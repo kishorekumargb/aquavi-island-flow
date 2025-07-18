@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Droplets, Zap, Heart, Star } from 'lucide-react';
+import { OrderModal } from '@/components/OrderModal';
 
 const products = [
   {
@@ -123,9 +124,11 @@ export function ProductRange() {
                 </CardContent>
 
                 <CardFooter className="flex flex-col space-y-3">
-                  <Button variant="premium" className="w-full">
-                    Add to Order
-                  </Button>
+                  <OrderModal>
+                    <Button variant="premium" className="w-full">
+                      Add to Order
+                    </Button>
+                  </OrderModal>
                   
                   <Dialog>
                     <DialogTrigger asChild>

@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Droplets, Award, Shield } from 'lucide-react';
 import heroBottle from '@/assets/aquavi-hero-bottle.jpg';
+import { OrderModal } from '@/components/OrderModal';
 
 export function Hero() {
   return (
@@ -66,9 +67,11 @@ export function Hero() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button variant="hero" size="lg" className="shadow-glow">
-              Order Now
-            </Button>
+            <OrderModal>
+              <Button variant="hero" size="lg" className="shadow-glow">
+                Order Now
+              </Button>
+            </OrderModal>
             <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/5">
               Learn More
             </Button>

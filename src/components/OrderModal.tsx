@@ -369,7 +369,21 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               </Card>
             </div>
 
-            <Button variant="hero" size="lg" className="w-full">
+            <Button 
+              variant="hero" 
+              size="lg" 
+              className="w-full"
+              onClick={() => {
+                const orderSummary = {
+                  items: getOrderItems(),
+                  total: orderData.autoRenew ? calculateTotal() * 0.9 : calculateTotal(),
+                  deliveryDetails: orderData
+                };
+                console.log('Proceeding to payment with:', orderSummary);
+                // Here you would typically redirect to Stripe checkout
+                alert(`Order total: $${orderSummary.total.toFixed(2)} - Payment integration will be added!`);
+              }}
+            >
               <CreditCard className="w-5 h-5 mr-2" />
               Proceed to Payment
             </Button>
@@ -391,7 +405,15 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
           </Button>
           <Button 
             variant="premium" 
-            onClick={nextStep}
+            onClick={currentStep === 4 ? () => {
+              const orderSummary = {
+                items: getOrderItems(),
+                total: orderData.autoRenew ? calculateTotal() * 0.9 : calculateTotal(),
+                deliveryDetails: orderData
+              };
+              console.log('Completing order:', orderSummary);
+              alert(`Order submitted successfully! Total: $${orderSummary.total.toFixed(2)}`);
+            } : nextStep}
             disabled={currentStep === 1 && getOrderItems().length === 0}
           >
             {currentStep === 4 ? 'Complete Order' : 'Next Step'}
