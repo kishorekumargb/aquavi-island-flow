@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Phone, Mail, MapPin, Clock, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useContactInfo } from '@/hooks/useContactInfo';
 
 export function Contact() {
   const [formData, setFormData] = useState({
@@ -17,26 +17,8 @@ export function Contact() {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [settings, setSettings] = useState<Record<string, string>>({});
+  const { contactInfo } = useContactInfo();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const { data } = await supabase
-        .from('site_settings')
-        .select('setting_key, setting_value');
-      
-      if (data) {
-        const settingsMap = data.reduce((acc, setting) => {
-          acc[setting.setting_key] = setting.setting_value;
-          return acc;
-        }, {});
-        setSettings(settingsMap);
-      }
-    };
-    
-    fetchSettings();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,7 +40,7 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="py-24 bg-background">
+    <section id="contact" className="py-16 bg-background">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
@@ -92,7 +74,7 @@ export function Contact() {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-foreground">WhatsApp Support</div>
-                      <div className="text-muted-foreground">{settings.phone || '1-499-4611'}</div>
+                      <div className="text-muted-foreground">{contactInfo.phone}</div>
                       <Badge variant="secondary" className="mt-2 bg-green-100 text-green-700">
                         Fastest Response
                       </Badge>
@@ -113,8 +95,8 @@ export function Contact() {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-foreground">Phone Support</div>
-                      <div className="text-muted-foreground">{settings.phone || '1-499-4611'}</div>
-                      <div className="text-sm text-muted-foreground">{settings.business_hours_monday_friday || 'Mon-Fri 8AM-6PM'}, {settings.business_hours_saturday || 'Sat 9AM-4PM'}</div>
+                      <div className="text-muted-foreground">{contactInfo.phone}</div>
+                      <div className="text-sm text-muted-foreground">{contactInfo.businessHoursMonFri}, {contactInfo.businessHoursSat}</div>
                     </div>
                     <Button variant="outline" size="sm">
                       Call Now
@@ -133,8 +115,7 @@ export function Contact() {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-foreground">Visit Our Office</div>
-                      <div className="text-muted-foreground">{settings.address || 'MoneyGram, Flemming Street'}</div>
-                      <div className="text-muted-foreground">{settings.address ? '' : 'Road Town, Tortola'}</div>
+                      <div className="text-muted-foreground">{contactInfo.address}</div>
                     </div>
                     <Button variant="outline" size="sm">
                       Directions
@@ -156,19 +137,19 @@ export function Contact() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <div className="font-medium">Monday - Friday</div>
-                    <div className="text-muted-foreground">{settings.business_hours_monday_friday || '8:00 AM - 6:00 PM'}</div>
+                    <div className="text-muted-foreground">{contactInfo.businessHoursMonFri}</div>
                   </div>
                   <div>
                     <div className="font-medium">Saturday</div>
-                    <div className="text-muted-foreground">{settings.business_hours_saturday || '9:00 AM - 4:00 PM'}</div>
+                    <div className="text-muted-foreground">{contactInfo.businessHoursSat}</div>
                   </div>
                   <div>
                     <div className="font-medium">Sunday</div>
-                    <div className="text-muted-foreground">{settings.business_hours_sunday || 'Emergency Only'}</div>
+                    <div className="text-muted-foreground">{contactInfo.businessHoursSun}</div>
                   </div>
                   <div>
                     <div className="font-medium">Delivery Hours</div>
-                    <div className="text-muted-foreground">{settings.delivery_hours || '3:30 PM - 5:30 PM'}</div>
+                    <div className="text-muted-foreground">{contactInfo.deliveryHours}</div>
                   </div>
                 </div>
               </CardContent>

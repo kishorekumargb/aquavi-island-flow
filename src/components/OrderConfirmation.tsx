@@ -3,10 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Package, MapPin, Phone } from 'lucide-react';
+import { useContactInfo } from '@/hooks/useContactInfo';
 
 export function OrderConfirmation() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { contactInfo } = useContactInfo();
   
   const orderData = {
     orderNumber: searchParams.get('orderNumber') || 'AQ1234567890',
@@ -85,7 +87,7 @@ export function OrderConfirmation() {
                     <Package className="w-5 h-5 text-primary mt-0.5" />
                     <div>
                       <p className="text-sm text-muted-foreground">Estimated Delivery</p>
-                      <p className="font-medium">3:30 PM - 5:30 PM</p>
+                      <p className="font-medium">{contactInfo.deliveryHours}</p>
                     </div>
                   </div>
                 </div>
@@ -128,11 +130,11 @@ export function OrderConfirmation() {
                   Questions about your order? Contact us at:
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6">
-                  <a href="tel:1-499-4611" className="flex items-center space-x-2 text-primary hover:underline">
+                  <a href={`tel:${contactInfo.phone}`} className="flex items-center space-x-2 text-primary hover:underline">
                     <Phone className="w-4 h-4" />
-                    <span>1-499-4611</span>
+                    <span>{contactInfo.phone}</span>
                   </a>
-                  <a href="https://wa.me/14994611" className="flex items-center space-x-2 text-primary hover:underline">
+                  <a href={`https://wa.me/${contactInfo.phone.replace(/[^0-9]/g, '')}`} className="flex items-center space-x-2 text-primary hover:underline">
                     <span>📱</span>
                     <span>WhatsApp</span>
                   </a>

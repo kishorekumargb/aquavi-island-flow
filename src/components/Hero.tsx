@@ -31,12 +31,12 @@ export function Hero() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-20 pb-12">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-subtle"></div>
       
       {/* Content Container */}
-      <div className="container mx-auto px-6 py-24 grid lg:grid-cols-2 gap-12 items-center relative z-10">
+      <div className="container mx-auto px-6 py-12 grid lg:grid-cols-2 gap-12 items-center relative z-10">
         
         {/* Left Content */}
         <div className="space-y-8">
