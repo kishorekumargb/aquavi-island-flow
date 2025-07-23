@@ -13,7 +13,7 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img 
-              src="/src/assets/aqua-vi-logo-updated.png" 
+              src="/lovable-uploads/a2e2f478-6f1b-41fd-954b-c2753b9c6153.png" 
               alt="Aqua VI Logo" 
               className="w-10 h-10"
               onError={(e) => {

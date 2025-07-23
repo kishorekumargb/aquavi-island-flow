@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus } from 'lucide-react';
+import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ProductEditModal } from '@/components/ProductEditModal';
 
 interface Order {
   id: string;
@@ -140,8 +141,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     try {
       const { error } = await supabase
         .from('site_settings')
-        .upsert({ setting_key: key, setting_value: value })
-        .eq('setting_key', key);
+        .upsert({ setting_key: key, setting_value: value }, { onConflict: 'setting_key' });
 
       if (error) throw error;
 
@@ -229,8 +229,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img 
-                src="/src/assets/aqua-vi-logo-updated.png" 
+            <img 
+                src="/lovable-uploads/a2e2f478-6f1b-41fd-954b-c2753b9c6153.png" 
                 alt="Aqua VI" 
                 className="w-8 h-8 object-contain"
               />
@@ -433,8 +433,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4" />
+                            <ProductEditModal product={product} onSave={updateProduct} />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => updateProduct(product.id, { is_active: !product.is_active })}
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>

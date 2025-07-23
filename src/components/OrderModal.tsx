@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,17 +13,48 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Calendar, Clock, MapPin, Truck, Package, CreditCard } from 'lucide-react';
 
-const products = [
-  { id: 1, name: '8 oz Premium', price: 3.99, size: '8 oz' },
-  { id: 2, name: '16 oz Classic', price: 6.99, size: '16 oz' },
-  { id: 3, name: '32 oz Grande', price: 12.99, size: '32 oz' },
-  { id: 4, name: '50 oz Family', price: 19.99, size: '50 oz' },
-  { id: 5, name: '5 Gallon Office', price: 24.99, size: '5 Gal' }
-];
+interface Product {
+  id: string;
+  name: string;
+  size: string;
+  price: number;
+  description: string;
+  image_url: string;
+  stock: number;
+  is_active: boolean;
+}
 
 export function OrderModal({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .order('price');
+
+      if (error) throw error;
+      
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
   const [orderData, setOrderData] = useState({
     deliveryType: 'delivery',
     frequency: 'once',
@@ -35,7 +68,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
   const [quantities, setQuantities] = useState({});
 
-  const handleQuantityChange = (productId: number, quantity: string) => {
+  const handleQuantityChange = (productId: string, quantity: string) => {
     setQuantities(prev => ({
       ...prev,
       [productId]: parseInt(quantity) || 0
@@ -44,7 +77,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
   const calculateTotal = () => {
     return Object.entries(quantities).reduce((total, [productId, quantity]) => {
-      const product = products.find(p => p.id === parseInt(productId));
+      const product = products.find(p => p.id === productId);
       return total + (product ? product.price * (quantity as number) : 0);
     }, 0);
   };
@@ -53,7 +86,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
     return Object.entries(quantities)
       .filter(([_, quantity]) => (quantity as number) > 0)
       .map(([productId, quantity]) => {
-        const product = products.find(p => p.id === parseInt(productId));
+        const product = products.find(p => p.id === productId);
         return { product, quantity: quantity as number };
       });
   };
@@ -145,7 +178,39 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
         {currentStep === 2 && (
           <div className="space-y-6">
-            <h3 className="text-xl font-heading font-semibold">Delivery Details</h3>
+            <h3 className="text-xl font-heading font-semibold">Customer & Delivery Details</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-base font-medium">Full Name *</Label>
+                <Input
+                  placeholder="Enter your full name"
+                  value={customerInfo.name}
+                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-medium">Email</Label>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={customerInfo.email}
+                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-medium">Phone</Label>
+                <Input
+                  type="tel"
+                  placeholder="Enter your phone"
+                  value={customerInfo.phone}
+                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                  className="mt-2"
+                />
+              </div>
+            </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -337,36 +402,75 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               variant="hero" 
               size="lg" 
               className="w-full"
-              onClick={() => {
-                const orderDetails = {
-                  orderNumber: `AQ${Date.now()}`,
-                  items: getOrderItems(),
-                  total: calculateTotal(),
-                  deliveryAddress: orderData.address,
-                  deliveryDate: orderData.date,
-                  deliveryTime: orderData.time,
-                  paymentMethod: 'Cash on Delivery'
-                };
+              disabled={isSubmitting}
+              onClick={async () => {
+                if (!customerInfo.name.trim()) {
+                  toast({
+                    title: "Missing Information",
+                    description: "Please enter your full name",
+                    variant: "destructive",
+                  });
+                  return;
+                }
                 
-                // Save to database and navigate to confirmation
-                const orderItems = getOrderItems().map(item => ({
-                  name: item.product?.name,
-                  quantity: item.quantity,
-                  price: item.product?.price
-                }));
+                setIsSubmitting(true);
                 
-                const params = new URLSearchParams({
-                  orderNumber: orderDetails.orderNumber,
-                  customerName: 'Customer',
-                  total: orderDetails.total.toFixed(2),
-                  items: orderItems.map(item => `${item.name} x${item.quantity}`).join(', '),
-                  deliveryAddress: orderData.address
-                });
-                
-                navigate(`/order-confirmation?${params.toString()}`);
+                try {
+                  const orderDetails = {
+                    order_number: `AQ${Date.now()}`,
+                    customer_name: customerInfo.name,
+                    customer_email: customerInfo.email || null,
+                    customer_phone: customerInfo.phone || null,
+                    delivery_address: orderData.address,
+                    items: getOrderItems().map(item => ({
+                      name: item.product?.name,
+                      quantity: item.quantity,
+                      price: item.product?.price
+                    })),
+                    total_amount: calculateTotal(),
+                    status: 'pending',
+                    payment_method: 'cash'
+                  };
+                  
+                  const { error } = await supabase
+                    .from('orders')
+                    .insert([orderDetails]);
+                  
+                  if (error) throw error;
+                  
+                  toast({
+                    title: "Order Placed Successfully!",
+                    description: `Order ${orderDetails.order_number} has been placed and will be delivered soon.`,
+                  });
+                  
+                  // Reset form and close modal
+                  setCurrentStep(1);
+                  setQuantities({});
+                  setCustomerInfo({ name: '', email: '', phone: '' });
+                  setOrderData({
+                    deliveryType: 'delivery',
+                    frequency: 'once',
+                    address: '',
+                    date: '',
+                    time: '15:30',
+                    items: [],
+                    marketingConsent: false,
+                    autoRenew: false
+                  });
+                  
+                } catch (error) {
+                  console.error('Error placing order:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to place order. Please try again.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsSubmitting(false);
+                }
               }}
             >
-              Confirm Order (Cash on Delivery)
+              {isSubmitting ? 'Placing Order...' : 'Confirm Order (Cash on Delivery)'}
             </Button>
           </div>
         )}
@@ -384,7 +488,10 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
             <Button 
               variant="premium" 
               onClick={nextStep}
-              disabled={currentStep === 1 && getOrderItems().length === 0}
+              disabled={
+                (currentStep === 1 && getOrderItems().length === 0) ||
+                (currentStep === 2 && !customerInfo.name.trim())
+              }
             >
               Next Step
             </Button>

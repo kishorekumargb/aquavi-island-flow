@@ -1,10 +1,35 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Droplets, Award, Shield } from 'lucide-react';
-import heroBottle from '@/assets/aqua-vi-bottle.png';
 import { OrderModal } from '@/components/OrderModal';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Hero() {
+  const [heroImageUrl, setHeroImageUrl] = useState('/src/assets/aqua-vi-hero-banner.jpg');
+
+  useEffect(() => {
+    fetchHeroImage();
+  }, []);
+
+  const fetchHeroImage = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'hero_image_url')
+        .single();
+
+      if (error) throw error;
+      
+      if (data?.setting_value) {
+        setHeroImageUrl(data.setting_value);
+      }
+    } catch (error) {
+      console.error('Error fetching hero image:', error);
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Gradient */}
@@ -94,7 +119,7 @@ export function Hero() {
         <div className="relative">
           <div className="relative z-10 p-8">
             <img 
-              src="/src/assets/aqua-vi-hero-banner.jpg" 
+              src={heroImageUrl} 
               alt="Aqua VI - The Sweet Taste of Purity"
               className="w-full max-w-sm mx-auto drop-shadow-2xl rounded-lg"
             />

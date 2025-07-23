@@ -1,52 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Droplets, Zap, Heart, Star } from 'lucide-react';
 import { OrderModal } from '@/components/OrderModal';
+import { supabase } from '@/integrations/supabase/client';
 
-const products = [
-  {
-    id: 1,
-    name: 'Small',
-    size: '8.45 FL OZ (250mL)',
-    price: '$2.50',
-    description: 'Perfect for on-the-go hydration',
-    icon: Droplets,
-    popular: false
-  },
-  {
-    id: 2,
-    name: 'Medium',
-    size: '16.9 FL OZ (500mL)',
-    price: '$4.50',
-    description: 'Our signature size for daily hydration',
-    icon: Droplets,
-    popular: true
-  },
-  {
-    id: 3,
-    name: 'Large',
-    size: '33.81 FL OZ (1000mL)',
-    price: '$7.50',
-    description: 'Ideal for workouts and extended activities',
-    icon: Zap,
-    popular: false
-  },
-  {
-    id: 4,
-    name: 'Extra Large',
-    size: '50.72 FL OZ (1500mL)',
-    price: '$10.50',
-    description: 'Perfect for families and sharing',
-    icon: Heart,
-    popular: false
-  }
-];
+interface Product {
+  id: string;
+  name: string;
+  size: string;
+  price: number;
+  description: string;
+  image_url: string;
+  stock: number;
+  is_active: boolean;
+}
 
 export function ProductRange() {
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .order('price');
+
+      if (error) throw error;
+      
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section id="products" className="py-24 bg-gradient-subtle">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <div className="w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto mb-4"></div>
+            <p>Loading products...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="products" className="py-24 bg-gradient-subtle">
@@ -61,11 +69,11 @@ export function ProductRange() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product) => {
-            const IconComponent = product.icon;
+          {products.map((product, index) => {
+            const isPopular = index === 1; // Make second product popular by default
             return (
               <Card key={product.id} className="relative group hover:shadow-elegant transition-smooth">
-                {product.popular && (
+                {isPopular && (
                   <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
                     Most Popular
                   </Badge>
@@ -73,25 +81,36 @@ export function ProductRange() {
                 
                 <CardHeader className="text-center pb-4">
                   <div className="flex items-center justify-center mb-4">
-                    <img 
-                      src={product.size.includes('500') ? '/src/assets/aqua-vi-500ml-bottle.png' : '/src/assets/aqua-vi-1l-bottle.png'} 
-                      alt={`Aqua VI ${product.name}`}
-                      className="w-20 h-32 object-contain"
-                    />
+                    {product.image_url ? (
+                      <img 
+                        src={product.image_url} 
+                        alt={`Aqua VI ${product.name}`}
+                        className="w-20 h-32 object-contain"
+                      />
+                    ) : (
+                      <div className="w-20 h-32 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Droplets className="w-8 h-8 text-primary" />
+                      </div>
+                    )}
                   </div>
                   <CardTitle className="text-xl font-heading">{product.name}</CardTitle>
                   <CardDescription>{product.description}</CardDescription>
                 </CardHeader>
 
                 <CardContent className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-2">{product.price}</div>
+                  <div className="text-3xl font-bold text-primary mb-2">${product.price.toFixed(2)}</div>
                   <div className="text-sm text-muted-foreground">{product.size}</div>
+                  {product.stock < 10 && (
+                    <Badge variant="destructive" className="mt-2">
+                      Low Stock ({product.stock} left)
+                    </Badge>
+                  )}
                 </CardContent>
 
                 <CardFooter className="flex flex-col space-y-3">
                   <OrderModal>
-                    <Button variant="premium" className="w-full">
-                      Add to Order
+                    <Button variant="premium" className="w-full" disabled={product.stock === 0}>
+                      {product.stock === 0 ? 'Out of Stock' : 'Add to Order'}
                     </Button>
                   </OrderModal>
                 </CardFooter>
