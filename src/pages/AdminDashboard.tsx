@@ -281,7 +281,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       const imageUrl = e.target?.result as string;
       
       if (type === 'hero') {
-        setEditableSettings(prev => ({ ...prev, hero_image: imageUrl }));
+        setEditableSettings(prev => ({ ...prev, hero_image_url: imageUrl }));
       } else if (type === 'product' && productId) {
         await updateProduct(productId, { image_url: imageUrl });
       }
@@ -726,12 +726,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
                   {/* Hero Image URL */}
                   <div>
-                    <Label htmlFor="hero_image" className="text-sm font-medium">Hero Image URL</Label>
+                    <Label htmlFor="hero_image_url" className="text-sm font-medium">Hero Image URL</Label>
                     <div className="flex gap-2 mt-1">
                       <Input
-                        id="hero_image"
-                        value={editableSettings.hero_image || ''}
-                        onChange={(e) => setEditableSettings(prev => ({ ...prev, hero_image: e.target.value }))}
+                        id="hero_image_url"
+                        value={editableSettings.hero_image_url || ''}
+                        onChange={(e) => setEditableSettings(prev => ({ ...prev, hero_image_url: e.target.value }))}
                         placeholder="https://example.com/hero.jpg"
                       />
                       <Input

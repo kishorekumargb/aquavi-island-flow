@@ -9,6 +9,7 @@ interface ContactInfo {
   businessHoursMonFri: string;
   businessHoursSat: string;
   businessHoursSun: string;
+  logo_url: string;
 }
 
 const defaultContactInfo: ContactInfo = {
@@ -18,7 +19,8 @@ const defaultContactInfo: ContactInfo = {
   deliveryHours: '3:30 PM - 5:30 PM',
   businessHoursMonFri: '8:00 AM - 6:00 PM',
   businessHoursSat: '9:00 AM - 4:00 PM',
-  businessHoursSun: 'Emergency Only'
+  businessHoursSun: 'Emergency Only',
+  logo_url: '/lovable-uploads/a2e2f478-6f1b-41fd-954b-c2753b9c6153.png',
 };
 
 export function useContactInfo() {
@@ -41,7 +43,8 @@ export function useContactInfo() {
           'delivery_hours',
           'business_hours_monday_friday',
           'business_hours_saturday',
-          'business_hours_sunday'
+          'business_hours_sunday',
+          'logo_url'
         ]);
 
       if (error) {
@@ -64,7 +67,8 @@ export function useContactInfo() {
           deliveryHours: settings.delivery_hours || defaultContactInfo.deliveryHours,
           businessHoursMonFri: settings.business_hours_monday_friday || defaultContactInfo.businessHoursMonFri,
           businessHoursSat: settings.business_hours_saturday || defaultContactInfo.businessHoursSat,
-          businessHoursSun: settings.business_hours_sunday || defaultContactInfo.businessHoursSun
+          businessHoursSun: settings.business_hours_sunday || defaultContactInfo.businessHoursSun,
+          logo_url: settings.logo_url || defaultContactInfo.logo_url,
         });
       }
     } catch (error) {
