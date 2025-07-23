@@ -60,7 +60,7 @@ export function TestimonialsCarousel() {
   };
 
   return (
-    <section id="testimonials" className="py-12 bg-gradient-subtle">
+    <section id="testimonials" className="py-20 bg-muted/20">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">

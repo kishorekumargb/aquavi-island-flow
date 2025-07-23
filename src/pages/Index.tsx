@@ -12,17 +12,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <Hero />
-      <div className="py-16">
+      <main className="space-y-0">
+        <Hero />
         <ProductRange />
-      </div>
-      <div className="py-16">
         <WhyAquavi />
-      </div>
-      <div className="py-16">
         <TestimonialsCarousel />
-      </div>
-      <Contact />
+        <Contact />
+      </main>
       <Footer />
       
       {/* Floating Order Button */}

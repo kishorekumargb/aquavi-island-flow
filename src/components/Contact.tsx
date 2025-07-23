@@ -40,7 +40,7 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="py-16 bg-background">
+    <section id="contact" className="py-20 bg-gradient-subtle">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">

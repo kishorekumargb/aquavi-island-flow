@@ -31,7 +31,7 @@ export function useContactInfo() {
 
   const fetchContactInfo = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('site_settings')
         .select('setting_key, setting_value')
         .in('setting_key', [
@@ -44,7 +44,14 @@ export function useContactInfo() {
           'business_hours_sunday'
         ]);
 
-      if (data) {
+      if (error) {
+        console.error('Supabase error:', error);
+        // Use default values if there's an error
+        setLoading(false);
+        return;
+      }
+
+      if (data && data.length > 0) {
         const settings = data.reduce((acc, setting) => {
           acc[setting.setting_key] = setting.setting_value;
           return acc;
@@ -62,6 +69,7 @@ export function useContactInfo() {
       }
     } catch (error) {
       console.error('Error fetching contact info:', error);
+      // Use default values if there's an error
     } finally {
       setLoading(false);
     }
