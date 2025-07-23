@@ -14,13 +14,13 @@ export function Header() {
             <div className="w-8 h-8 bg-gradient-hero rounded-full flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">A</span>
             </div>
-            <span className="font-heading text-2xl font-bold text-primary">AQUAVI</span>
+            <span className="font-heading text-2xl font-bold text-primary">Aqua VI</span>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#products" className="text-foreground hover:text-primary transition-smooth">Products</a>
-            <a href="#why-aquavi" className="text-foreground hover:text-primary transition-smooth">Why AQUAVI?</a>
+            <a href="#why-aquavi" className="text-foreground hover:text-primary transition-smooth">Why Aqua VI?</a>
             <a href="#testimonials" className="text-foreground hover:text-primary transition-smooth">Reviews</a>
             <a href="#contact" className="text-foreground hover:text-primary transition-smooth">Contact</a>
           </nav>
@@ -30,11 +30,11 @@ export function Header() {
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center space-x-1">
                 <Phone className="w-4 h-4" />
-                <span>(284) 494-AQUA</span>
+                <span>1-499-4611</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Mail className="w-4 h-4" />
-                <span>info@aquavi.vg</span>
+                <span>info@aquavi.com</span>
               </div>
             </div>
             <Button variant="premium" size="sm">
@@ -56,7 +56,7 @@ export function Header() {
           <div className="md:hidden mt-4 pb-4 border-t border-border">
             <nav className="flex flex-col space-y-4 mt-4">
               <a href="#products" className="text-foreground hover:text-primary transition-smooth">Products</a>
-              <a href="#why-aquavi" className="text-foreground hover:text-primary transition-smooth">Why AQUAVI?</a>
+              <a href="#why-aquavi" className="text-foreground hover:text-primary transition-smooth">Why Aqua VI?</a>
               <a href="#testimonials" className="text-foreground hover:text-primary transition-smooth">Reviews</a>
               <a href="#contact" className="text-foreground hover:text-primary transition-smooth">Contact</a>
               <div className="pt-4 border-t border-border">

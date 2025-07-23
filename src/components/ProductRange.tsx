@@ -9,78 +9,39 @@ import { OrderModal } from '@/components/OrderModal';
 const products = [
   {
     id: 1,
-    name: '8 oz Premium',
-    size: '8 oz',
-    price: '$3.99',
+    name: 'Small',
+    size: '8.45 FL OZ (250mL)',
+    price: '$2.50',
     description: 'Perfect for on-the-go hydration',
     icon: Droplets,
-    popular: false,
-    minerals: {
-      calcium: '15 mg/L',
-      magnesium: '8 mg/L',
-      potassium: '2 mg/L',
-      ph: '7.8'
-    }
+    popular: false
   },
   {
     id: 2,
-    name: '16 oz Classic',
-    size: '16 oz',
-    price: '$6.99',
+    name: 'Medium',
+    size: '16.9 FL OZ (500mL)',
+    price: '$4.50',
     description: 'Our signature size for daily hydration',
     icon: Droplets,
-    popular: true,
-    minerals: {
-      calcium: '15 mg/L',
-      magnesium: '8 mg/L',
-      potassium: '2 mg/L',
-      ph: '7.8'
-    }
+    popular: true
   },
   {
     id: 3,
-    name: '32 oz Grande',
-    size: '32 oz',
-    price: '$12.99',
+    name: 'Large',
+    size: '33.81 FL OZ (1000mL)',
+    price: '$7.50',
     description: 'Ideal for workouts and extended activities',
     icon: Zap,
-    popular: false,
-    minerals: {
-      calcium: '15 mg/L',
-      magnesium: '8 mg/L',
-      potassium: '2 mg/L',
-      ph: '7.8'
-    }
+    popular: false
   },
   {
     id: 4,
-    name: '50 oz Family',
-    size: '50 oz',
-    price: '$19.99',
+    name: 'Extra Large',
+    size: '50.72 FL OZ (1500mL)',
+    price: '$10.50',
     description: 'Perfect for families and sharing',
     icon: Heart,
-    popular: false,
-    minerals: {
-      calcium: '15 mg/L',
-      magnesium: '8 mg/L',
-      potassium: '2 mg/L',
-      ph: '7.8'
-    }
-  },
-  {
-    id: 5,
-    name: '5 Gallon Office',
-    size: '5 Gal',
-    price: '$24.99',
-    description: 'Commercial grade for offices and events',
-    icon: Star,
-    popular: false,
-    minerals: {
-      calcium: '15 mg/L',
-      magnesium: '8 mg/L',
-      potassium: '2 mg/L',
-      ph: '7.8'
-    }
+    popular: false
   }
 ];
 
@@ -92,14 +53,14 @@ export function ProductRange() {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
-            Premium Product Range
+            Product Sizes
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            From personal hydration to office solutions, AQUAVI offers the perfect size for every need.
+            Choose the perfect size for your hydration needs. All bottles are locally sourced and delivered fresh.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((product) => {
             const IconComponent = product.icon;
             return (
@@ -129,55 +90,6 @@ export function ProductRange() {
                       Add to Order
                     </Button>
                   </OrderModal>
-                  
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full text-primary">
-                        View Mineral Profile
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle className="font-heading">
-                          {product.name} - Mineral Composition
-                        </DialogTitle>
-                        <DialogDescription>
-                          Laboratory-certified mineral profile and purity analysis
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-muted/50 p-4 rounded-lg">
-                            <div className="text-sm text-muted-foreground">Calcium</div>
-                            <div className="text-lg font-semibold">{product.minerals.calcium}</div>
-                          </div>
-                          <div className="bg-muted/50 p-4 rounded-lg">
-                            <div className="text-sm text-muted-foreground">Magnesium</div>
-                            <div className="text-lg font-semibold">{product.minerals.magnesium}</div>
-                          </div>
-                          <div className="bg-muted/50 p-4 rounded-lg">
-                            <div className="text-sm text-muted-foreground">Potassium</div>
-                            <div className="text-lg font-semibold">{product.minerals.potassium}</div>
-                          </div>
-                          <div className="bg-muted/50 p-4 rounded-lg">
-                            <div className="text-sm text-muted-foreground">pH Level</div>
-                            <div className="text-lg font-semibold">{product.minerals.ph}</div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Droplets className="w-5 h-5 text-primary" />
-                            <span className="font-semibold">Purity Guarantee</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            Third-party laboratory tested for 99.9% purity. Sourced from pristine British Virgin Islands springs.
-                          </p>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </CardFooter>
               </Card>
             );
@@ -186,20 +98,20 @@ export function ProductRange() {
 
         <div className="text-center mt-12">
           <p className="text-muted-foreground mb-4">
-            All products are laboratory-certified and sourced from pristine BVI springs
+            All bottles are locally sourced and delivered fresh to your door
           </p>
           <div className="flex justify-center space-x-8 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span>Third-party Lab Tested</span>
+              <span>Locally Bottled</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-primary rounded-full"></div>
-              <span>BVI Sourced</span>
+              <span>Great Taste</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-secondary rounded-full"></div>
-              <span>99.9% Pure</span>
+              <span>Free Delivery</span>
             </div>
           </div>
         </div>

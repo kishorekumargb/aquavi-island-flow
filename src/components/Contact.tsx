@@ -26,7 +26,7 @@ export function Contact() {
     setTimeout(() => {
       toast({
         title: "Message Sent Successfully!",
-        description: "We'll respond within 24 hours. Thank you for contacting AQUAVI.",
+        description: "We'll respond within 24 hours. Thank you for contacting Aqua VI.",
       });
       setFormData({ name: '', email: '', phone: '', message: '' });
       setIsSubmitting(false);
@@ -42,10 +42,10 @@ export function Contact() {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
-            Contact & Support
+            Contact us today to schedule your Aqua VI delivery
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Get in touch with our team for orders, questions, or premium customer support.
+            Delivery available in the greater Road Town area with FREE delivery service.
           </p>
         </div>
 
@@ -55,9 +55,9 @@ export function Contact() {
             <div>
               <h3 className="text-2xl font-heading font-semibold mb-6">Get in Touch</h3>
               <p className="text-muted-foreground leading-relaxed mb-8">
-                Our customer service team is here to help with orders, delivery scheduling, 
-                and any questions about AQUAVI premium water. We pride ourselves on 
-                concierge-level service for all our valued customers.
+              Our customer service team is here to help with orders, delivery scheduling, 
+              and any questions about Aqua VI water. We provide friendly local service 
+              with free delivery to the greater Road Town area.
               </p>
             </div>
 
@@ -72,7 +72,7 @@ export function Contact() {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-foreground">WhatsApp Support</div>
-                      <div className="text-muted-foreground">+1 (284) 494-AQUA</div>
+                      <div className="text-muted-foreground">1-499-4611</div>
                       <Badge variant="secondary" className="mt-2 bg-green-100 text-green-700">
                         Fastest Response
                       </Badge>
@@ -93,7 +93,7 @@ export function Contact() {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-foreground">Phone Support</div>
-                      <div className="text-muted-foreground">+1 (284) 494-AQUA (2782)</div>
+                      <div className="text-muted-foreground">1-499-4611</div>
                       <div className="text-sm text-muted-foreground">Mon-Fri 8AM-6PM, Sat 9AM-4PM</div>
                     </div>
                     <Button variant="outline" size="sm">
@@ -112,7 +112,7 @@ export function Contact() {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-foreground">Email Support</div>
-                      <div className="text-muted-foreground">info@aquavi.vg</div>
+                      <div className="text-muted-foreground">info@aquavi.com</div>
                       <div className="text-sm text-muted-foreground">Response within 24 hours</div>
                     </div>
                     <Button variant="outline" size="sm">
@@ -131,8 +131,8 @@ export function Contact() {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-foreground">Visit Our Office</div>
+                      <div className="text-muted-foreground">MoneyGram, Flemming Street</div>
                       <div className="text-muted-foreground">Road Town, Tortola</div>
-                      <div className="text-muted-foreground">British Virgin Islands</div>
                     </div>
                     <Button variant="outline" size="sm">
                       Directions

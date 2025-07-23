@@ -8,23 +8,23 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* AQUAVI Brand Colors */
+    /* Aqua VI Brand Colors */
     --background: 0 0% 100%;
-    --foreground: 210 22% 15%;
+    --foreground: 0 0% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 22% 15%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 22% 15%;
+    --popover-foreground: 0 0% 15%;
 
-    /* Deep Teal Primary #20B2AA */
-    --primary: 177 69% 41%;
+    /* Aqua Blue Primary #00B5B7 */
+    --primary: 181 100% 36%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 177 69% 51%;
+    --primary-glow: 181 100% 46%;
 
-    /* Royal Blue Secondary #4682B4 */
-    --secondary: 207 44% 49%;
+    /* Deep Violet Secondary #25408F */
+    --secondary: 227 64% 35%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 210 40% 96.1%;
@@ -43,10 +43,10 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    /* AQUAVI Gradients */
+    /* Aqua VI Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
-    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(210 40% 98%));
-    --gradient-ocean: linear-gradient(45deg, hsl(var(--primary-glow)), hsl(var(--secondary)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(0 0% 98%));
+    --gradient-ocean: linear-gradient(45deg, hsl(var(--primary-glow)), hsl(181 100% 56%));
 
     /* Premium Shadows */
     --shadow-premium: 0 20px 60px -12px hsl(var(--primary) / 0.25);

@@ -18,29 +18,29 @@ export function Hero() {
           {/* Premium Badge */}
           <div className="flex items-center space-x-2">
             <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-              <Award className="w-4 h-4 mr-2" />
-              Laboratory Certified
+              <Droplets className="w-4 h-4 mr-2" />
+              Locally Bottled
             </Badge>
             <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20">
               <Shield className="w-4 h-4 mr-2" />
-              BVI Premium
+              Free Delivery
             </Badge>
           </div>
 
           {/* Main Heading */}
           <div className="space-y-4">
             <h1 className="text-5xl lg:text-7xl font-heading font-bold text-foreground leading-tight">
-              AQUAVI
+              Convenience Meets Great Taste
             </h1>
             <p className="text-2xl lg:text-3xl font-tagline text-primary italic">
-              "Pure BVI. Pure Excellence."
+              Enjoy Aqua VI—the sweet taste of purity, delivered to you for FREE.
             </p>
           </div>
 
           {/* Description */}
           <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-            Ultra-luxury, locally owned premium bottled water delivering laboratory-certified purity 
-            with island pride and concierge-level reliability. Experience the essence of the British Virgin Islands.
+            Locally bottled water from the British Virgin Islands. Fresh, pure, and delivered free 
+            to your door in the greater Road Town area. Choose water that's from the VI. For you.
           </p>
 
           {/* Features */}
@@ -49,19 +49,19 @@ export function Hero() {
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Droplets className="w-6 h-6 text-primary" />
               </div>
-              <p className="text-sm font-medium">99.9% Pure</p>
+              <p className="text-sm font-medium">Locally Bottled</p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Award className="w-6 h-6 text-secondary" />
               </div>
-              <p className="text-sm font-medium">Lab Tested</p>
+              <p className="text-sm font-medium">Great Taste</p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Shield className="w-6 h-6 text-primary" />
               </div>
-              <p className="text-sm font-medium">BVI Local</p>
+              <p className="text-sm font-medium">Free Delivery</p>
             </div>
           </div>
 
@@ -95,7 +95,7 @@ export function Hero() {
           <div className="relative z-10">
             <img 
               src={heroBottle} 
-              alt="AQUAVI Premium Bottled Water"
+              alt="Aqua VI Premium Bottled Water"
               className="w-full max-w-md mx-auto drop-shadow-2xl shadow-premium"
             />
           </div>
