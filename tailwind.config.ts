@@ -33,6 +33,10 @@ export default {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
+				tropical: {
+					DEFAULT: 'hsl(var(--tropical))',
+					foreground: 'hsl(var(--tropical-foreground))'
+				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
@@ -72,7 +76,8 @@ export default {
 			backgroundImage: {
 				'gradient-hero': 'var(--gradient-hero)',
 				'gradient-ocean': 'var(--gradient-ocean)',
-				'gradient-subtle': 'var(--gradient-subtle)'
+				'gradient-subtle': 'var(--gradient-subtle)',
+				'gradient-bottle': 'var(--gradient-bottle)'
 			},
 			boxShadow: {
 				'premium': 'var(--shadow-premium)',

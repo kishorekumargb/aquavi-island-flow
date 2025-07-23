@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Droplets, Award, Shield } from 'lucide-react';
-import heroBottle from '@/assets/aquavi-hero-bottle.jpg';
+import heroBottle from '@/assets/aqua-vi-bottle.png';
 import { OrderModal } from '@/components/OrderModal';
 
 export function Hero() {
@@ -32,15 +32,15 @@ export function Hero() {
             <h1 className="text-5xl lg:text-7xl font-heading font-bold text-foreground leading-tight">
               Convenience Meets Great Taste
             </h1>
-            <p className="text-2xl lg:text-3xl font-tagline text-primary italic">
-              Enjoy Aqua VI—the sweet taste of purity, delivered to you for FREE.
+            <p className="text-2xl lg:text-3xl font-tagline text-tropical italic">
+              Locally bottled water with great taste and free delivery across Road Town.
             </p>
           </div>
 
           {/* Description */}
           <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-            Locally bottled water from the British Virgin Islands. Fresh, pure, and delivered free 
-            to your door in the greater Road Town area. Choose water that's from the VI. For you.
+            Experience the sweet taste of purity with minerals added for taste. Fresh, locally bottled 
+            in the British Virgin Islands and delivered free to your door across Road Town.
           </p>
 
           {/* Features */}
@@ -92,18 +92,22 @@ export function Hero() {
 
         {/* Right Content - Hero Image */}
         <div className="relative">
-          <div className="relative z-10">
+          <div className="relative z-10 p-8">
             <img 
               src={heroBottle} 
-              alt="Aqua VI Premium Bottled Water"
-              className="w-full max-w-md mx-auto drop-shadow-2xl shadow-premium"
+              alt="Aqua VI - The Sweet Taste of Purity"
+              className="w-full max-w-sm mx-auto drop-shadow-2xl"
+              onError={(e) => {
+                e.currentTarget.src = '/src/assets/aquavi-hero-bottle.jpg';
+              }}
             />
           </div>
           
-          {/* Floating Elements */}
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-hero rounded-full opacity-20 animate-pulse"></div>
-          <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-gradient-ocean rounded-full opacity-20 animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 -right-12 w-16 h-16 bg-primary/20 rounded-full opacity-40 animate-pulse delay-500"></div>
+          {/* Caribbean-inspired Floating Elements */}
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-bottle rounded-full opacity-15 animate-pulse"></div>
+          <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-gradient-ocean rounded-full opacity-15 animate-pulse delay-1000"></div>
+          <div className="absolute top-1/3 -right-16 w-20 h-20 bg-tropical/20 rounded-full opacity-30 animate-pulse delay-500"></div>
+          <div className="absolute bottom-1/3 -left-8 w-16 h-16 bg-primary/15 rounded-full opacity-25 animate-pulse delay-700"></div>
         </div>
       </div>
 

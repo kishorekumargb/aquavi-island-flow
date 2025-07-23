@@ -11,8 +11,19 @@ export function Header() {
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-hero rounded-full flex items-center justify-center">
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/src/assets/aqua-vi-logo.png" 
+              alt="Aqua VI Logo" 
+              className="w-10 h-10"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                const sibling = target.nextElementSibling as HTMLElement;
+                target.style.display = 'none';
+                if (sibling) sibling.style.display = 'flex';
+              }}
+            />
+            <div className="w-10 h-10 bg-gradient-hero rounded-full items-center justify-center hidden">
               <span className="text-primary-foreground font-bold text-lg">A</span>
             </div>
             <span className="font-heading text-2xl font-bold text-primary">Aqua VI</span>
