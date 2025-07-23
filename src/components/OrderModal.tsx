@@ -188,6 +188,18 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   value={customerInfo.name}
                   onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
                   className="mt-2"
+                  required
+                />
+              </div>
+              <div>
+                <Label className="text-base font-medium">Phone *</Label>
+                <Input
+                  type="tel"
+                  placeholder="Enter your phone"
+                  value={customerInfo.phone}
+                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                  className="mt-2"
+                  required
                 />
               </div>
               <div>
@@ -197,16 +209,6 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   placeholder="Enter your email"
                   value={customerInfo.email}
                   onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label className="text-base font-medium">Phone</Label>
-                <Input
-                  type="tel"
-                  placeholder="Enter your phone"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
                   className="mt-2"
                 />
               </div>
@@ -254,12 +256,13 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
             {orderData.deliveryType === 'delivery' && (
               <div>
-                <Label className="text-base font-medium">Delivery Address</Label>
+                <Label className="text-base font-medium">Delivery Address *</Label>
                 <Input
                   placeholder="Enter your full address in BVI"
                   value={orderData.address}
                   onChange={(e) => setOrderData(prev => ({ ...prev, address: e.target.value }))}
                   className="mt-2"
+                  required
                 />
                 <p className="text-sm text-muted-foreground mt-1">
                   We'll use Google Places to verify and optimize your address
@@ -404,10 +407,29 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               className="w-full"
               disabled={isSubmitting}
               onClick={async () => {
+                // Validation
                 if (!customerInfo.name.trim()) {
                   toast({
                     title: "Missing Information",
                     description: "Please enter your full name",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                if (!customerInfo.phone.trim()) {
+                  toast({
+                    title: "Missing Information", 
+                    description: "Please enter your phone number",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                if (orderData.deliveryType === 'delivery' && !orderData.address.trim()) {
+                  toast({
+                    title: "Missing Information",
+                    description: "Please enter your delivery address",
                     variant: "destructive",
                   });
                   return;
@@ -422,6 +444,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                     customer_email: customerInfo.email || null,
                     customer_phone: customerInfo.phone || null,
                     delivery_address: orderData.address,
+                    delivery_type: orderData.deliveryType,
                     items: getOrderItems().map(item => ({
                       name: item.product?.name,
                       quantity: item.quantity,
@@ -438,10 +461,17 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   
                   if (error) throw error;
                   
-                  toast({
-                    title: "Order Placed Successfully!",
-                    description: `Order ${orderDetails.order_number} has been placed and will be delivered soon.`,
+                  // Navigate to order confirmation page instead of toast
+                  const orderParams = new URLSearchParams({
+                    orderNumber: orderDetails.order_number,
+                    customerName: orderDetails.customer_name,
+                    total: orderDetails.total_amount.toString(),
+                    items: orderDetails.items.map(item => `${item.name} x${item.quantity}`).join(', '),
+                    deliveryAddress: orderDetails.delivery_address || '',
+                    customerPhone: orderDetails.customer_phone || ''
                   });
+                  
+                  navigate(`/order-confirmation?${orderParams.toString()}`);
                   
                   // Reset form and close modal
                   setCurrentStep(1);

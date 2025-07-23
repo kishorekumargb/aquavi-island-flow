@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -14,6 +15,7 @@ import {
   Shield,
   Clock
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const quickLinks = [
   { name: 'Products', href: '#products' },
@@ -37,6 +39,39 @@ const legal = [
 ];
 
 export function Footer() {
+  const [businessPhone, setBusinessPhone] = useState('1-499-4611');
+  const [businessAddress, setBusinessAddress] = useState('MoneyGram, Flemming Street');
+  const [deliveryHours, setDeliveryHours] = useState('3:30-5:30 PM');
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('*')
+        .in('setting_key', ['business_phone', 'business_address', 'delivery_hours']);
+
+      if (data) {
+        data.forEach(setting => {
+          if (setting.setting_key === 'business_phone' && setting.setting_value) {
+            setBusinessPhone(setting.setting_value);
+          }
+          if (setting.setting_key === 'business_address' && setting.setting_value) {
+            setBusinessAddress(setting.setting_value);
+          }
+          if (setting.setting_key === 'delivery_hours' && setting.setting_value) {
+            setDeliveryHours(setting.setting_value);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
+
   return (
     <footer className="bg-gradient-subtle border-t border-border">
       <div className="container mx-auto px-6 py-16">
@@ -86,18 +121,18 @@ export function Footer() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Phone className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">1-499-4611</span>
+                <span className="text-muted-foreground">{businessPhone}</span>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="w-4 h-4 text-primary mt-1" />
                 <div>
-                  <div className="text-muted-foreground">MoneyGram, Flemming Street</div>
+                  <div className="text-muted-foreground">{businessAddress}</div>
                   <div className="text-muted-foreground text-sm">Road Town Tortola</div>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Clock className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground text-sm">Delivery: 3:30-5:30 PM</span>
+                <span className="text-muted-foreground text-sm">Delivery: {deliveryHours}</span>
               </div>
             </div>
 

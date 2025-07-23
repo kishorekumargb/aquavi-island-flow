@@ -447,8 +447,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               variant="outline" 
                               size="sm"
                               onClick={() => updateProduct(product.id, { is_active: !product.is_active })}
+                              className={product.is_active ? "text-red-600" : "text-green-600"}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {product.is_active ? 'Deactivate' : 'Activate'}
                             </Button>
                           </div>
                         </TableCell>

@@ -1,10 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { OrderModal } from '@/components/OrderModal';
 import { Menu, X, Phone, Mail } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [businessPhone, setBusinessPhone] = useState('1-499-4611');
+  const [businessEmail, setBusinessEmail] = useState('info@aquavi.com');
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('*')
+        .in('setting_key', ['business_phone']);
+
+      if (data) {
+        data.forEach(setting => {
+          if (setting.setting_key === 'business_phone' && setting.setting_value) {
+            setBusinessPhone(setting.setting_value);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
@@ -42,11 +68,11 @@ export function Header() {
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center space-x-1">
                 <Phone className="w-4 h-4" />
-                <span>1-499-4611</span>
+                <span>{businessPhone}</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Mail className="w-4 h-4" />
-                <span>info@aquavi.com</span>
+                <span>{businessEmail}</span>
               </div>
             </div>
             <OrderModal>
