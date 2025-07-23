@@ -20,6 +20,7 @@ interface Order {
   customer_email: string;
   customer_phone: string;
   delivery_address: string;
+  delivery_type?: string;
   items: any;
   total_amount: number;
   status: 'pending' | 'confirmed' | 'in-transit' | 'delivered' | 'cancelled';
@@ -320,6 +321,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <TableHead>Customer</TableHead>
                       <TableHead>Items</TableHead>
                       <TableHead>Total</TableHead>
+                      <TableHead>Delivery Type</TableHead>
+                      <TableHead>Address</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
@@ -332,6 +335,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>{order.customer_name}</TableCell>
                         <TableCell>{Array.isArray(order.items) ? order.items.map((item: any) => `${item.name} x${item.quantity}`).join(', ') : 'N/A'}</TableCell>
                         <TableCell>${order.total_amount.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {order.delivery_type || 'delivery'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">{order.delivery_address || 'N/A'}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(order.status)}>
                             {order.status}
@@ -528,24 +537,66 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div>
                     <Label>Business Phone</Label>
                     <Input 
-                      defaultValue={getSetting('business_phone')} 
-                      onBlur={(e) => updateSiteSetting('business_phone', e.target.value)}
+                      value={getSetting('business_phone')} 
+                      onChange={(e) => setSiteSettings(prev => {
+                        const existing = prev.find(s => s.setting_key === 'business_phone');
+                        if (existing) {
+                          return prev.map(s => s.setting_key === 'business_phone' ? { ...s, setting_value: e.target.value } : s);
+                        } else {
+                          return [...prev, { id: Date.now().toString(), setting_key: 'business_phone', setting_value: e.target.value }];
+                        }
+                      })}
                     />
                   </div>
                   <div>
                     <Label>Business Address</Label>
                     <Input 
-                      defaultValue={getSetting('business_address')} 
-                      onBlur={(e) => updateSiteSetting('business_address', e.target.value)}
+                      value={getSetting('business_address')} 
+                      onChange={(e) => setSiteSettings(prev => {
+                        const existing = prev.find(s => s.setting_key === 'business_address');
+                        if (existing) {
+                          return prev.map(s => s.setting_key === 'business_address' ? { ...s, setting_value: e.target.value } : s);
+                        } else {
+                          return [...prev, { id: Date.now().toString(), setting_key: 'business_address', setting_value: e.target.value }];
+                        }
+                      })}
                     />
                   </div>
                   <div>
                     <Label>Delivery Hours</Label>
                     <Input 
-                      defaultValue={getSetting('delivery_hours')} 
-                      onBlur={(e) => updateSiteSetting('delivery_hours', e.target.value)}
+                      value={getSetting('delivery_hours')} 
+                      onChange={(e) => setSiteSettings(prev => {
+                        const existing = prev.find(s => s.setting_key === 'delivery_hours');
+                        if (existing) {
+                          return prev.map(s => s.setting_key === 'delivery_hours' ? { ...s, setting_value: e.target.value } : s);
+                        } else {
+                          return [...prev, { id: Date.now().toString(), setting_key: 'delivery_hours', setting_value: e.target.value }];
+                        }
+                      })}
                     />
                   </div>
+                  <Button 
+                    onClick={() => {
+                      const phoneValue = getSetting('business_phone');
+                      const addressValue = getSetting('business_address');
+                      const hoursValue = getSetting('delivery_hours');
+                      
+                      Promise.all([
+                        phoneValue && updateSiteSetting('business_phone', phoneValue),
+                        addressValue && updateSiteSetting('business_address', addressValue),
+                        hoursValue && updateSiteSetting('delivery_hours', hoursValue)
+                      ]).then(() => {
+                        toast({
+                          title: "Settings Saved",
+                          description: "All site settings have been updated successfully",
+                        });
+                      });
+                    }}
+                    className="w-full mt-4"
+                  >
+                    Save Settings
+                  </Button>
                 </CardContent>
               </Card>
             </div>
