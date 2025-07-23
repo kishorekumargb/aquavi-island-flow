@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ const products = [
 ];
 
 export function OrderModal({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [orderData, setOrderData] = useState({
     deliveryType: 'delivery',
@@ -336,14 +338,18 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               size="lg" 
               className="w-full"
               onClick={() => {
-                const orderSummary = {
+                const orderDetails = {
+                  orderNumber: `AQ${Date.now()}`,
                   items: getOrderItems(),
                   total: calculateTotal(),
-                  deliveryDetails: orderData
+                  deliveryAddress: orderData.address,
+                  deliveryDate: orderData.date,
+                  deliveryTime: orderData.time,
+                  paymentMethod: 'Cash on Delivery'
                 };
                 
-                // Show order confirmation
-                alert(`Order Confirmed!\n\nItems: ${getOrderItems().map(item => `${item.product?.name} x${item.quantity}`).join(', ')}\nTotal: $${orderSummary.total.toFixed(2)}\nPayment: Cash on Delivery\nDelivery: ${orderData.date} at ${orderData.time}\n\nThank you for choosing Aqua VI!`);
+                // Navigate to order confirmation page
+                navigate('/order-confirmation', { state: { orderDetails } });
               }}
             >
               Confirm Order (Cash on Delivery)

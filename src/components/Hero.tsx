@@ -94,12 +94,9 @@ export function Hero() {
         <div className="relative">
           <div className="relative z-10 p-8">
             <img 
-              src={heroBottle} 
+              src="/src/assets/aqua-vi-hero-banner.jpg" 
               alt="Aqua VI - The Sweet Taste of Purity"
-              className="w-full max-w-sm mx-auto drop-shadow-2xl"
-              onError={(e) => {
-                e.currentTarget.src = '/src/assets/aquavi-hero-bottle.jpg';
-              }}
+              className="w-full max-w-sm mx-auto drop-shadow-2xl rounded-lg"
             />
           </div>
           

@@ -103,24 +103,6 @@ export function Contact() {
                 </CardContent>
               </Card>
 
-              {/* Email */}
-              <Card className="hover:shadow-elegant transition-smooth">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center">
-                      <Mail className="w-6 h-6 text-secondary-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-foreground">Email Support</div>
-                      <div className="text-muted-foreground">info@aquavi.com</div>
-                      <div className="text-sm text-muted-foreground">Response within 24 hours</div>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Send Email
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Address */}
               <Card className="hover:shadow-elegant transition-smooth">

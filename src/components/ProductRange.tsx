@@ -72,8 +72,12 @@ export function ProductRange() {
                 )}
                 
                 <CardHeader className="text-center pb-4">
-                  <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-smooth">
-                    <IconComponent className="w-8 h-8 text-primary-foreground" />
+                  <div className="flex items-center justify-center mb-4">
+                    <img 
+                      src={product.size.includes('500') ? '/src/assets/aqua-vi-500ml-bottle.png' : '/src/assets/aqua-vi-1l-bottle.png'} 
+                      alt={`Aqua VI ${product.name}`}
+                      className="w-20 h-32 object-contain"
+                    />
                   </div>
                   <CardTitle className="text-xl font-heading">{product.name}</CardTitle>
                   <CardDescription>{product.description}</CardDescription>

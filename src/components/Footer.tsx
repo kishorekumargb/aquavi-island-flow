@@ -79,22 +79,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
-          <div>
-            <h3 className="font-heading text-lg font-semibold text-foreground mb-4">Support</h3>
-            <ul className="space-y-3">
-              {support.map((item) => (
-                <li key={item.name}>
-                  <a 
-                    href={item.href} 
-                    className="text-muted-foreground hover:text-primary transition-smooth"
-                  >
-                    {item.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
 
           {/* Contact Info */}
           <div>
@@ -102,17 +86,13 @@ export function Footer() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Phone className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">+1 (284) 494-AQUA</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Mail className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">info@aquavi.vg</span>
+                <span className="text-muted-foreground">1-499-4611</span>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="w-4 h-4 text-primary mt-1" />
                 <div>
-                  <div className="text-muted-foreground">Road Town, Tortola</div>
-                  <div className="text-muted-foreground text-sm">British Virgin Islands</div>
+                  <div className="text-muted-foreground">MoneyGram, Flemming Street</div>
+                  <div className="text-muted-foreground text-sm">Road Town Tortola</div>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
