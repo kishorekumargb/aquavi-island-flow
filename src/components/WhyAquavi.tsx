@@ -5,49 +5,22 @@ import { CheckCircle, Droplets, Shield, Award, Truck, Clock, Heart } from 'lucid
 const features = [
   {
     icon: Droplets,
-    title: "Locally Sourced",
+    title: "Locally Bottled",
     description: "Fresh water bottled right here in the British Virgin Islands",
     highlight: "Local Quality"
-  },
-  {
-    icon: Shield,
-    title: "Premium Filtration",
-    description: "Advanced purification process ensuring the purest taste",
-    highlight: "99.9% Pure"
-  },
-  {
-    icon: Truck,
-    title: "Free Delivery",
-    description: "Same-day delivery across all major BVI locations",
-    highlight: "No Extra Cost"
-  },
-  {
-    icon: Clock,
-    title: "Reliable Service",
-    description: "Consistent delivery schedule you can count on",
-    highlight: "On Time"
-  },
-  {
-    icon: Heart,
-    title: "Community Focused",
-    description: "Supporting local business and keeping BVI hydrated",
-    highlight: "Local Pride"
   },
   {
     icon: Award,
     title: "Great Taste",
     description: "Crisp, clean water that beats the competition",
     highlight: "Premium Taste"
+  },
+  {
+    icon: Truck,
+    title: "Free Delivery",
+    description: "Same-day delivery across all major BVI locations",
+    highlight: "No Extra Cost"
   }
-];
-
-const comparison = [
-  { feature: "Local Bottling", aquavi: true, competition: false },
-  { feature: "Free Delivery", aquavi: true, competition: false },
-  { feature: "Same-Day Service", aquavi: true, competition: false },
-  { feature: "BVI Community Support", aquavi: true, competition: false },
-  { feature: "Premium Filtration", aquavi: true, competition: true },
-  { feature: "Competitive Pricing", aquavi: true, competition: true }
 ];
 
 export function WhyAquavi() {
@@ -85,40 +58,6 @@ export function WhyAquavi() {
           ))}
         </div>
 
-        {/* Comparison Table */}
-        <div className="max-w-4xl mx-auto">
-          <h3 className="text-2xl font-heading font-bold text-center mb-8">Aqua VI vs Competition</h3>
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 pb-4 border-b border-border">
-                  <div className="font-semibold text-foreground">Feature</div>
-                  <div className="font-semibold text-primary text-center">Aqua VI</div>
-                  <div className="font-semibold text-muted-foreground text-center">Others</div>
-                </div>
-                {comparison.map((item, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-4 py-3 border-b border-border/50 last:border-b-0">
-                    <div className="text-foreground">{item.feature}</div>
-                    <div className="text-center">
-                      {item.aquavi ? (
-                        <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </div>
-                    <div className="text-center">
-                      {item.competition ? (
-                        <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </section>
   );

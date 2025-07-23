@@ -152,6 +152,48 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          location: string
+          name: string
+          order_type: string | null
+          rating: number
+          review: string
+          updated_at: string
+          verified: boolean | null
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location: string
+          name: string
+          order_type?: string | null
+          rating?: number
+          review: string
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location?: string
+          name?: string
+          order_type?: string | null
+          rating?: number
+          review?: string
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

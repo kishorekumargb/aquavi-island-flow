@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2 } from 'lucide-react';
+import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ProductEditModal } from '@/components/ProductEditModal';
@@ -39,6 +39,19 @@ interface Product {
   is_active: boolean;
 }
 
+interface Testimonial {
+  id: string;
+  name: string;
+  location: string;
+  rating: number;
+  review: string;
+  avatar?: string;
+  verified: boolean;
+  order_type?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 interface SiteSetting {
   id: string;
   setting_key: string;
@@ -52,8 +65,21 @@ interface AdminDashboardProps {
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSetting[]>([]);
+  const [editableSettings, setEditableSettings] = useState<Record<string, string>>({});
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [activeTestimonial, setActiveTestimonial] = useState<Testimonial | null>(null);
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+  const [testimonialForm, setTestimonialForm] = useState({
+    name: '',
+    location: '',
+    rating: 5,
+    review: '',
+    order_type: '',
+    verified: true,
+    is_active: true
+  });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -63,15 +89,24 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchData = async () => {
     try {
-      const [ordersRes, productsRes, settingsRes] = await Promise.all([
+      const [ordersRes, productsRes, testimonialsRes, settingsRes] = await Promise.all([
         supabase.from('orders').select('*').order('created_at', { ascending: false }),
         supabase.from('products').select('*').order('name'),
+        supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
         supabase.from('site_settings').select('*')
       ]);
 
       if (ordersRes.data) setOrders(ordersRes.data as Order[]);
       if (productsRes.data) setProducts(productsRes.data as Product[]);
-      if (settingsRes.data) setSiteSettings(settingsRes.data as SiteSetting[]);
+      if (testimonialsRes.data) setTestimonials(testimonialsRes.data as Testimonial[]);
+      if (settingsRes.data) {
+        setSiteSettings(settingsRes.data as SiteSetting[]);
+        const settingsMap = settingsRes.data.reduce((acc, setting) => {
+          acc[setting.setting_key] = setting.setting_value;
+          return acc;
+        }, {} as Record<string, string>);
+        setEditableSettings(settingsMap);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -138,32 +173,98 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const updateSiteSetting = async (key: string, value: string) => {
+  const saveSettings = async () => {
     try {
-      const { error } = await supabase
-        .from('site_settings')
-        .upsert({ setting_key: key, setting_value: value }, { onConflict: 'setting_key' });
-
-      if (error) throw error;
-
-      setSiteSettings(prev => {
-        const existing = prev.find(s => s.setting_key === key);
-        if (existing) {
-          return prev.map(s => s.setting_key === key ? { ...s, setting_value: value } : s);
-        } else {
-          return [...prev, { id: Date.now().toString(), setting_key: key, setting_value: value }];
-        }
-      });
+      for (const [key, value] of Object.entries(editableSettings)) {
+        const { error } = await supabase
+          .from('site_settings')
+          .upsert({ setting_key: key, setting_value: value }, { onConflict: 'setting_key' });
+        
+        if (error) throw error;
+      }
       
       toast({
         title: "Settings Updated",
-        description: "Site settings have been updated successfully",
+        description: "Site settings have been saved successfully.",
       });
     } catch (error) {
-      console.error('Error updating settings:', error);
+      console.error('Error saving settings:', error);
       toast({
         title: "Error",
-        description: "Failed to update settings",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const saveTestimonial = async () => {
+    try {
+      if (activeTestimonial) {
+        // Update existing testimonial
+        const { error } = await supabase
+          .from('testimonials')
+          .update(testimonialForm)
+          .eq('id', activeTestimonial.id);
+        
+        if (error) throw error;
+        
+        setTestimonials(prev => prev.map(t => 
+          t.id === activeTestimonial.id ? { ...t, ...testimonialForm } : t
+        ));
+        
+        toast({
+          title: "Testimonial Updated",
+          description: "Testimonial has been updated successfully.",
+        });
+      } else {
+        // Add new testimonial
+        const { data, error } = await supabase
+          .from('testimonials')
+          .insert([testimonialForm])
+          .select();
+        
+        if (error) throw error;
+        
+        setTestimonials(prev => [data[0], ...prev]);
+        
+        toast({
+          title: "Testimonial Added",
+          description: "New testimonial has been added successfully.",
+        });
+      }
+      
+      setShowTestimonialModal(false);
+      setActiveTestimonial(null);
+    } catch (error) {
+      console.error('Error saving testimonial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save testimonial. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteTestimonial = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('testimonials')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setTestimonials(prev => prev.filter(t => t.id !== id));
+      
+      toast({
+        title: "Testimonial Deleted",
+        description: "Testimonial has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting testimonial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete testimonial. Please try again.",
         variant: "destructive",
       });
     }
@@ -180,7 +281,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       const imageUrl = e.target?.result as string;
       
       if (type === 'hero') {
-        await updateSiteSetting('hero_image_url', imageUrl);
+        setEditableSettings(prev => ({ ...prev, hero_image: imageUrl }));
       } else if (type === 'product' && productId) {
         await updateProduct(productId, { image_url: imageUrl });
       }
@@ -199,8 +300,30 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const getSetting = (key: string) => {
-    return siteSettings.find(s => s.setting_key === key)?.setting_value || '';
+  const openTestimonialModal = (testimonial: Testimonial | null = null) => {
+    setActiveTestimonial(testimonial);
+    if (testimonial) {
+      setTestimonialForm({
+        name: testimonial.name,
+        location: testimonial.location,
+        rating: testimonial.rating,
+        review: testimonial.review,
+        order_type: testimonial.order_type || '',
+        verified: testimonial.verified,
+        is_active: testimonial.is_active
+      });
+    } else {
+      setTestimonialForm({
+        name: '',
+        location: '',
+        rating: 5,
+        review: '',
+        order_type: '',
+        verified: true,
+        is_active: true
+      });
+    }
+    setShowTestimonialModal(true);
   };
 
   const stats = {
@@ -230,7 +353,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-            <img 
+              <img 
                 src="/lovable-uploads/a2e2f478-6f1b-41fd-954b-c2753b9c6153.png" 
                 alt="Aqua VI" 
                 className="w-8 h-8 object-contain"
@@ -299,9 +422,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -461,6 +585,86 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </Card>
           </TabsContent>
 
+          {/* Testimonials Tab */}
+          <TabsContent value="testimonials" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Star className="w-5 h-5" />
+                    <span>Testimonials Management</span>
+                  </div>
+                  <Button onClick={() => openTestimonialModal()} className="bg-primary hover:bg-primary/90">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Testimonial
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {testimonials.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No testimonials found
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead>Review</TableHead>
+                        <TableHead>Order Type</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {testimonials.map((testimonial) => (
+                        <TableRow key={testimonial.id}>
+                          <TableCell className="font-medium">{testimonial.name}</TableCell>
+                          <TableCell>{testimonial.location}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              {Array.from({ length: testimonial.rating }, (_, i) => (
+                                <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">{testimonial.review}</TableCell>
+                          <TableCell>{testimonial.order_type}</TableCell>
+                          <TableCell>
+                            <Badge variant={testimonial.is_active ? "default" : "secondary"}>
+                              {testimonial.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openTestimonialModal(testimonial)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteTestimonial(testimonial.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Customers Tab */}
           <TabsContent value="customers" className="space-y-6">
             <Card>
@@ -502,108 +706,221 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Hero Image</CardTitle>
-                  <CardDescription>Update the main hero image on the homepage</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Site Settings</CardTitle>
+                <CardDescription>Configure general site settings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Logo URL */}
                   <div>
-                    <Label>Current Hero Image</Label>
-                    {getSetting('hero_image_url') && (
-                      <div className="mt-2">
-                        <img src={getSetting('hero_image_url')} alt="Hero" className="w-full max-w-md rounded-lg" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Label>Upload New Hero Image</Label>
+                    <Label htmlFor="logo_url" className="text-sm font-medium">Logo URL</Label>
                     <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(e, 'hero')}
-                      className="mt-2"
+                      id="logo_url"
+                      value={editableSettings.logo_url || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, logo_url: e.target.value }))}
+                      placeholder="https://example.com/logo.png"
                     />
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Site Settings</CardTitle>
-                  <CardDescription>Configure general site settings</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                  {/* Hero Image URL */}
                   <div>
-                    <Label>Business Phone</Label>
-                    <Input 
-                      value={getSetting('business_phone')} 
-                      onChange={(e) => setSiteSettings(prev => {
-                        const existing = prev.find(s => s.setting_key === 'business_phone');
-                        if (existing) {
-                          return prev.map(s => s.setting_key === 'business_phone' ? { ...s, setting_value: e.target.value } : s);
-                        } else {
-                          return [...prev, { id: Date.now().toString(), setting_key: 'business_phone', setting_value: e.target.value }];
-                        }
-                      })}
+                    <Label htmlFor="hero_image" className="text-sm font-medium">Hero Image URL</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        id="hero_image"
+                        value={editableSettings.hero_image || ''}
+                        onChange={(e) => setEditableSettings(prev => ({ ...prev, hero_image: e.target.value }))}
+                        placeholder="https://example.com/hero.jpg"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'hero')}
+                        className="w-24"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <Label htmlFor="phone" className="text-sm font-medium">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={editableSettings.phone || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="1-499-4611"
                     />
                   </div>
+
+                  {/* Email */}
                   <div>
-                    <Label>Business Address</Label>
-                    <Input 
-                      value={getSetting('business_address')} 
-                      onChange={(e) => setSiteSettings(prev => {
-                        const existing = prev.find(s => s.setting_key === 'business_address');
-                        if (existing) {
-                          return prev.map(s => s.setting_key === 'business_address' ? { ...s, setting_value: e.target.value } : s);
-                        } else {
-                          return [...prev, { id: Date.now().toString(), setting_key: 'business_address', setting_value: e.target.value }];
-                        }
-                      })}
+                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                    <Input
+                      id="email"
+                      value={editableSettings.email || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="info@aquavi.com"
                     />
                   </div>
+
+                  {/* Address */}
                   <div>
-                    <Label>Delivery Hours</Label>
-                    <Input 
-                      value={getSetting('delivery_hours')} 
-                      onChange={(e) => setSiteSettings(prev => {
-                        const existing = prev.find(s => s.setting_key === 'delivery_hours');
-                        if (existing) {
-                          return prev.map(s => s.setting_key === 'delivery_hours' ? { ...s, setting_value: e.target.value } : s);
-                        } else {
-                          return [...prev, { id: Date.now().toString(), setting_key: 'delivery_hours', setting_value: e.target.value }];
-                        }
-                      })}
+                    <Label htmlFor="address" className="text-sm font-medium">Address</Label>
+                    <Input
+                      id="address"
+                      value={editableSettings.address || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="MoneyGram, Flemming Street, Road Town, Tortola"
                     />
                   </div>
-                  <Button 
-                    onClick={() => {
-                      const phoneValue = getSetting('business_phone');
-                      const addressValue = getSetting('business_address');
-                      const hoursValue = getSetting('delivery_hours');
-                      
-                      Promise.all([
-                        phoneValue && updateSiteSetting('business_phone', phoneValue),
-                        addressValue && updateSiteSetting('business_address', addressValue),
-                        hoursValue && updateSiteSetting('delivery_hours', hoursValue)
-                      ]).then(() => {
-                        toast({
-                          title: "Settings Saved",
-                          description: "All site settings have been updated successfully",
-                        });
-                      });
-                    }}
-                    className="w-full mt-4"
-                  >
-                    Save Settings
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+
+                  {/* Delivery Hours */}
+                  <div>
+                    <Label htmlFor="delivery_hours" className="text-sm font-medium">Delivery Hours</Label>
+                    <Input
+                      id="delivery_hours"
+                      value={editableSettings.delivery_hours || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, delivery_hours: e.target.value }))}
+                      placeholder="3:30 PM - 5:30 PM"
+                    />
+                  </div>
+
+                  {/* Business Hours - Monday Friday */}
+                  <div>
+                    <Label htmlFor="business_hours_monday_friday" className="text-sm font-medium">Business Hours (Mon-Fri)</Label>
+                    <Input
+                      id="business_hours_monday_friday"
+                      value={editableSettings.business_hours_monday_friday || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, business_hours_monday_friday: e.target.value }))}
+                      placeholder="8:00 AM - 6:00 PM"
+                    />
+                  </div>
+
+                  {/* Business Hours - Saturday */}
+                  <div>
+                    <Label htmlFor="business_hours_saturday" className="text-sm font-medium">Business Hours (Saturday)</Label>
+                    <Input
+                      id="business_hours_saturday"
+                      value={editableSettings.business_hours_saturday || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, business_hours_saturday: e.target.value }))}
+                      placeholder="9:00 AM - 4:00 PM"
+                    />
+                  </div>
+
+                  {/* Business Hours - Sunday */}
+                  <div>
+                    <Label htmlFor="business_hours_sunday" className="text-sm font-medium">Business Hours (Sunday)</Label>
+                    <Input
+                      id="business_hours_sunday"
+                      value={editableSettings.business_hours_sunday || ''}
+                      onChange={(e) => setEditableSettings(prev => ({ ...prev, business_hours_sunday: e.target.value }))}
+                      placeholder="Emergency Only"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={saveSettings}
+                  className="w-full mt-6"
+                >
+                  Save Settings
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Testimonial Modal */}
+      {showTestimonialModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-background rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">
+              {activeTestimonial ? 'Edit Testimonial' : 'Add New Testimonial'}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="testimonial_name">Name</Label>
+                <Input
+                  id="testimonial_name"
+                  value={testimonialForm.name}
+                  onChange={(e) => setTestimonialForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Customer name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="testimonial_location">Location</Label>
+                <Input
+                  id="testimonial_location"
+                  value={testimonialForm.location}
+                  onChange={(e) => setTestimonialForm(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Customer location"
+                />
+              </div>
+              <div>
+                <Label htmlFor="testimonial_rating">Rating</Label>
+                <select 
+                  id="testimonial_rating"
+                  className="w-full p-2 border rounded"
+                  value={testimonialForm.rating}
+                  onChange={(e) => setTestimonialForm(prev => ({ ...prev, rating: parseInt(e.target.value) }))}
+                >
+                  {[1, 2, 3, 4, 5].map(num => (
+                    <option key={num} value={num}>{num} Star{num !== 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="testimonial_review">Review</Label>
+                <textarea
+                  id="testimonial_review"
+                  className="w-full p-2 border rounded min-h-[100px]"
+                  value={testimonialForm.review}
+                  onChange={(e) => setTestimonialForm(prev => ({ ...prev, review: e.target.value }))}
+                  placeholder="Customer review"
+                />
+              </div>
+              <div>
+                <Label htmlFor="testimonial_order_type">Order Type</Label>
+                <Input
+                  id="testimonial_order_type"
+                  value={testimonialForm.order_type}
+                  onChange={(e) => setTestimonialForm(prev => ({ ...prev, order_type: e.target.value }))}
+                  placeholder="e.g., Office Subscription, Personal Use"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="testimonial_verified"
+                  checked={testimonialForm.verified}
+                  onChange={(e) => setTestimonialForm(prev => ({ ...prev, verified: e.target.checked }))}
+                />
+                <Label htmlFor="testimonial_verified">Verified Customer</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="testimonial_active"
+                  checked={testimonialForm.is_active}
+                  onChange={(e) => setTestimonialForm(prev => ({ ...prev, is_active: e.target.checked }))}
+                />
+                <Label htmlFor="testimonial_active">Active</Label>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowTestimonialModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={saveTestimonial}>
+                {activeTestimonial ? 'Update' : 'Add'} Testimonial
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

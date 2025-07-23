@@ -1,66 +1,31 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 
-const testimonials = [
-  {
-    id: 1,
-    name: 'Marina Rodriguez',
-    location: 'Road Town, Tortola',
-    rating: 5,
-    review: 'AQUAVI has completely changed our office hydration game. The taste is incredible and the delivery service is always punctual. We\'ve been subscribers for 8 months now.',
-    avatar: '/api/placeholder/64/64',
-    verified: true,
-    orderType: 'Office Subscription'
-  },
-  {
-    id: 2,
-    name: 'James Thompson',
-    location: 'Spanish Town, Virgin Gorda',
-    rating: 5,
-    review: 'As a yacht captain, I demand the highest quality water for my guests. AQUAVI delivers premium quality that matches our luxury standards perfectly.',
-    avatar: '/api/placeholder/64/64',
-    verified: true,
-    orderType: 'Luxury Service'
-  },
-  {
-    id: 3,
-    name: 'Dr. Sarah Chen',
-    location: 'The Valley, Virgin Gorda',
-    rating: 5,
-    review: 'The mineral composition in AQUAVI is exceptional. As a healthcare professional, I recommend it to patients for optimal hydration and taste.',
-    avatar: '/api/placeholder/64/64',
-    verified: true,
-    orderType: 'Personal Use'
-  },
-  {
-    id: 4,
-    name: 'Roberto Silva',
-    location: 'West End, Tortola',
-    rating: 5,
-    review: 'Been ordering the family size bottles for over a year. Kids love the taste and we love supporting a local BVI business that cares about quality.',
-    avatar: '/api/placeholder/64/64',
-    verified: true,
-    orderType: 'Family Plan'
-  },
-  {
-    id: 5,
-    name: 'Lisa Williams',
-    location: 'Cane Garden Bay, Tortola',
-    rating: 5,
-    review: 'The subscription service is so convenient! Never have to worry about running out of premium water. Customer service is outstanding too.',
-    avatar: '/api/placeholder/64/64',
-    verified: true,
-    orderType: 'Monthly Subscription'
-  }
-];
-
 export function TestimonialsCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [testimonials, setTestimonials] = useState([]);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      const { data } = await supabase
+        .from('testimonials')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        setTestimonials(data);
+      }
+    };
+    
+    fetchTestimonials();
+  }, []);
 
   useEffect(() => {
     if (isAutoPlaying) {
@@ -145,7 +110,7 @@ export function TestimonialsCarousel() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
                               <Avatar className="w-12 h-12">
-                                <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
+                                <AvatarImage src={testimonial.avatar || '/api/placeholder/64/64'} alt={testimonial.name} />
                                 <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                                   {testimonial.name.split(' ').map(n => n[0]).join('')}
                                 </AvatarFallback>
@@ -163,7 +128,7 @@ export function TestimonialsCarousel() {
                               </div>
                             </div>
                             <Badge variant="outline" className="border-primary/30 text-primary">
-                              {testimonial.orderType}
+                              {testimonial.order_type}
                             </Badge>
                           </div>
                         </div>
