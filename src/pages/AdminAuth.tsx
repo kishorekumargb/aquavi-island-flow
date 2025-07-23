@@ -21,7 +21,7 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     setIsLoading(true);
 
     // Simple hardcoded auth (replace with real authentication)
-    if (credentials.username === 'admin' && credentials.password === 'aquavi2024') {
+    if (credentials.username === 'kkumar@mwmglobalhld.com' && credentials.password === 'Admin@12345') {
       setTimeout(() => {
         onLogin();
         toast({
@@ -91,7 +91,7 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
             </Button>
           </form>
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            Demo credentials: admin / aquavi2024
+            Demo credentials: kkumar@mwmglobalhld.com / Admin@12345
           </div>
         </CardContent>
       </Card>

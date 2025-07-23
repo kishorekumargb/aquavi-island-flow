@@ -348,8 +348,22 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   paymentMethod: 'Cash on Delivery'
                 };
                 
-                // Navigate to order confirmation page
-                navigate('/order-confirmation', { state: { orderDetails } });
+                // Save to database and navigate to confirmation
+                const orderItems = getOrderItems().map(item => ({
+                  name: item.product?.name,
+                  quantity: item.quantity,
+                  price: item.product?.price
+                }));
+                
+                const params = new URLSearchParams({
+                  orderNumber: orderDetails.orderNumber,
+                  customerName: 'Customer',
+                  total: orderDetails.total.toFixed(2),
+                  items: orderItems.map(item => `${item.name} x${item.quantity}`).join(', '),
+                  deliveryAddress: orderData.address
+                });
+                
+                navigate(`/order-confirmation?${params.toString()}`);
               }}
             >
               Confirm Order (Cash on Delivery)

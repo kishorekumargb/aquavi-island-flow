@@ -8,6 +8,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { OrderConfirmation } from "./components/OrderConfirmation";
 
+
 const queryClient = new QueryClient();
 
 const App = () => (
