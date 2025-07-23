@@ -32,65 +32,13 @@ export function Hero() {
 
   return (
     <>
-      {/* Full Screen Hero Image Section */}
+      {/* Full Screen Hero Image Section - Image Only */}
       <section className="relative h-screen w-full overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImageUrl})` }}
         >
-          <div className="absolute inset-0 bg-black/30"></div>
-        </div>
-        
-        {/* Hero Content Overlay */}
-        <div className="relative z-10 h-full flex items-center justify-center">
-          <div className="container mx-auto px-4 sm:px-6 text-center text-white">
-            <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-6">
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm text-sm sm:text-base">
-                  <Droplets className="w-4 h-4 mr-2" />
-                  Locally Bottled
-                </Badge>
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm text-sm sm:text-base">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Free Delivery
-                </Badge>
-              </div>
-              
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-heading font-bold leading-tight mb-4 sm:mb-6">
-                Convenience Meets Great Taste
-              </h1>
-              
-              <p className="text-xl sm:text-2xl lg:text-3xl font-tagline text-tropical italic mb-6 sm:mb-8">
-                Locally bottled water with great taste and free delivery across Road Town.
-              </p>
-              
-              <p className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12 text-white/90">
-                Enjoy Aqua VI—the sweet taste of purity, delivered to you for FREE.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-                <OrderModal>
-                  <Button variant="hero" size="lg" className="shadow-glow text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
-                    Order Now
-                  </Button>
-                </OrderModal>
-                <Button variant="outline" size="lg" className="border-white/30 hover:bg-white/10 text-white hover:text-white text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
-                  Learn More
-                </Button>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm sm:text-base text-white/80 mt-8">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span>Available Today</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-tropical rounded-full"></div>
-                  <span>Delivery 3:30 - 5:30 PM</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div className="absolute inset-0 bg-black/20"></div>
         </div>
         
         {/* Scroll Indicator */}
@@ -101,10 +49,62 @@ export function Hero() {
         </div>
       </section>
 
-      {/* Content Section */}
+      {/* Hero Content Section */}
       <section className="relative py-16 sm:py-20 bg-background">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          <div className="text-center mb-12 lg:mb-16">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-8">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-sm sm:text-base">
+                <Droplets className="w-4 h-4 mr-2" />
+                Locally Bottled
+              </Badge>
+              <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20 text-sm sm:text-base">
+                <Shield className="w-4 h-4 mr-2" />
+                Free Delivery
+              </Badge>
+            </div>
+            
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-heading font-bold leading-tight mb-6 sm:mb-8 text-foreground">
+              Convenience Meets Great Taste
+            </h1>
+            
+            <p className="text-xl sm:text-2xl lg:text-3xl font-tagline text-tropical italic mb-8 sm:mb-10">
+              Locally bottled water with great taste and free delivery across Road Town.
+            </p>
+            
+            <p className="text-base sm:text-lg max-w-3xl mx-auto leading-relaxed mb-12 sm:mb-16 text-muted-foreground">
+              Enjoy Aqua VI—the sweet taste of purity, delivered to you for FREE.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center mb-12">
+              <OrderModal>
+                <Button variant="hero" size="lg" className="shadow-glow text-base sm:text-lg px-8 py-4">
+                  Order Now
+                </Button>
+              </OrderModal>
+              <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/5 text-base sm:text-lg px-8 py-4">
+                Learn More
+              </Button>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-sm sm:text-base text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Available Today</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <span>Delivery 3:30 - 5:30 PM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="relative py-16 sm:py-20 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Features Section */}
             <div className="text-center lg:text-left">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-6 lg:mb-8">
