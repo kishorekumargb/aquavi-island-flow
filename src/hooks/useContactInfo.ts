@@ -35,9 +35,9 @@ export function useContactInfo() {
         .from('site_settings')
         .select('setting_key, setting_value')
         .in('setting_key', [
-          'business_phone',
-          'business_email', 
-          'business_address',
+          'phone',
+          'email', 
+          'address',
           'delivery_hours',
           'business_hours_monday_friday',
           'business_hours_saturday',
@@ -58,9 +58,9 @@ export function useContactInfo() {
         }, {} as Record<string, string>);
 
         setContactInfo({
-          phone: settings.business_phone || defaultContactInfo.phone,
-          email: settings.business_email || defaultContactInfo.email,
-          address: settings.business_address || defaultContactInfo.address,
+          phone: settings.phone || defaultContactInfo.phone,
+          email: settings.email || defaultContactInfo.email,
+          address: settings.address || defaultContactInfo.address,
           deliveryHours: settings.delivery_hours || defaultContactInfo.deliveryHours,
           businessHoursMonFri: settings.business_hours_monday_friday || defaultContactInfo.businessHoursMonFri,
           businessHoursSat: settings.business_hours_saturday || defaultContactInfo.businessHoursSat,

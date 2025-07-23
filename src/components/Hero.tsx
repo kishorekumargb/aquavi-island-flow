@@ -31,7 +31,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden pt-20 pb-8">
+    <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden pt-16 pb-12">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-subtle"></div>
       

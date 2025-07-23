@@ -25,9 +25,9 @@ const features = [
 
 export function WhyAquavi() {
   return (
-    <section id="why-aquavi" className="py-20 bg-background">
+    <section id="why-aquavi" className="py-16 bg-background">
       <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <h2 className="text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
             Why Choose Aqua VI?
           </h2>
