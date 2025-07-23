@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { OrderModal } from '@/components/OrderModal';
 import { Menu, X, Phone, Mail } from 'lucide-react';
 
 export function Header() {
@@ -37,9 +38,11 @@ export function Header() {
                 <span>info@aquavi.com</span>
               </div>
             </div>
-            <Button variant="premium" size="sm">
-              Order Now
-            </Button>
+            <OrderModal>
+              <Button variant="premium" size="sm">
+                Order Now
+              </Button>
+            </OrderModal>
           </div>
 
           {/* Mobile Menu Button */}
@@ -60,9 +63,11 @@ export function Header() {
               <a href="#testimonials" className="text-foreground hover:text-primary transition-smooth">Reviews</a>
               <a href="#contact" className="text-foreground hover:text-primary transition-smooth">Contact</a>
               <div className="pt-4 border-t border-border">
-                <Button variant="premium" className="w-full">
-                  Order Now
-                </Button>
+                <OrderModal>
+                  <Button variant="premium" className="w-full">
+                    Order Now
+                  </Button>
+                </OrderModal>
               </div>
             </nav>
           </div>

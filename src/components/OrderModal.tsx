@@ -66,7 +66,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-heading text-2xl">Order AQUAVI Premium Water</DialogTitle>
+          <DialogTitle className="font-heading text-2xl">Order Aqua VI Water</DialogTitle>
           <DialogDescription>
             Complete your order in a few simple steps for same-day delivery
           </DialogDescription>
@@ -231,59 +231,29 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
         {currentStep === 3 && (
           <div className="space-y-6">
-            <h3 className="text-xl font-heading font-semibold">Preferences & Subscriptions</h3>
+            <h3 className="text-xl font-heading font-semibold">Payment Method</h3>
             
             <div className="space-y-4">
-              <div className="flex items-center space-x-2 p-4 border border-border rounded-lg">
-                <Checkbox
-                  id="marketing"
-                  checked={orderData.marketingConsent}
-                  onCheckedChange={(checked) =>
-                    setOrderData(prev => ({ ...prev, marketingConsent: !!checked }))}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="marketing" className="text-base font-medium cursor-pointer">
-                    Receive SMS & Email Promotions
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Get exclusive offers, delivery updates, and AQUAVI news (opt-out anytime)
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 p-4 border border-border rounded-lg">
-                <Checkbox
-                  id="autorenew"
-                  checked={orderData.autoRenew}
-                  onCheckedChange={(checked) =>
-                    setOrderData(prev => ({ ...prev, autoRenew: !!checked }))}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="autorenew" className="text-base font-medium cursor-pointer">
-                    Auto-Renew Subscription
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically reorder based on your selected frequency (cancel anytime)
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {orderData.autoRenew && (
-              <Card className="bg-secondary/5 border-secondary/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Badge variant="secondary">Subscription Benefits</Badge>
+              <Card className="p-4 border-2 border-primary">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-primary rounded-full"></div>
+                  <div>
+                    <div className="font-semibold text-primary">Pay by Cash on Delivery</div>
+                    <div className="text-sm text-muted-foreground">Pay when your order arrives</div>
                   </div>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• 10% discount on recurring orders</li>
-                    <li>• Priority delivery scheduling</li>
-                    <li>• Exclusive subscriber-only products</li>
-                    <li>• Cancel or modify anytime</li>
-                  </ul>
-                </CardContent>
+                </div>
               </Card>
-            )}
+
+              <Card className="p-4 border border-muted bg-muted/30">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-muted rounded-full"></div>
+                  <div>
+                    <div className="font-semibold text-muted-foreground">Pay by Card</div>
+                    <div className="text-sm text-muted-foreground">Coming Soon</div>
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
         )}
 
@@ -319,18 +289,10 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                       <span>Delivery</span>
                       <span>Free</span>
                     </div>
-                    {orderData.autoRenew && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Subscription Discount (10%)</span>
-                        <span>-${(calculateTotal() * 0.1).toFixed(2)}</span>
-                      </div>
-                    )}
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span className="text-primary">
-                        ${(orderData.autoRenew ? calculateTotal() * 0.9 : calculateTotal()).toFixed(2)}
-                      </span>
+                      <span className="text-primary">${calculateTotal().toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -376,21 +338,16 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               onClick={() => {
                 const orderSummary = {
                   items: getOrderItems(),
-                  total: orderData.autoRenew ? calculateTotal() * 0.9 : calculateTotal(),
+                  total: calculateTotal(),
                   deliveryDetails: orderData
                 };
-                console.log('Proceeding to payment with:', orderSummary);
-                // Here you would typically redirect to Stripe checkout
-                alert(`Order total: $${orderSummary.total.toFixed(2)} - Payment integration will be added!`);
+                
+                // Show order confirmation
+                alert(`Order Confirmed!\n\nItems: ${getOrderItems().map(item => `${item.product?.name} x${item.quantity}`).join(', ')}\nTotal: $${orderSummary.total.toFixed(2)}\nPayment: Cash on Delivery\nDelivery: ${orderData.date} at ${orderData.time}\n\nThank you for choosing Aqua VI!`);
               }}
             >
-              <CreditCard className="w-5 h-5 mr-2" />
-              Proceed to Payment
+              Confirm Order (Cash on Delivery)
             </Button>
-            
-            <p className="text-center text-sm text-muted-foreground">
-              Secure payment powered by Stripe • Accept all major cards, Apple Pay & Google Pay
-            </p>
           </div>
         )}
 
@@ -403,21 +360,15 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
           >
             Previous
           </Button>
-          <Button 
-            variant="premium" 
-            onClick={currentStep === 4 ? () => {
-              const orderSummary = {
-                items: getOrderItems(),
-                total: orderData.autoRenew ? calculateTotal() * 0.9 : calculateTotal(),
-                deliveryDetails: orderData
-              };
-              console.log('Completing order:', orderSummary);
-              alert(`Order submitted successfully! Total: $${orderSummary.total.toFixed(2)}`);
-            } : nextStep}
-            disabled={currentStep === 1 && getOrderItems().length === 0}
-          >
-            {currentStep === 4 ? 'Complete Order' : 'Next Step'}
-          </Button>
+          {currentStep < 4 && (
+            <Button 
+              variant="premium" 
+              onClick={nextStep}
+              disabled={currentStep === 1 && getOrderItems().length === 0}
+            >
+              Next Step
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

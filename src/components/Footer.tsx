@@ -49,27 +49,16 @@ export function Footer() {
               <div className="w-10 h-10 bg-gradient-hero rounded-full flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-xl">A</span>
               </div>
-              <span className="font-heading text-3xl font-bold text-primary">AQUAVI</span>
+              <span className="font-heading text-3xl font-bold text-primary">Aqua VI</span>
             </div>
             
             <p className="text-muted-foreground leading-relaxed mb-6 max-w-xs">
-              Ultra-luxury, locally owned premium bottled water delivering laboratory-certified 
-              purity with island pride and concierge-level reliability.
+              Locally bottled water with great taste and free delivery across the British Virgin Islands.
             </p>
 
-            <div className="space-y-3 mb-6">
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                <Award className="w-3 h-3 mr-2" />
-                Laboratory Certified
-              </Badge>
-              <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20">
-                <Shield className="w-3 h-3 mr-2" />
-                BVI Premium
-              </Badge>
-            </div>
 
             <p className="text-sm font-tagline text-primary italic">
-              "Pure BVI. Pure Excellence."
+              "Convenience Meets Great Taste"
             </p>
           </div>
 
@@ -153,42 +142,13 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Mini FAQ */}
-        <div className="mb-12">
-          <h3 className="font-heading text-xl font-semibold text-foreground mb-6 text-center">
-            Quick Answers
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-background rounded-lg border border-border">
-              <Droplets className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h4 className="font-semibold mb-2">Is AQUAVI really pure?</h4>
-              <p className="text-sm text-muted-foreground">
-                Yes! 99.9% pure, third-party lab certified with complete transparency.
-              </p>
-            </div>
-            <div className="text-center p-4 bg-background rounded-lg border border-border">
-              <Clock className="w-8 h-8 text-secondary mx-auto mb-3" />
-              <h4 className="font-semibold mb-2">Same-day delivery?</h4>
-              <p className="text-sm text-muted-foreground">
-                Orders before 2:00 PM get same-day delivery between 3:30-5:30 PM.
-              </p>
-            </div>
-            <div className="text-center p-4 bg-background rounded-lg border border-border">
-              <Award className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h4 className="font-semibold mb-2">Why choose local?</h4>
-              <p className="text-sm text-muted-foreground">
-                Support BVI business with premium quality and unmatched service.
-              </p>
-            </div>
-          </div>
-        </div>
 
         <Separator className="mb-8" />
 
         {/* Bottom Footer */}
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-sm text-muted-foreground">
-            © 2024 AQUAVI Premium Water. All rights reserved. Made with pride in the BVI.
+            © 2024 Aqua VI Water. All rights reserved. Made with pride in the BVI.
           </div>
           
           <div className="flex flex-wrap justify-center space-x-6 text-sm">
@@ -204,25 +164,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Trust Indicators */}
-        <div className="flex justify-center space-x-8 mt-8 pt-8 border-t border-border text-sm text-muted-foreground">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>ISO Certified</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
-            <span>Lab Tested</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-secondary rounded-full"></div>
-            <span>BVI Local</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>Available Today</span>
-          </div>
-        </div>
       </div>
     </footer>
   );
