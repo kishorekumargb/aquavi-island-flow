@@ -33,7 +33,7 @@ export function Hero() {
   return (
     <>
       {/* Full Screen Hero Image Section - Image Only */}
-      <section className="relative h-screen w-full overflow-hidden">
+      <section className="relative h-screen w-full overflow-hidden mt-20">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100 sm:scale-100 md:scale-100"
           style={{ backgroundImage: `url(${heroImageUrl})` }}

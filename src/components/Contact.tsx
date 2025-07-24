@@ -24,7 +24,7 @@ export function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
+    // Temporarily simulate form submission until contact_messages table is created
     setTimeout(() => {
       toast({
         title: "Message Sent Successfully!",
