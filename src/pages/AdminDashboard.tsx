@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star } from 'lucide-react';
+import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ProductEditModal } from '@/components/ProductEditModal';
@@ -57,6 +57,7 @@ interface SiteSetting {
   setting_key: string;
   setting_value: string;
 }
+
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -270,6 +271,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
+  const exportOrders = () => {
+    const csvContent = [
+      ['Order Number', 'Customer Name', 'Email', 'Phone', 'Items', 'Total', 'Status', 'Date', 'Address'].join(','),
+      ...orders.map(order => [
+        order.order_number,
+        order.customer_name,
+        order.customer_email,
+        order.customer_phone,
+        Array.isArray(order.items) ? order.items.map((item: any) => `${item.name} x${item.quantity}`).join('; ') : 'N/A',
+        order.total_amount,
+        order.status,
+        new Date(order.created_at).toLocaleDateString(),
+        order.delivery_address
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'product', productId?: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -433,9 +459,15 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Order Management</CardTitle>
-                <CardDescription>Track and manage customer orders</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Order Management</CardTitle>
+                  <CardDescription>Track and manage customer orders</CardDescription>
+                </div>
+                <Button onClick={exportOrders} variant="outline" className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Export Orders
+                </Button>
               </CardHeader>
               <CardContent>
                 <Table>

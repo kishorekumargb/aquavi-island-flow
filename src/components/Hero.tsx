@@ -6,7 +6,7 @@ import { OrderModal } from '@/components/OrderModal';
 import { supabase } from '@/integrations/supabase/client';
 
 export function Hero() {
-  const [heroImageUrl, setHeroImageUrl] = useState('/src/assets/aqua-vi-hero-banner.jpg');
+  const [heroImageUrl, setHeroImageUrl] = useState('');
 
   useEffect(() => {
     fetchHeroImage();
@@ -35,7 +35,7 @@ export function Hero() {
       {/* Full Screen Hero Image Section - Image Only */}
       <section className="relative h-screen w-full overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-125 sm:scale-120 md:scale-115"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100 sm:scale-100 md:scale-100"
           style={{ backgroundImage: `url(${heroImageUrl})` }}
         />
         

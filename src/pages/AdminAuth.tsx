@@ -90,9 +90,6 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            Demo credentials: kkumar@mwmglobalhld.com / Admin@12345
-          </div>
         </CardContent>
       </Card>
     </div>
