@@ -120,23 +120,9 @@ export function ProductRange() {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground">
             All bottles are locally sourced and delivered fresh to your door
           </p>
-          <div className="flex justify-center space-x-8 text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span>Locally Bottled</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-primary rounded-full"></div>
-              <span>Great Taste</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-secondary rounded-full"></div>
-              <span>Free Delivery</span>
-            </div>
-          </div>
         </div>
       </div>
     </section>

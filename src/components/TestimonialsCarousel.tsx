@@ -28,13 +28,13 @@ export function TestimonialsCarousel() {
   }, []);
 
   useEffect(() => {
-    if (isAutoPlaying) {
+    if (isAutoPlaying && testimonials.length > 0) {
       const interval = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-      }, 5000);
+      }, 4000);
       return () => clearInterval(interval);
     }
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, testimonials.length]);
 
   const nextTestimonial = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);

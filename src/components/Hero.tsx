@@ -35,7 +35,7 @@ export function Hero() {
       {/* Full Screen Hero Image Section - Image Only */}
       <section className="relative h-screen w-full overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-110 sm:scale-105"
           style={{ backgroundImage: `url(${heroImageUrl})` }}
         />
         
@@ -74,15 +74,12 @@ export function Hero() {
               Enjoy Aqua VI—the sweet taste of purity, delivered to you for FREE.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center mb-12">
+            <div className="flex justify-center mb-12">
               <OrderModal>
                 <Button variant="hero" size="lg" className="shadow-glow text-base sm:text-lg px-8 py-4">
                   Order Now
                 </Button>
               </OrderModal>
-              <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/5 text-base sm:text-lg px-8 py-4">
-                Learn More
-              </Button>
             </div>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-sm sm:text-base text-muted-foreground">

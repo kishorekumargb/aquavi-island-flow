@@ -7,18 +7,34 @@ import { Contact } from '@/components/Contact';
 import { Footer } from '@/components/Footer';
 import { OrderModal } from '@/components/OrderModal';
 import { Button } from '@/components/ui/button';
+import { useScrollAnimation, useParallaxEffect } from '@/hooks/useScrollAnimation';
 
 const Index = () => {
+  const productRef = useScrollAnimation();
+  const whyRef = useScrollAnimation();
+  const testimonialsRef = useScrollAnimation();
+  const contactRef = useScrollAnimation();
+  
+  useParallaxEffect();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
         <Hero />
         <div className="space-y-16">
-          <ProductRange />
-          <WhyAquavi />
-          <TestimonialsCarousel />
-          <Contact />
+          <section ref={productRef}>
+            <ProductRange />
+          </section>
+          <section ref={whyRef}>
+            <WhyAquavi />
+          </section>
+          <section ref={testimonialsRef}>
+            <TestimonialsCarousel />
+          </section>
+          <section ref={contactRef}>
+            <Contact />
+          </section>
         </div>
       </main>
       <Footer />
