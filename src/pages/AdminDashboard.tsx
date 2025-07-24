@@ -672,34 +672,49 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <CardTitle>Customer Management</CardTitle>
                 <CardDescription>View customer information from orders</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Orders</TableHead>
-                      <TableHead>Total Spent</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Array.from(new Map(orders.map(order => [order.customer_email, order])).values()).map((order) => {
-                      const customerOrders = orders.filter(o => o.customer_email === order.customer_email);
-                      const totalSpent = customerOrders.reduce((sum, o) => sum + o.total_amount, 0);
-                      
-                      return (
-                        <TableRow key={order.customer_email}>
-                          <TableCell className="font-medium">{order.customer_name}</TableCell>
-                          <TableCell>{order.customer_email}</TableCell>
-                          <TableCell>{order.customer_phone}</TableCell>
-                          <TableCell>{customerOrders.length}</TableCell>
-                          <TableCell>${totalSpent.toFixed(2)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+               <CardContent>
+                <div className="space-y-6">
+                  {Array.from(new Map(orders.map(order => [order.customer_email, order])).values()).map((order) => {
+                    const customerOrders = orders.filter(o => o.customer_email === order.customer_email);
+                    const totalSpent = customerOrders.reduce((sum, o) => sum + o.total_amount, 0);
+                    
+                    return (
+                      <Card key={order.customer_email} className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold">{order.customer_name}</h3>
+                            <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+                            <p className="text-sm text-muted-foreground">{order.customer_phone}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-semibold">{customerOrders.length} Orders</p>
+                            <p className="text-sm text-muted-foreground">Total: ${totalSpent.toFixed(2)}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm text-muted-foreground">Order History:</h4>
+                          {customerOrders.map((customerOrder) => (
+                            <div key={customerOrder.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium">{customerOrder.order_number}</span>
+                                <Badge className={getStatusColor(customerOrder.status)}>
+                                  {customerOrder.status}
+                                </Badge>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium">${customerOrder.total_amount.toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(customerOrder.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

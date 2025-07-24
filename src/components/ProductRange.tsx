@@ -85,11 +85,11 @@ export function ProductRange() {
                       <img 
                         src={product.image_url} 
                         alt={`Aqua VI ${product.name}`}
-                        className="w-20 h-32 object-contain"
+                        className="w-32 h-48 object-contain"
                       />
                     ) : (
-                      <div className="w-20 h-32 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Droplets className="w-8 h-8 text-primary" />
+                      <div className="w-32 h-48 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Droplets className="w-12 h-12 text-primary" />
                       </div>
                     )}
                   </div>
