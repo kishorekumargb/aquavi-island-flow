@@ -272,12 +272,13 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-base font-medium">Preferred Date</Label>
+                <Label className="text-base font-medium">Preferred Date *</Label>
                 <Input
                   type="date"
                   value={orderData.date}
                   onChange={(e) => setOrderData(prev => ({ ...prev, date: e.target.value }))}
                   className="mt-2"
+                  required
                 />
               </div>
 
@@ -430,6 +431,15 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   toast({
                     title: "Missing Information",
                     description: "Please enter your delivery address",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                if (!orderData.date.trim()) {
+                  toast({
+                    title: "Missing Information",
+                    description: "Please select a preferred date",
                     variant: "destructive",
                   });
                   return;

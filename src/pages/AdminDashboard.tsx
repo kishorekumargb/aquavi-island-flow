@@ -674,46 +674,63 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               </CardHeader>
                <CardContent>
                 <div className="space-y-6">
-                  {Array.from(new Map(orders.map(order => [order.customer_email, order])).values()).map((order) => {
-                    const customerOrders = orders.filter(o => o.customer_email === order.customer_email);
-                    const totalSpent = customerOrders.reduce((sum, o) => sum + o.total_amount, 0);
+                  {(() => {
+                    // Group customers by phone (primary) and email (secondary) to handle duplicates
+                    const customerMap = new Map();
                     
-                    return (
-                      <Card key={order.customer_email} className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="text-lg font-semibold">{order.customer_name}</h3>
-                            <p className="text-sm text-muted-foreground">{order.customer_email}</p>
-                            <p className="text-sm text-muted-foreground">{order.customer_phone}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-semibold">{customerOrders.length} Orders</p>
-                            <p className="text-sm text-muted-foreground">Total: ${totalSpent.toFixed(2)}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm text-muted-foreground">Order History:</h4>
-                          {customerOrders.map((customerOrder) => (
-                            <div key={customerOrder.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <span className="font-medium">{customerOrder.order_number}</span>
-                                <Badge className={getStatusColor(customerOrder.status)}>
-                                  {customerOrder.status}
-                                </Badge>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-medium">${customerOrder.total_amount.toFixed(2)}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(customerOrder.created_at).toLocaleDateString()}
-                                </p>
-                              </div>
+                    orders.forEach(order => {
+                      const key = order.customer_phone || order.customer_email || order.customer_name;
+                      if (!customerMap.has(key)) {
+                        customerMap.set(key, {
+                          name: order.customer_name,
+                          email: order.customer_email,
+                          phone: order.customer_phone,
+                          orders: []
+                        });
+                      }
+                      customerMap.get(key).orders.push(order);
+                    });
+                    
+                    return Array.from(customerMap.values()).map((customer, index) => {
+                      const totalSpent = customer.orders.reduce((sum, o) => sum + o.total_amount, 0);
+                      
+                      return (
+                        <Card key={index} className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="text-lg font-semibold">{customer.name}</h3>
+                              {customer.email && <p className="text-sm text-muted-foreground">{customer.email}</p>}
+                              {customer.phone && <p className="text-sm text-muted-foreground">{customer.phone}</p>}
                             </div>
-                          ))}
-                        </div>
-                      </Card>
-                    );
-                  })}
+                            <div className="text-right">
+                              <p className="text-lg font-semibold">{customer.orders.length} Orders</p>
+                              <p className="text-sm text-muted-foreground">Total: ${totalSpent.toFixed(2)}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm text-muted-foreground">Order History:</h4>
+                            {customer.orders.map((customerOrder) => (
+                              <div key={customerOrder.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium">{customerOrder.order_number}</span>
+                                  <Badge className={getStatusColor(customerOrder.status)}>
+                                    {customerOrder.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-medium">${customerOrder.total_amount.toFixed(2)}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(customerOrder.created_at).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </Card>
+                      );
+                    });
+                  })()}
                 </div>
               </CardContent>
             </Card>

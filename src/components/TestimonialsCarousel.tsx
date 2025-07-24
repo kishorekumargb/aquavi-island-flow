@@ -83,10 +83,10 @@ export function TestimonialsCarousel() {
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="w-full flex-shrink-0 px-4">
+                <div key={testimonial.id} className="w-full flex-shrink-0 px-2 md:px-4">
                   <Card className="shadow-elegant hover:shadow-premium transition-smooth">
-                    <CardContent className="p-8">
-                      <div className="flex items-start space-x-6">
+                    <CardContent className="p-4 md:p-8">
+                      <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6">
                         {/* Quote Icon */}
                         <div className="flex-shrink-0">
                           <div className="w-12 h-12 bg-gradient-hero rounded-full flex items-center justify-center">
