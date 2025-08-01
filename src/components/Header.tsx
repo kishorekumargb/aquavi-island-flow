@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { OrderModal } from '@/components/OrderModal';
-import { Menu, X, Phone, Mail } from 'lucide-react';
+import { Menu, X, Phone, Mail, User, LogOut } from 'lucide-react';
 import { useContactInfo } from '@/hooks/useContactInfo';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { Link } from 'react-router-dom';
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const {
-    contactInfo
-  } = useContactInfo();
+  const { contactInfo } = useContactInfo();
+  const { user, signOut } = useAuth();
   return <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border shadow-sm">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
@@ -50,6 +51,25 @@ export function Header() {
                 Order Now
               </Button>
             </OrderModal>
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <Link to="/admin">
+                  <Button variant="outline" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={() => signOut()}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Link to="/auth">
+                <Button variant="outline" size="sm">
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -65,12 +85,32 @@ export function Header() {
               <a href="#why-aquavi" className="text-foreground hover:text-primary transition-smooth">Why Aqua VI?</a>
               <a href="#testimonials" className="text-foreground hover:text-primary transition-smooth">Reviews</a>
               <a href="#contact" className="text-foreground hover:text-primary transition-smooth">Contact</a>
-              <div className="pt-4 border-t border-border">
+              <div className="pt-4 border-t border-border space-y-2">
                 <OrderModal>
                   <Button variant="premium" className="w-full">
                     Order Now
                   </Button>
                 </OrderModal>
+                {user ? (
+                  <>
+                    <Link to="/admin" className="block">
+                      <Button variant="outline" className="w-full">
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button variant="ghost" className="w-full" onClick={() => signOut()}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <Link to="/auth" className="block">
+                    <Button variant="outline" className="w-full">
+                      <User className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </Link>
+                )}
               </div>
             </nav>
           </div>}

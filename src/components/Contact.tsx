@@ -25,16 +25,34 @@ export function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // For now, just simulate form submission
-    // TODO: Connect to Supabase contact_messages table once available in types
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          message: formData.message,
+          status: 'unread'
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Message Sent Successfully!",
         description: "We'll get back to you within 24 hours.",
       });
       setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {

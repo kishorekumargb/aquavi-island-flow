@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare, MessageCircle } from 'lucide-react';
+import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare, MessageCircle, Mail, Phone, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -58,6 +58,17 @@ interface SiteSetting {
   setting_value: string;
 }
 
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+  status: 'unread' | 'read' | 'responded';
+  created_at: string;
+  updated_at: string;
+}
+
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -67,6 +78,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSetting[]>([]);
   const [editableSettings, setEditableSettings] = useState<Record<string, string>>({});
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -90,16 +102,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchData = async () => {
     try {
-      const [ordersRes, productsRes, testimonialsRes, settingsRes] = await Promise.all([
+      const [ordersRes, productsRes, testimonialsRes, messagesRes, settingsRes] = await Promise.all([
         supabase.from('orders').select('*').order('created_at', { ascending: false }),
         supabase.from('products').select('*').order('name'),
         supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
+        supabase.from('contact_messages').select('*').order('created_at', { ascending: false }),
         supabase.from('site_settings').select('*')
       ]);
 
       if (ordersRes.data) setOrders(ordersRes.data as Order[]);
       if (productsRes.data) setProducts(productsRes.data as Product[]);
       if (testimonialsRes.data) setTestimonials(testimonialsRes.data as Testimonial[]);
+      if (messagesRes.data) setContactMessages(messagesRes.data as ContactMessage[]);
       if (settingsRes.data) {
         setSiteSettings(settingsRes.data as SiteSetting[]);
         const settingsMap = settingsRes.data.reduce((acc, setting) => {
@@ -169,6 +183,33 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       toast({
         title: "Error",
         description: "Failed to update product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateMessageStatus = async (messageId: string, status: 'read' | 'responded') => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({ status })
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      setContactMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, status } : msg
+      ));
+      
+      toast({
+        title: "Message Updated",
+        description: `Message marked as ${status}`,
+      });
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update message status",
         variant: "destructive",
       });
     }
@@ -813,13 +854,86 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Messages Yet</h3>
-                  <p className="text-muted-foreground">
-                    Contact messages from customers will appear here once the feature is fully integrated.
-                  </p>
-                </div>
+                {contactMessages.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Messages Yet</h3>
+                    <p className="text-muted-foreground">
+                      Contact messages from customers will appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Message</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {contactMessages.map((message) => (
+                        <TableRow key={message.id}>
+                          <TableCell className="font-medium">{message.name}</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-sm">
+                                <Mail className="w-3 h-3" />
+                                {message.email}
+                              </div>
+                              {message.phone && (
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                  <Phone className="w-3 h-3" />
+                                  {message.phone}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[300px]">
+                            <div className="truncate">{message.message}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={message.status === 'unread' ? 'destructive' : 
+                                      message.status === 'read' ? 'secondary' : 'default'}
+                            >
+                              {message.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Clock className="w-3 h-3" />
+                              {new Date(message.created_at).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateMessageStatus(message.id, 'read')}
+                                disabled={message.status === 'read'}
+                              >
+                                Mark Read
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateMessageStatus(message.id, 'responded')}
+                                disabled={message.status === 'responded'}
+                              >
+                                Mark Responded
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

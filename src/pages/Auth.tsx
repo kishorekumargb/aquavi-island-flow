@@ -1,133 +1,93 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Eye, EyeOff, UserPlus, Users } from 'lucide-react';
+import { Shield, Eye, EyeOff, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
-interface AdminAuthProps {
-  onLogin: () => void;
-}
-
-export function AdminAuth({ onLogin }: AdminAuthProps) {
+export default function Auth() {
   const [credentials, setCredentials] = useState({ email: '', password: '', displayName: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
   const { toast } = useToast();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { error } = await signIn(credentials.email, credentials.password);
-      
-      if (error) throw error;
-
-      // Check if user has admin role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (roleData?.role === 'admin') {
-        onLogin();
-        toast({
-          title: "Login Successful",
-          description: "Welcome to Aqua VI Admin Dashboard",
-        });
-      } else {
-        await supabase.auth.signOut();
-        throw new Error('Access denied: Admin privileges required');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid credentials or insufficient privileges",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (user) {
+      navigate('/');
     }
-  };
+  }, [user, navigate]);
 
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      // First create the user
-      const { error: signUpError } = await signUp(
-        credentials.email, 
-        credentials.password, 
-        credentials.displayName
-      );
-      
-      if (signUpError) throw signUpError;
+    const { error } = await signIn(credentials.email, credentials.password);
 
-      // Get the newly created user
-      const { data: userData } = await supabase.auth.getUser();
-      
-      if (userData.user) {
-        // Update user role if admin
-        if (newUserRole === 'admin') {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .update({ role: 'admin' })
-            .eq('user_id', userData.user.id);
-          
-          if (roleError) throw roleError;
-        }
-      }
-
+    if (error) {
       toast({
-        title: "User Created Successfully",
-        description: `New ${newUserRole} account created for ${credentials.email}`,
-      });
-
-      setCredentials({ email: '', password: '', displayName: '' });
-    } catch (error: any) {
-      toast({
-        title: "User Creation Failed",
+        title: "Sign In Failed",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast({
+        title: "Sign In Successful",
+        description: "Welcome back!",
+      });
     }
+    setIsLoading(false);
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { error } = await signUp(credentials.email, credentials.password, credentials.displayName);
+
+    if (error) {
+      toast({
+        title: "Sign Up Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sign Up Successful",
+        description: "Please check your email to confirm your account.",
+      });
+    }
+    setIsLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-6">
       <Card className="w-full max-w-md shadow-elegant">
         <CardHeader className="text-center">
           <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-8 h-8 text-primary-foreground" />
+            <User className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-heading">Aqua VI Admin</CardTitle>
-          <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+          <CardTitle className="text-2xl font-heading">Welcome to Aqua VI</CardTitle>
+          <CardDescription>Sign in to your account or create a new one</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Admin Login</TabsTrigger>
-              <TabsTrigger value="create">Create User</TabsTrigger>
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="signin-email">Email</Label>
                   <Input
-                    id="email"
+                    id="signin-email"
                     type="email"
                     value={credentials.email}
                     onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
@@ -136,10 +96,10 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="signin-password">Password</Label>
                   <div className="relative mt-1">
                     <Input
-                      id="password"
+                      id="signin-password"
                       type={showPassword ? 'text' : 'password'}
                       value={credentials.password}
                       onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
@@ -162,12 +122,12 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
               </form>
             </TabsContent>
             
-            <TabsContent value="create">
-              <form onSubmit={handleCreateUser} className="space-y-4">
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4">
                 <div>
-                  <Label htmlFor="create-name">Display Name</Label>
+                  <Label htmlFor="signup-name">Display Name</Label>
                   <Input
-                    id="create-name"
+                    id="signup-name"
                     type="text"
                     value={credentials.displayName}
                     onChange={(e) => setCredentials(prev => ({ ...prev, displayName: e.target.value }))}
@@ -176,9 +136,9 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="create-email">Email</Label>
+                  <Label htmlFor="signup-email">Email</Label>
                   <Input
-                    id="create-email"
+                    id="signup-email"
                     type="email"
                     value={credentials.email}
                     onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
@@ -187,10 +147,10 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="create-password">Password</Label>
+                  <Label htmlFor="signup-password">Password</Label>
                   <div className="relative mt-1">
                     <Input
-                      id="create-password"
+                      id="signup-password"
                       type={showPassword ? 'text' : 'password'}
                       value={credentials.password}
                       onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
@@ -208,20 +168,8 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                     </Button>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="role">User Role</Label>
-                  <select
-                    id="role"
-                    value={newUserRole}
-                    onChange={(e) => setNewUserRole(e.target.value as 'user' | 'admin')}
-                    className="w-full mt-1 p-2 border border-input rounded-md bg-background"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Creating User...' : 'Create User'}
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </form>
             </TabsContent>
