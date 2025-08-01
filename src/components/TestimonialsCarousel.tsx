@@ -25,6 +25,26 @@ export function TestimonialsCarousel() {
     };
     
     fetchTestimonials();
+    
+    // Set up real-time subscription for testimonial changes
+    const channel = supabase
+      .channel('testimonials-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'testimonials' 
+        }, 
+        (payload) => {
+          console.log('Testimonial change detected:', payload);
+          fetchTestimonials(); // Refresh testimonials when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {

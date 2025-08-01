@@ -23,6 +23,26 @@ export function ProductRange() {
 
   useEffect(() => {
     fetchProducts();
+    
+    // Set up real-time subscription for product changes
+    const channel = supabase
+      .channel('products-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'products' 
+        }, 
+        (payload) => {
+          console.log('Product change detected:', payload);
+          fetchProducts(); // Refresh products when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchProducts = async () => {

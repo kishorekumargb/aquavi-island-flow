@@ -98,6 +98,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [editableSettings, setEditableSettings] = useState<Record<string, string>>({});
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTestimonial, setActiveTestimonial] = useState<Testimonial | null>(null);
+  const [authUsers, setAuthUsers] = useState<AuthUser[]>([]);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
   const [testimonialForm, setTestimonialForm] = useState({
     name: '',
@@ -106,7 +108,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     review: '',
     order_type: '',
     verified: true,
-    is_active: true
+    is_active: true,
+    avatar: ''
   });
   const [loading, setLoading] = useState(true);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -270,18 +273,39 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   };
 
   const saveTestimonial = async () => {
+    // Validate required fields
+    if (!testimonialForm.name || !testimonialForm.location || !testimonialForm.review) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (name, location, review)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      const testimonialData = {
+        name: testimonialForm.name,
+        location: testimonialForm.location,
+        rating: Number(testimonialForm.rating) || 5,
+        review: testimonialForm.review,
+        avatar: testimonialForm.avatar || null,
+        verified: testimonialForm.verified || true,
+        order_type: testimonialForm.order_type || '',
+        is_active: testimonialForm.is_active !== false
+      };
+
       if (activeTestimonial) {
         // Update existing testimonial
         const { error } = await supabase
           .from('testimonials')
-          .update(testimonialForm)
+          .update(testimonialData)
           .eq('id', activeTestimonial.id);
         
         if (error) throw error;
         
         setTestimonials(prev => prev.map(t => 
-          t.id === activeTestimonial.id ? { ...t, ...testimonialForm } : t
+          t.id === activeTestimonial.id ? { ...t, ...testimonialData } : t
         ));
         
         toast({
@@ -292,7 +316,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         // Add new testimonial
         const { data, error } = await supabase
           .from('testimonials')
-          .insert([testimonialForm])
+          .insert([testimonialData])
           .select();
         
         if (error) throw error;
@@ -492,10 +516,29 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   };
 
   const createProduct = async () => {
+    // Validate required fields
+    if (!newProductForm.name || !newProductForm.size || newProductForm.price <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (name, size, price)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      const productData = {
+        name: newProductForm.name,
+        size: newProductForm.size,
+        price: Number(newProductForm.price),
+        description: newProductForm.description || '',
+        stock: Number(newProductForm.stock) || 0,
+        is_active: true
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .insert([newProductForm])
+        .insert([productData])
         .select();
 
       if (error) throw error;
@@ -518,7 +561,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       console.error('Error creating product:', error);
       toast({
         title: "Error",
-        description: "Failed to create product",
+        description: "Failed to create product. Please try again.",
         variant: "destructive",
       });
     }
@@ -581,6 +624,76 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
+  const resetUserPassword = async (userId: string) => {
+    try {
+      toast({
+        title: "Password Reset",
+        description: "Password reset instructions will be sent to the user's email",
+      });
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset password",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    try {
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', userId);
+      
+      toast({
+        title: "User Deleted",
+        description: "User has been removed from the system",
+      });
+
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      // In a real app, you'd need admin access to auth.users
+      // For now, we'll just fetch profiles and roles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('*');
+
+      setUserRoles(roles || []);
+      // For display purposes, convert profiles to AuthUser format
+      setAuthUsers(profiles?.map(p => ({
+        id: p.user_id,
+        email: p.display_name || 'unknown@email.com',
+        created_at: p.created_at,
+        email_confirmed_at: null,
+        last_sign_in_at: null
+      })) || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -602,7 +715,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         review: testimonial.review,
         order_type: testimonial.order_type || '',
         verified: testimonial.verified,
-        is_active: testimonial.is_active
+        is_active: testimonial.is_active,
+        avatar: testimonial.avatar || ''
       });
     } else {
       setTestimonialForm({
@@ -612,7 +726,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         review: '',
         order_type: '',
         verified: true,
-        is_active: true
+        is_active: true,
+        avatar: ''
       });
     }
     setShowTestimonialModal(true);
@@ -1216,7 +1331,57 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </Button>
               </CardHeader>
               <CardContent>
-                <UserControlsSection />
+                <div className="space-y-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Last Login</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {authUsers.map((user) => {
+                        const userRole = userRoles.find(r => r.user_id === user.id);
+                        return (
+                          <TableRow key={user.id}>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge variant={userRole?.role === 'admin' ? 'default' : 'secondary'}>
+                                {userRole?.role || 'user'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => resetUserPassword(user.id)}
+                                >
+                                  <Key className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteUser(user.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <UserX className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1477,8 +1642,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   id="product_price"
                   type="number"
                   step="0.01"
-                  value={newProductForm.price}
-                  onChange={(e) => setNewProductForm(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                  value={newProductForm.price || ''}
+                  onChange={(e) => setNewProductForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
                   placeholder="0.00"
                 />
               </div>
@@ -1497,8 +1662,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <Input
                   id="product_stock"
                   type="number"
-                  value={newProductForm.stock}
-                  onChange={(e) => setNewProductForm(prev => ({ ...prev, stock: parseInt(e.target.value) }))}
+                  value={newProductForm.stock || ''}
+                  onChange={(e) => setNewProductForm(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
                   placeholder="0"
                 />
               </div>

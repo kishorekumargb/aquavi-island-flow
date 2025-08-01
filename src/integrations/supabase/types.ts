@@ -286,12 +286,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: Record<PropertyKey, never> | { user_uuid: string }
         Returns: string
       }
       is_admin: {
         Args: { user_uuid: string }
+        Returns: boolean
+      }
+      is_session_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       validate_admin_login: {
