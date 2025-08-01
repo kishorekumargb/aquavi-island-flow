@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Eye, EyeOff, UserPlus, Users } from 'lucide-react';
+import { Shield, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
+import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal';
 
 interface AdminAuthProps {
   onLogin: () => void;
@@ -15,9 +16,9 @@ interface AdminAuthProps {
 
 export function AdminAuth({ onLogin }: AdminAuthProps) {
   const [credentials, setCredentials] = useState({ email: '', password: '', displayName: '' });
-  const [resetEmail, setResetEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
@@ -79,10 +80,11 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
       if (signUpError) throw signUpError;
 
       // User will be created with default 'user' role via trigger
+      await sendWelcomeEmail(credentials.email, credentials.displayName, 'user');
 
       toast({
         title: "User Created Successfully",
-        description: `New user account created for ${credentials.email}. Role can be assigned in the admin console.`,
+        description: `New user account created for ${credentials.email}. Welcome email sent.`,
       });
 
       setCredentials({ email: '', password: '', displayName: '' });
@@ -97,31 +99,14 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  // Send welcome email after user creation
+  const sendWelcomeEmail = async (email: string, displayName: string, role: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/password-reset`,
+      await supabase.functions.invoke('send-welcome-email', {
+        body: { email, displayName, role }
       });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password Reset Email Sent",
-        description: "Check your email for password reset instructions",
-      });
-
-      setResetEmail('');
-    } catch (error: any) {
-      toast({
-        title: "Password Reset Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
     }
   };
 
@@ -138,9 +123,8 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Admin Login</TabsTrigger>
-              <TabsTrigger value="reset">Reset Password</TabsTrigger>
               <TabsTrigger value="create">Create User</TabsTrigger>
             </TabsList>
             
@@ -181,26 +165,16 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="reset">
-              <form onSubmit={handleForgotPassword} className="space-y-4">
-                <div>
-                  <Label htmlFor="reset-email">Email Address</Label>
-                  <Input
-                    id="reset-email"
-                    type="email"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    required
-                    className="mt-1"
-                    placeholder="Enter your email to reset password"
-                  />
+                
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Sending Reset Email...' : 'Send Reset Email'}
-                </Button>
               </form>
             </TabsContent>
             
@@ -258,6 +232,11 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
           </Tabs>
         </CardContent>
       </Card>
+      
+      <ForgotPasswordModal 
+        isOpen={showForgotPassword} 
+        onClose={() => setShowForgotPassword(false)} 
+      />
     </div>
   );
 }
