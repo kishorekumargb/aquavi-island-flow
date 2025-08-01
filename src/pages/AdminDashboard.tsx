@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ProductEditModal } from '@/components/ProductEditModal';
+
 
 interface Order {
   id: string;
@@ -317,12 +317,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'in-transit': return 'bg-purple-100 text-purple-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'in-transit': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -599,7 +599,41 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <ProductEditModal product={product} onSave={updateProduct} />
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Edit Product</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label>Name</Label>
+                                    <Input value={product.name} disabled />
+                                  </div>
+                                  <div>
+                                    <Label>Price</Label>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      defaultValue={product.price}
+                                      onChange={(e) => updateProduct(product.id, { price: parseFloat(e.target.value) })}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Stock</Label>
+                                    <Input
+                                      type="number"
+                                      defaultValue={product.stock}
+                                      onChange={(e) => updateProduct(product.id, { stock: parseInt(e.target.value) })}
+                                    />
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                             <Button 
                               variant="outline" 
                               size="sm"
@@ -708,7 +742,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                <CardContent>
                 <div className="space-y-6">
                   {(() => {
-                    // Group customers by phone (primary) and email (secondary) to handle duplicates
+                    // Group customers by phone to remove duplicates
                     const customerMap = new Map();
                     
                     orders.forEach(order => {

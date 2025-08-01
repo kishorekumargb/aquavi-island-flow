@@ -21,11 +21,12 @@ export function Contact() {
   const { contactInfo } = useContactInfo();
   const { toast } = useToast();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Store contact message in database
+    // For now, just simulate form submission
+    // TODO: Connect to Supabase contact_messages table once available in types
     setTimeout(() => {
       toast({
         title: "Message Sent Successfully!",
@@ -36,7 +37,7 @@ export function Contact() {
     }, 1000);
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

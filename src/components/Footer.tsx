@@ -23,13 +23,6 @@ const quickLinks = [
   { name: 'Contact', href: '#contact' }
 ];
 
-const support = [
-  { name: 'Order Tracking', href: '#' },
-  { name: 'Delivery Info', href: '#' },
-  { name: 'Subscription Management', href: '#' },
-  { name: 'FAQ', href: '#' }
-];
-
 const legal = [
   { name: 'Privacy Policy', href: '#' },
   { name: 'Terms of Service', href: '#' },
@@ -80,6 +73,16 @@ export function Footer() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* About Section */}
+          <div>
+            <h3 className="font-heading text-lg font-semibold text-foreground mb-4">About Aqua VI</h3>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Premium bottled water sourced locally in the British Virgin Islands. 
+              We're committed to providing the purest water with exceptional taste and 
+              reliable delivery service.
+            </p>
           </div>
 
 
