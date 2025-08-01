@@ -18,7 +18,7 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
   const [resetEmail, setResetEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
+  
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
 
@@ -78,21 +78,11 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
       
       if (signUpError) throw signUpError;
 
-      if (data.user) {
-        // Update user role if admin
-        if (newUserRole === 'admin') {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .update({ role: 'admin' })
-            .eq('user_id', data.user.id);
-          
-          if (roleError) throw roleError;
-        }
-      }
+      // User will be created with default 'user' role via trigger
 
       toast({
         title: "User Created Successfully",
-        description: `New ${newUserRole} account created for ${credentials.email}`,
+        description: `New user account created for ${credentials.email}. Role can be assigned in the admin console.`,
       });
 
       setCredentials({ email: '', password: '', displayName: '' });
@@ -113,7 +103,7 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/admin`,
+        redirectTo: `${window.location.origin}/password-reset`,
       });
 
       if (error) throw error;
@@ -259,18 +249,6 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="role">Assign User Role</Label>
-                  <select
-                    id="role"
-                    value={newUserRole}
-                    onChange={(e) => setNewUserRole(e.target.value as 'user' | 'admin')}
-                    className="w-full mt-1 p-2 border border-input rounded-md bg-background"
-                  >
-                    <option value="user">User (Orders access only)</option>
-                    <option value="admin">Admin (Full dashboard access)</option>
-                  </select>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Creating User...' : 'Create User'}
