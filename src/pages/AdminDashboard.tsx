@@ -109,6 +109,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     is_active: true
   });
   const [loading, setLoading] = useState(true);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [newProductForm, setNewProductForm] = useState({
+    name: '',
+    size: '',
+    price: 0,
+    description: '',
+    stock: 0
+  });
+  const [newUserForm, setNewUserForm] = useState({
+    email: '',
+    password: '',
+    display_name: '',
+    role: 'user'
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -352,7 +367,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'product', productId?: string) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'product' | 'logo', productId?: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -364,11 +379,206 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       
       if (type === 'hero') {
         setEditableSettings(prev => ({ ...prev, hero_image_url: imageUrl }));
+      } else if (type === 'logo') {
+        setEditableSettings(prev => ({ ...prev, logo_url: imageUrl }));
       } else if (type === 'product' && productId) {
         await updateProduct(productId, { image_url: imageUrl });
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      setOrders(orders.filter(order => order.id !== orderId));
+      
+      toast({
+        title: "Order Deleted",
+        description: "Order has been deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete order",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteProduct = async (productId: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      setProducts(products.filter(product => product.id !== productId));
+      
+      toast({
+        title: "Product Deleted",
+        description: "Product has been deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      setContactMessages(contactMessages.filter(message => message.id !== messageId));
+      
+      toast({
+        title: "Message Deleted",
+        description: "Message has been deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete message",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteCustomerFromOrders = async (customerIdentifier: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .or(`customer_email.eq.${customerIdentifier},customer_phone.eq.${customerIdentifier}`);
+
+      if (error) throw error;
+
+      setOrders(orders.filter(order => 
+        order.customer_email !== customerIdentifier && 
+        order.customer_phone !== customerIdentifier
+      ));
+      
+      toast({
+        title: "Customer Orders Deleted",
+        description: "All orders for this customer have been deleted",
+      });
+    } catch (error) {
+      console.error('Error deleting customer orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete customer orders",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createProduct = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .insert([newProductForm])
+        .select();
+
+      if (error) throw error;
+
+      setProducts([...products, data[0]]);
+      setShowProductModal(false);
+      setNewProductForm({
+        name: '',
+        size: '',
+        price: 0,
+        description: '',
+        stock: 0
+      });
+      
+      toast({
+        title: "Product Created",
+        description: "New product has been created successfully",
+      });
+    } catch (error) {
+      console.error('Error creating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createUser = async () => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: newUserForm.email,
+        password: newUserForm.password,
+        options: {
+          data: {
+            display_name: newUserForm.display_name,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Create profile
+        await supabase
+          .from('profiles')
+          .insert([{
+            user_id: data.user.id,
+            display_name: newUserForm.display_name
+          }]);
+
+        // Create user role
+        await supabase
+          .from('user_roles')
+          .insert([{
+            user_id: data.user.id,
+            role: newUserForm.role
+          }]);
+      }
+
+      setShowCreateUserModal(false);
+      setNewUserForm({
+        email: '',
+        password: '',
+        display_name: '',
+        role: 'user'
+      });
+
+      toast({
+        title: "User Created",
+        description: "New user has been created successfully",
+      });
+
+      // Refresh user data
+      fetchData();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: Order['status']) => {
@@ -598,6 +808,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                                 </div>
                               </DialogContent>
                             </Dialog>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteOrder(order.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -611,9 +829,15 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           {/* Products Tab */}
           <TabsContent value="products" className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Product Management</CardTitle>
-                <CardDescription>Manage your product catalog and inventory</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Product Management</CardTitle>
+                  <CardDescription>Manage your product catalog and inventory</CardDescription>
+                </div>
+                <Button onClick={() => setShowProductModal(true)} className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Product
+                </Button>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -698,6 +922,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               className={product.is_active ? "text-red-600" : "text-green-600"}
                             >
                               {product.is_active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteProduct(product.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -847,18 +1079,26 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                                   <p className="text-xs text-muted-foreground">
                                     {new Date(customerOrder.created_at).toLocaleDateString()}
                                   </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </Card>
-                      );
-                    });
-                  })()}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                                 </div>
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   onClick={() => deleteCustomerFromOrders(customer.email || customer.phone)}
+                                   className="text-red-600 hover:text-red-700"
+                                 >
+                                   <Trash2 className="w-4 h-4" />
+                                 </Button>
+                               </div>
+                             ))}
+                           </div>
+                         </Card>
+                       );
+                     });
+                   })()}
+                 </div>
+               </CardContent>
+             </Card>
+           </TabsContent>
 
           {/* Messages Tab */}
           <TabsContent value="messages" className="space-y-6">
@@ -935,13 +1175,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               >
                                 Mark Read
                               </Button>
-                              <Button
+                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => updateMessageStatus(message.id, 'responded')}
                                 disabled={message.status === 'responded'}
                               >
                                 Mark Responded
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteMessage(message.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -957,9 +1205,15 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           {/* User Controls Tab */}
           <TabsContent value="users" className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>Control user accounts and roles</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>User Management</CardTitle>
+                  <CardDescription>Control user accounts and roles</CardDescription>
+                </div>
+                <Button onClick={() => setShowCreateUserModal(true)} className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create User
+                </Button>
               </CardHeader>
               <CardContent>
                 <UserControlsSection />
@@ -978,18 +1232,26 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Logo URL */}
                   <div>
-                    <Label htmlFor="logo_url" className="text-sm font-medium">Logo URL</Label>
-                    <Input
-                      id="logo_url"
-                      value={editableSettings.logo_url || ''}
-                      onChange={(e) => setEditableSettings(prev => ({ ...prev, logo_url: e.target.value }))}
-                      placeholder="https://example.com/logo.png"
-                    />
+                    <Label htmlFor="logo_url" className="text-sm font-medium">Logo Upload</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        id="logo_url"
+                        value={editableSettings.logo_url || ''}
+                        onChange={(e) => setEditableSettings(prev => ({ ...prev, logo_url: e.target.value }))}
+                        placeholder="https://example.com/logo.png"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'logo')}
+                        className="w-32"
+                      />
+                    </div>
                   </div>
 
                   {/* Hero Image URL */}
                   <div>
-                    <Label htmlFor="hero_image_url" className="text-sm font-medium">Hero Image URL</Label>
+                    <Label htmlFor="hero_image_url" className="text-sm font-medium">Hero Image Upload</Label>
                     <div className="flex gap-2 mt-1">
                       <Input
                         id="hero_image_url"
@@ -1001,7 +1263,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         type="file"
                         accept="image/*"
                         onChange={(e) => handleImageUpload(e, 'hero')}
-                        className="w-24"
+                        className="w-32"
                       />
                     </div>
                   </div>
@@ -1179,6 +1441,137 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               </Button>
               <Button onClick={saveTestimonial}>
                 {activeTestimonial ? 'Update' : 'Add'} Testimonial
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-background rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Add New Product</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="product_name">Product Name</Label>
+                <Input
+                  id="product_name"
+                  value={newProductForm.name}
+                  onChange={(e) => setNewProductForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Product name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="product_size">Size</Label>
+                <Input
+                  id="product_size"
+                  value={newProductForm.size}
+                  onChange={(e) => setNewProductForm(prev => ({ ...prev, size: e.target.value }))}
+                  placeholder="Product size"
+                />
+              </div>
+              <div>
+                <Label htmlFor="product_price">Price</Label>
+                <Input
+                  id="product_price"
+                  type="number"
+                  step="0.01"
+                  value={newProductForm.price}
+                  onChange={(e) => setNewProductForm(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="product_description">Description</Label>
+                <textarea
+                  id="product_description"
+                  className="w-full p-2 border rounded min-h-[80px]"
+                  value={newProductForm.description}
+                  onChange={(e) => setNewProductForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Product description"
+                />
+              </div>
+              <div>
+                <Label htmlFor="product_stock">Stock</Label>
+                <Input
+                  id="product_stock"
+                  type="number"
+                  value={newProductForm.stock}
+                  onChange={(e) => setNewProductForm(prev => ({ ...prev, stock: parseInt(e.target.value) }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowProductModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={createProduct}>
+                Create Product
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create User Modal */}
+      {showCreateUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-background rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Create New User</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="user_email">Email</Label>
+                <Input
+                  id="user_email"
+                  type="email"
+                  value={newUserForm.email}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="user@example.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="user_password">Password</Label>
+                <Input
+                  id="user_password"
+                  type="password"
+                  value={newUserForm.password}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Enter password"
+                />
+              </div>
+              <div>
+                <Label htmlFor="user_display_name">Display Name</Label>
+                <Input
+                  id="user_display_name"
+                  value={newUserForm.display_name}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, display_name: e.target.value }))}
+                  placeholder="User's display name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="user_role">Role</Label>
+                <Select 
+                  value={newUserForm.role} 
+                  onValueChange={(value) => setNewUserForm(prev => ({ ...prev, role: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowCreateUserModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={createUser}>
+                Create User
               </Button>
             </div>
           </div>
