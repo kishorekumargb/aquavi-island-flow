@@ -21,11 +21,18 @@ export function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProp
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // First, check if user exists
+      const { data: existingUser } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/password-reset`,
       });
 
-      if (error) throw error;
+      // Send custom password reset email
+      await supabase.functions.invoke('send-password-reset', {
+        body: { 
+          email: email,
+          resetLink: `${window.location.origin}/password-reset`
+        }
+      });
 
       toast({
         title: "Password Reset Email Sent",

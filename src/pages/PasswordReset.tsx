@@ -18,18 +18,45 @@ export function PasswordReset() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if we have the required tokens from the URL
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    if (!accessToken || !refreshToken) {
-      toast({
-        title: "Invalid Reset Link",
-        description: "The password reset link is invalid or has expired.",
-        variant: "destructive",
-      });
-      navigate('/access-water-360');
-    }
+    // Handle the session from URL parameters
+    const handleSession = async () => {
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      
+      if (accessToken && refreshToken) {
+        try {
+          // Set the session using the tokens
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) throw error;
+          
+          toast({
+            title: "Reset Link Verified",
+            description: "Please enter your new password below.",
+          });
+        } catch (error: any) {
+          console.error('Session error:', error);
+          toast({
+            title: "Invalid Reset Link", 
+            description: "The password reset link is invalid or has expired.",
+            variant: "destructive",
+          });
+          navigate('/access-water-360');
+        }
+      } else {
+        toast({
+          title: "Invalid Reset Link",
+          description: "The password reset link is invalid or has expired.",
+          variant: "destructive",
+        });
+        navigate('/access-water-360');
+      }
+    };
+
+    handleSession();
   }, [searchParams, navigate, toast]);
 
   const handlePasswordReset = async (e: React.FormEvent) => {

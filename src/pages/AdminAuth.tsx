@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Shield, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,7 +15,8 @@ interface AdminAuthProps {
 }
 
 export function AdminAuth({ onLogin }: AdminAuthProps) {
-  const [credentials, setCredentials] = useState({ email: '', password: '', displayName: '' });
+  const [userCredentials, setUserCredentials] = useState({ email: '', password: '', displayName: '' });
+  const [adminCredentials, setAdminCredentials] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -23,12 +24,12 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(credentials.email, credentials.password);
+      const { error } = await signIn(adminCredentials.email, adminCredentials.password);
       
       if (error) throw error;
 
@@ -60,37 +61,80 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     }
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const handleUserLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Create the user without signing them in
+      const { error } = await signIn(userCredentials.email, userCredentials.password);
+      
+      if (error) throw error;
+
+      toast({
+        title: "Login Successful",
+        description: "Welcome to Aqua VI!",
+      });
+
+      // Redirect to main page for regular users
+      window.location.href = '/';
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUserSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', userCredentials.email);
+
+      // Try to sign up the user
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
+        email: userCredentials.email,
+        password: userCredentials.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            display_name: credentials.displayName,
+            display_name: userCredentials.displayName,
           }
         }
       });
       
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        // Handle specific error messages
+        if (signUpError.message.includes('already been registered')) {
+          throw new Error('An account with this email already exists. Please try logging in instead.');
+        }
+        throw signUpError;
+      }
 
-      // User will be created with default 'user' role via trigger
-      await sendWelcomeEmail(credentials.email, credentials.displayName, 'user');
+      // Send welcome email only if signup was successful
+      if (data.user && !data.user.identities?.length) {
+        throw new Error('An account with this email already exists. Please try logging in instead.');
+      }
+
+      await sendWelcomeEmail(userCredentials.email, userCredentials.displayName, 'user');
 
       toast({
-        title: "User Created Successfully",
-        description: `New user account created for ${credentials.email}. Welcome email sent.`,
+        title: "Account Created Successfully",
+        description: `Welcome to Aqua VI! Check your email for a confirmation link.`,
       });
 
-      setCredentials({ email: '', password: '', displayName: '' });
+      setUserCredentials({ email: '', password: '', displayName: '' });
     } catch (error: any) {
       toast({
-        title: "User Creation Failed",
+        title: "Signup Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -110,7 +154,6 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-6">
       <Card className="w-full max-w-md shadow-elegant">
@@ -118,37 +161,37 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
           <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-heading">Aqua VI Admin</CardTitle>
-          <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+          <CardTitle className="text-2xl font-heading">Aqua VI</CardTitle>
+          <CardDescription>Access your account or sign up to get started</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue="user" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Admin Login</TabsTrigger>
-              <TabsTrigger value="create">Create User</TabsTrigger>
+              <TabsTrigger value="user">User Login</TabsTrigger>
+              <TabsTrigger value="admin">Admin Login</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
+            <TabsContent value="user">
+              <form onSubmit={handleUserLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="user-email">Email</Label>
                   <Input
-                    id="email"
+                    id="user-email"
                     type="email"
-                    value={credentials.email}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+                    value={userCredentials.email}
+                    onChange={(e) => setUserCredentials(prev => ({ ...prev, email: e.target.value }))}
                     required
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="user-password">Password</Label>
                   <div className="relative mt-1">
                     <Input
-                      id="password"
+                      id="user-password"
                       type={showPassword ? 'text' : 'password'}
-                      value={credentials.password}
-                      onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                      value={userCredentials.password}
+                      onChange={(e) => setUserCredentials(prev => ({ ...prev, password: e.target.value }))}
                       required
                     />
                     <Button
@@ -166,52 +209,131 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                   {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
                 
-                <div className="text-center mt-4">
+                <div className="text-center mt-4 space-y-2">
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm text-primary hover:underline block mx-auto"
                   >
                     Forgot your password?
                   </button>
+                  <div className="text-sm text-muted-foreground">
+                    Don't have an account?{' '}
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="p-0 h-auto text-primary"
+                      onClick={() => {
+                        // Show signup form
+                        const signupForm = document.getElementById('signup-form');
+                        const loginForm = document.getElementById('login-form');
+                        if (signupForm && loginForm) {
+                          loginForm.style.display = 'none';
+                          signupForm.style.display = 'block';
+                        }
+                      }}
+                    >
+                      Sign up
+                    </Button>
+                  </div>
                 </div>
               </form>
+
+              {/* Signup Form */}
+              <div id="signup-form" style={{ display: 'none' }}>
+                <form onSubmit={handleUserSignup} className="space-y-4">
+                  <div>
+                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      value={userCredentials.displayName}
+                      onChange={(e) => setUserCredentials(prev => ({ ...prev, displayName: e.target.value }))}
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      value={userCredentials.email}
+                      onChange={(e) => setUserCredentials(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-password">Password</Label>
+                    <div className="relative mt-1">
+                      <Input
+                        id="signup-password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={userCredentials.password}
+                        onChange={(e) => setUserCredentials(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                        minLength={6}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Creating Account...' : 'Sign Up'}
+                  </Button>
+                  
+                  <div className="text-center mt-4">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="p-0 h-auto text-primary text-sm"
+                      onClick={() => {
+                        // Show login form
+                        const signupForm = document.getElementById('signup-form');
+                        const loginForm = document.getElementById('login-form');
+                        if (signupForm && loginForm) {
+                          signupForm.style.display = 'none';
+                          loginForm.style.display = 'block';
+                        }
+                      }}
+                    >
+                      Already have an account? Sign in
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </TabsContent>
             
-            <TabsContent value="create">
-              <form onSubmit={handleCreateUser} className="space-y-4">
+            <TabsContent value="admin">
+              <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="create-name">Display Name</Label>
+                  <Label htmlFor="admin-email">Admin Email</Label>
                   <Input
-                    id="create-name"
-                    type="text"
-                    value={credentials.displayName}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, displayName: e.target.value }))}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="create-email">Email</Label>
-                  <Input
-                    id="create-email"
+                    id="admin-email"
                     type="email"
-                    value={credentials.email}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+                    value={adminCredentials.email}
+                    onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
                     required
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="create-password">Password</Label>
+                  <Label htmlFor="admin-password">Admin Password</Label>
                   <div className="relative mt-1">
                     <Input
-                      id="create-password"
+                      id="admin-password"
                       type={showPassword ? 'text' : 'password'}
-                      value={credentials.password}
-                      onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                      value={adminCredentials.password}
+                      onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
                       required
-                      minLength={6}
                     />
                     <Button
                       type="button"
@@ -225,8 +347,18 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Creating User...' : 'Create User'}
+                  {isLoading ? 'Signing in...' : 'Admin Sign In'}
                 </Button>
+                
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
               </form>
             </TabsContent>
           </Tabs>
