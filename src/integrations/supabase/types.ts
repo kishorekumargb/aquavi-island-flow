@@ -294,6 +294,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      validate_admin_login: {
+        Args: { email_input: string; password_input: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

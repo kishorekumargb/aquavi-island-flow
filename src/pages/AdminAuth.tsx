@@ -29,31 +29,26 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(adminCredentials.email, adminCredentials.password);
-      
-      if (error) throw error;
+      // Use the simple admin validation function
+      const { data: isValidAdmin, error } = await supabase.rpc('validate_admin_login', {
+        email_input: adminCredentials.email,
+        password_input: adminCredentials.password
+      });
 
-      // Check if user has admin role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (roleData?.role === 'admin') {
-        onLogin();
-        toast({
-          title: "Login Successful",
-          description: "Welcome to Aqua VI Admin Dashboard",
-        });
-      } else {
-        await supabase.auth.signOut();
-        throw new Error('Access denied: Admin privileges required');
+      if (error || !isValidAdmin) {
+        throw new Error('Invalid admin credentials');
       }
+
+      // Admin login successful
+      onLogin();
+      toast({
+        title: "Login Successful",
+        description: "Welcome to Aqua VI Admin Dashboard",
+      });
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid credentials or insufficient privileges",
+        description: error.message || "Invalid admin credentials",
         variant: "destructive",
       });
     } finally {
