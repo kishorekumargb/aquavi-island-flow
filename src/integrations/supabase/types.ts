@@ -21,8 +21,9 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string | null
-          password_hash: string
+          role: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -30,8 +31,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string | null
-          password_hash: string
+          role?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -39,7 +41,41 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string | null
-          password_hash?: string
+          role?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -194,12 +230,40 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: Record<PropertyKey, never> | { user_uuid: string }
+        Returns: string
+      }
+      is_admin: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
