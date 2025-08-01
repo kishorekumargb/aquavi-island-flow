@@ -15,6 +15,7 @@ interface AdminAuthProps {
 
 export function AdminAuth({ onLogin }: AdminAuthProps) {
   const [credentials, setCredentials] = useState({ email: '', password: '', displayName: '' });
+  const [resetEmail, setResetEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
@@ -63,25 +64,27 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     setIsLoading(true);
 
     try {
-      // First create the user
-      const { error: signUpError } = await signUp(
-        credentials.email, 
-        credentials.password, 
-        credentials.displayName
-      );
+      // Create the user without signing them in
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            display_name: credentials.displayName,
+          }
+        }
+      });
       
       if (signUpError) throw signUpError;
 
-      // Get the newly created user
-      const { data: userData } = await supabase.auth.getUser();
-      
-      if (userData.user) {
+      if (data.user) {
         // Update user role if admin
         if (newUserRole === 'admin') {
           const { error: roleError } = await supabase
             .from('user_roles')
             .update({ role: 'admin' })
-            .eq('user_id', userData.user.id);
+            .eq('user_id', data.user.id);
           
           if (roleError) throw roleError;
         }
@@ -104,6 +107,34 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/admin`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for password reset instructions",
+      });
+
+      setResetEmail('');
+    } catch (error: any) {
+      toast({
+        title: "Password Reset Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-6">
@@ -117,8 +148,9 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login">Admin Login</TabsTrigger>
+              <TabsTrigger value="reset">Reset Password</TabsTrigger>
               <TabsTrigger value="create">Create User</TabsTrigger>
             </TabsList>
             
@@ -158,6 +190,26 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Signing in...' : 'Sign In'}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="reset">
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="reset-email">Email Address</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    className="mt-1"
+                    placeholder="Enter your email to reset password"
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Sending Reset Email...' : 'Send Reset Email'}
                 </Button>
               </form>
             </TabsContent>
@@ -209,15 +261,15 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="role">User Role</Label>
+                  <Label htmlFor="role">Assign User Role</Label>
                   <select
                     id="role"
                     value={newUserRole}
                     onChange={(e) => setNewUserRole(e.target.value as 'user' | 'admin')}
                     className="w-full mt-1 p-2 border border-input rounded-md bg-background"
                   >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
+                    <option value="user">User (Orders access only)</option>
+                    <option value="admin">Admin (Full dashboard access)</option>
                   </select>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>

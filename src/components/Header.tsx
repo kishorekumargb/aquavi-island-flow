@@ -51,7 +51,7 @@ export function Header() {
                 Order Now
               </Button>
             </OrderModal>
-            {user ? (
+            {user && (
               <div className="flex items-center space-x-2">
                 <Link to="/admin">
                   <Button variant="outline" size="sm">
@@ -62,13 +62,6 @@ export function Header() {
                   <LogOut className="w-4 h-4" />
                 </Button>
               </div>
-            ) : (
-              <Link to="/auth">
-                <Button variant="outline" size="sm">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-              </Link>
             )}
           </div>
 
@@ -91,7 +84,7 @@ export function Header() {
                     Order Now
                   </Button>
                 </OrderModal>
-                {user ? (
+                {user && (
                   <>
                     <Link to="/admin" className="block">
                       <Button variant="outline" className="w-full">
@@ -103,13 +96,6 @@ export function Header() {
                       Sign Out
                     </Button>
                   </>
-                ) : (
-                  <Link to="/auth" className="block">
-                    <Button variant="outline" className="w-full">
-                      <User className="w-4 h-4 mr-2" />
-                      Sign In
-                    </Button>
-                  </Link>
                 )}
               </div>
             </nav>
