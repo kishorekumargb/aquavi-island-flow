@@ -172,7 +172,8 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
             </TabsList>
             
             <TabsContent value="user">
-              <form onSubmit={handleUserLogin} className="space-y-4">
+              <div id="login-form">
+                <form onSubmit={handleUserLogin} className="space-y-4">
                 <div>
                   <Label htmlFor="user-email">Email</Label>
                   <Input
@@ -238,6 +239,7 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
                   </div>
                 </div>
               </form>
+              </div>
 
               {/* Signup Form */}
               <div id="signup-form" style={{ display: 'none' }}>
