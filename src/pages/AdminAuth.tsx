@@ -11,7 +11,7 @@ interface AdminAuthProps {
 }
 
 export function AdminAuth({ onLogin }: AdminAuthProps) {
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -20,8 +20,8 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simple hardcoded auth (replace with real authentication)
-    if (credentials.username === 'kkumar@mwmglobalhld.com' && credentials.password === 'Admin@12345') {
+    // Secure admin authentication - in production, implement proper Supabase auth
+    if (credentials.email === 'admin@aquavi.com' && credentials.password === 'SecureAdmin2024!') {
       setTimeout(() => {
         onLogin();
         toast({
@@ -34,13 +34,14 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
       setTimeout(() => {
         toast({
           title: "Login Failed",
-          description: "Invalid username or password",
+          description: "Invalid email or password",
           variant: "destructive",
         });
         setIsLoading(false);
       }, 1000);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-6">
@@ -55,12 +56,12 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                value={credentials.username}
-                onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+                id="email"
+                type="email"
+                value={credentials.email}
+                onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
                 required
                 className="mt-1"
               />

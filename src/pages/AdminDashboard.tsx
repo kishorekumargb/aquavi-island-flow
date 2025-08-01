@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare } from 'lucide-react';
+import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ProductEditModal } from '@/components/ProductEditModal';
@@ -448,11 +448,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -763,6 +764,27 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       );
                     });
                   })()}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Messages</CardTitle>
+                <CardDescription>
+                  Manage customer inquiries and support requests
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Messages Yet</h3>
+                  <p className="text-muted-foreground">
+                    Contact messages from customers will appear here once the feature is fully integrated.
+                  </p>
                 </div>
               </CardContent>
             </Card>

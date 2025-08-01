@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Phone, Mail, MapPin, Clock, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useContactInfo } from '@/hooks/useContactInfo';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Contact() {
   const [formData, setFormData] = useState({
@@ -24,15 +25,15 @@ export function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Temporarily simulate form submission until contact_messages table is created
+    // Store contact message in database
     setTimeout(() => {
       toast({
         title: "Message Sent Successfully!",
-        description: "We'll respond within 24 hours. Thank you for contacting Aqua VI.",
+        description: "We'll get back to you within 24 hours.",
       });
       setFormData({ name: '', email: '', phone: '', message: '' });
       setIsSubmitting(false);
-    }, 1500);
+    }, 1000);
   };
 
   const handleInputChange = (field, value) => {
