@@ -12,12 +12,21 @@ export default function Admin() {
   const { user } = useAuth();
 
   useEffect(() => {
+    // Check for admin authentication or user authentication
     if (user) {
       fetchUserRole();
     } else {
-      setIsAuthenticated(false);
-      setUserRole(null);
-      setLoading(false);
+      // Check session storage for admin login
+      const adminAuthenticated = sessionStorage.getItem('admin_authenticated');
+      if (adminAuthenticated === 'true') {
+        setIsAuthenticated(true);
+        setUserRole('admin');
+        setLoading(false);
+      } else {
+        setIsAuthenticated(false);
+        setUserRole(null);
+        setLoading(false);
+      }
     }
   }, [user]);
 
@@ -44,11 +53,14 @@ export default function Admin() {
 
   const handleLogin = () => {
     setIsAuthenticated(true);
+    setUserRole('admin');
+    sessionStorage.setItem('admin_authenticated', 'true');
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUserRole(null);
+    sessionStorage.removeItem('admin_authenticated');
   };
 
   if (loading) {

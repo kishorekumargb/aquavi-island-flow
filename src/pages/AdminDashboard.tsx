@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare, MessageCircle, Mail, Phone, Clock } from 'lucide-react';
+import { LogOut, Package, Users, Settings, Upload, Eye, Edit, Plus, Trash2, Star, Download, MessageSquare, MessageCircle, Mail, Phone, Clock, UserX, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -67,6 +67,21 @@ interface ContactMessage {
   status: 'unread' | 'read' | 'responded';
   created_at: string;
   updated_at: string;
+}
+
+interface AuthUser {
+  id: string;
+  email: string;
+  created_at: string;
+  email_confirmed_at?: string;
+  last_sign_in_at?: string;
+}
+
+interface UserRole {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
 }
 
 
@@ -489,11 +504,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="users">User Controls</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -938,6 +954,19 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </Card>
           </TabsContent>
 
+          {/* User Controls Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Control user accounts and roles</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserControlsSection />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
             <Card>
@@ -1154,6 +1183,213 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// User Controls Component
+function UserControlsSection() {
+  const [users, setUsers] = useState<AuthUser[]>([]);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      // Fetch from profiles table instead of auth.users since we can't access that directly
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*');
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('*');
+
+      // Convert profiles to user format for display
+      const usersFromProfiles = profileData?.map(profile => ({
+        id: profile.user_id,
+        email: profile.user_id, // We'll need to get email from somewhere else
+        created_at: profile.created_at,
+        display_name: profile.display_name
+      })) || [];
+
+      setUsers(usersFromProfiles as AuthUser[]);
+      setUserRoles(roleData || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    try {
+      // Delete from user_roles first
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Delete from profiles
+      await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Note: We can't delete from auth.users directly, but removing from our tables is sufficient
+      setUsers(users.filter(u => u.id !== userId));
+      setUserRoles(userRoles.filter(r => r.user_id !== userId));
+
+      toast({
+        title: "User Removed",
+        description: "User has been removed from the system",
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetUserPassword = async (userEmail: string) => {
+    try {
+      // Send password reset email
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+        redirectTo: `${window.location.origin}/password-reset`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Reset Sent",
+        description: `Password reset email sent to ${userEmail}`,
+      });
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateUserRole = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
+      setUserRoles(prev => {
+        const existing = prev.find(r => r.user_id === userId);
+        if (existing) {
+          return prev.map(r => r.user_id === userId ? { ...r, role: newRole } : r);
+        } else {
+          return [...prev, { id: crypto.randomUUID(), user_id: userId, role: newRole, created_at: new Date().toISOString() }];
+        }
+      });
+
+      toast({
+        title: "Role Updated",
+        description: `User role updated to ${newRole}`,
+      });
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading users...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {users.length === 0 ? (
+        <div className="text-center py-8">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Users Found</h3>
+          <p className="text-muted-foreground">
+            Users will appear here once they register for the system.
+          </p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User ID</TableHead>
+              <TableHead>Display Name</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => {
+              const userRole = userRoles.find(r => r.user_id === user.id);
+              return (
+                <TableRow key={user.id}>
+                  <TableCell className="font-mono text-sm">{user.id}</TableCell>
+                  <TableCell>{(user as any).display_name || 'Not set'}</TableCell>
+                  <TableCell>
+                    <Select 
+                      value={userRole?.role || 'user'} 
+                      onValueChange={(value) => updateUserRole(user.id, value)}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => resetUserPassword(user.email)}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Key className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteUser(user.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <UserX className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

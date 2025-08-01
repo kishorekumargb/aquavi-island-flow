@@ -39,7 +39,8 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
         throw new Error('Invalid admin credentials');
       }
 
-      // Admin login successful
+      // Admin login successful - set session storage
+      sessionStorage.setItem('admin_authenticated', 'true');
       onLogin();
       toast({
         title: "Login Successful",

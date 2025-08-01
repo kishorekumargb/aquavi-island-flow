@@ -26,13 +26,17 @@ export function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProp
         redirectTo: `${window.location.origin}/password-reset`,
       });
 
-      // Send custom password reset email
-      await supabase.functions.invoke('send-password-reset', {
-        body: { 
-          email: email,
-          resetLink: `${window.location.origin}/password-reset`
-        }
-      });
+      // Send custom password reset email via edge function
+      try {
+        await supabase.functions.invoke('send-password-reset', {
+          body: { 
+            email: email,
+            resetLink: `${window.location.origin}/password-reset`
+          }
+        });
+      } catch (edgeFunctionError) {
+        console.warn('Edge function failed, continuing with standard reset:', edgeFunctionError);
+      }
 
       toast({
         title: "Password Reset Email Sent",
