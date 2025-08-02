@@ -18,10 +18,31 @@ export function PasswordReset() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Handle the session from URL parameters
+    // Handle the session from URL parameters or hash parameters
     const handleSession = async () => {
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
+      // Check URL parameters first
+      let accessToken = searchParams.get('access_token');
+      let refreshToken = searchParams.get('refresh_token');
+      
+      // If not in URL params, check hash (common for auth redirects)
+      if (!accessToken || !refreshToken) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        accessToken = hashParams.get('access_token');
+        refreshToken = hashParams.get('refresh_token');
+      }
+      
+      // Also check for error parameters
+      const error = searchParams.get('error') || new URLSearchParams(window.location.hash.substring(1)).get('error');
+      
+      if (error) {
+        toast({
+          title: "Reset Link Error",
+          description: "The password reset link has expired or is invalid.",
+          variant: "destructive",
+        });
+        navigate('/access-water-360');
+        return;
+      }
       
       if (accessToken && refreshToken) {
         try {

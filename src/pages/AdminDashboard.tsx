@@ -568,18 +568,40 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   };
 
   const createUser = async () => {
+    if (!newUserForm.email || !newUserForm.password) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Create user using signUp for internal users 
       const { data, error } = await supabase.auth.signUp({
         email: newUserForm.email,
         password: newUserForm.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             display_name: newUserForm.display_name,
           }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if user already exists
+        if (error.message.includes('already registered')) {
+          toast({
+            title: "User Already Exists",
+            description: "A user with this email already exists. Please try to sign in.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       if (data.user) {
         // Create profile
@@ -597,6 +619,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             user_id: data.user.id,
             role: newUserForm.role
           }]);
+
+        // Refresh the data
+        fetchData();
       }
 
       setShowCreateUserModal(false);
@@ -609,11 +634,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       toast({
         title: "User Created",
-        description: "New user has been created successfully",
+        description: `User ${newUserForm.email} has been created successfully`,
       });
-
-      // Refresh user data
-      fetchData();
     } catch (error: any) {
       console.error('Error creating user:', error);
       toast({

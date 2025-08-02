@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminAuth } from './AdminAuth';
 import { AdminDashboard } from './AdminDashboard';
-import { UserDashboard } from './UserDashboard';
+import UserDashboard from './UserDashboard';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -82,6 +82,6 @@ export default function Admin() {
   if (userRole === 'admin') {
     return <AdminDashboard onLogout={handleLogout} />;
   } else {
-    return <UserDashboard onLogout={handleLogout} />;
+    return <UserDashboard />;
   }
 }
