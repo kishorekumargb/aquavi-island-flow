@@ -29,13 +29,26 @@ export function AdminAuth({ onLogin }: AdminAuthProps) {
     setIsLoading(true);
 
     try {
-      // Use the simple admin validation function
-      const { data: isValidAdmin, error } = await supabase.rpc('validate_admin_login', {
-        email_input: adminCredentials.email,
-        password_input: adminCredentials.password
+      // First try to sign in the user
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: adminCredentials.email,
+        password: adminCredentials.password,
       });
 
-      if (error || !isValidAdmin) {
+      if (authError) {
+        throw new Error('Invalid credentials');
+      }
+
+      // Check if the user has admin role
+      const { data: userRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (roleError || !userRole || userRole.role !== 'admin') {
+        // Sign out the user since they're not an admin
+        await supabase.auth.signOut();
         throw new Error('Invalid admin credentials');
       }
 

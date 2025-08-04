@@ -604,48 +604,38 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       }
 
       if (data.user) {
-        // Wait a moment for the trigger to complete, then manually ensure data exists
-        setTimeout(async () => {
-          try {
-            // Check if profile exists, if not create it
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', data.user.id)
-              .single();
+        try {
+          // Create profile immediately
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+              user_id: data.user.id,
+              display_name: newUserForm.display_name,
+              email: newUserForm.email
+            }]);
 
-            if (!existingProfile) {
-              await supabase
-                .from('profiles')
-                .insert([{
-                  user_id: data.user.id,
-                  display_name: newUserForm.display_name,
-                  email: newUserForm.email
-                }]);
-            }
-
-            // Check if user role exists, if not create it
-            const { data: existingRole } = await supabase
-              .from('user_roles')
-              .select('*')
-              .eq('user_id', data.user.id)
-              .single();
-
-            if (!existingRole) {
-              await supabase
-                .from('user_roles')
-                .insert([{
-                  user_id: data.user.id,
-                  role: newUserForm.role
-                }]);
-            }
-
-            // Refresh the data
-            fetchData();
-          } catch (error) {
-            console.error('Error ensuring user data:', error);
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
           }
-        }, 1000);
+
+          // Create user role immediately
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert([{
+              user_id: data.user.id,
+              role: newUserForm.role
+            }]);
+
+          if (roleError) {
+            console.error('Role creation error:', roleError);
+          }
+
+          // Refresh the data immediately
+          await fetchData();
+          
+        } catch (error) {
+          console.error('Error creating user data:', error);
+        }
       }
 
       setShowCreateUserModal(false);
