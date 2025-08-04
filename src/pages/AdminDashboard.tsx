@@ -604,28 +604,48 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       }
 
       if (data.user) {
-        // Create profile with email
-        await supabase
-          .from('profiles')
-          .insert([{
-            user_id: data.user.id,
-            display_name: newUserForm.display_name,
-            email: newUserForm.email
-          }]);
+        // Wait a moment for the trigger to complete, then manually ensure data exists
+        setTimeout(async () => {
+          try {
+            // Check if profile exists, if not create it
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', data.user.id)
+              .single();
 
-        // Create user role
-        await supabase
-          .from('user_roles')
-          .insert([{
-            user_id: data.user.id,
-            role: newUserForm.role
-          }]);
+            if (!existingProfile) {
+              await supabase
+                .from('profiles')
+                .insert([{
+                  user_id: data.user.id,
+                  display_name: newUserForm.display_name,
+                  email: newUserForm.email
+                }]);
+            }
 
-        // Refresh the data
-        fetchData();
-        
-        // Trigger refresh of UserControlsSection if it exists
-        window.dispatchEvent(new CustomEvent('userCreated'));
+            // Check if user role exists, if not create it
+            const { data: existingRole } = await supabase
+              .from('user_roles')
+              .select('*')
+              .eq('user_id', data.user.id)
+              .single();
+
+            if (!existingRole) {
+              await supabase
+                .from('user_roles')
+                .insert([{
+                  user_id: data.user.id,
+                  role: newUserForm.role
+                }]);
+            }
+
+            // Refresh the data
+            fetchData();
+          } catch (error) {
+            console.error('Error ensuring user data:', error);
+          }
+        }, 1000);
       }
 
       setShowCreateUserModal(false);
