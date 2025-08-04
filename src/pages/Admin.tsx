@@ -81,7 +81,10 @@ export default function Admin() {
   // Role-based dashboard rendering
   if (userRole === 'admin') {
     return <AdminDashboard onLogout={handleLogout} />;
+  } else if (userRole === 'user') {
+    return <UserDashboard />;
   } else {
+    // Fallback for unknown roles
     return <UserDashboard />;
   }
 }

@@ -107,8 +107,8 @@ export default function UserDashboard() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">User Dashboard</h1>
-              <p className="text-muted-foreground">Manage orders and operations</p>
+              <h1 className="text-2xl font-bold">Staff Dashboard</h1>
+              <p className="text-muted-foreground">Manage orders and update statuses</p>
             </div>
             <div className="flex items-center gap-4">
               <Badge variant="secondary">{userRole}</Badge>
@@ -135,7 +135,7 @@ export default function UserDashboard() {
               <CardHeader>
                 <CardTitle>Order Management</CardTitle>
                 <CardDescription>
-                  Update order statuses and manage deliveries
+                  Update order statuses and track deliveries
                 </CardDescription>
               </CardHeader>
               <CardContent>

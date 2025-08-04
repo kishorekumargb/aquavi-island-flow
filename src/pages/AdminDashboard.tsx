@@ -604,12 +604,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       }
 
       if (data.user) {
-        // Create profile
+        // Create profile with email
         await supabase
           .from('profiles')
           .insert([{
             user_id: data.user.id,
-            display_name: newUserForm.display_name
+            display_name: newUserForm.display_name,
+            email: newUserForm.email
           }]);
 
         // Create user role
@@ -622,6 +623,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         // Refresh the data
         fetchData();
+        
+        // Trigger refresh of UserControlsSection if it exists
+        window.dispatchEvent(new CustomEvent('userCreated'));
       }
 
       setShowCreateUserModal(false);
@@ -1777,11 +1781,19 @@ function UserControlsSection() {
 
   useEffect(() => {
     fetchUsers();
+    
+    // Listen for user creation events
+    const handleUserCreated = () => {
+      fetchUsers();
+    };
+    
+    window.addEventListener('userCreated', handleUserCreated);
+    return () => window.removeEventListener('userCreated', handleUserCreated);
   }, []);
 
   const fetchUsers = async () => {
     try {
-      // Fetch from profiles table instead of auth.users since we can't access that directly
+      // Fetch from profiles table with email now included
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*');
@@ -1793,7 +1805,7 @@ function UserControlsSection() {
       // Convert profiles to user format for display
       const usersFromProfiles = profileData?.map(profile => ({
         id: profile.user_id,
-        email: profile.user_id, // We'll need to get email from somewhere else
+        email: profile.email || profile.user_id, // Use email from profiles table
         created_at: profile.created_at,
         display_name: profile.display_name
       })) || [];
