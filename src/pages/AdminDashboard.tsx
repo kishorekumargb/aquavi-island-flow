@@ -1798,30 +1798,78 @@ function UserControlsSection() {
     };
     
     window.addEventListener('userCreated', handleUserCreated);
-    return () => window.removeEventListener('userCreated', handleUserCreated);
+    
+    // Set up real-time subscriptions for live sync
+    const profilesSubscription = supabase
+      .channel('profiles-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          console.log('Profiles table changed, refreshing users...');
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    const rolesSubscription = supabase
+      .channel('roles-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'user_roles' },
+        () => {
+          console.log('User roles table changed, refreshing users...');
+          fetchUsers();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      window.removeEventListener('userCreated', handleUserCreated);
+      supabase.removeChannel(profilesSubscription);
+      supabase.removeChannel(rolesSubscription);
+    };
   }, []);
 
   const fetchUsers = async () => {
     try {
-      // Fetch from profiles table with email now included
-      const { data: profileData } = await supabase
+      setLoading(true);
+      
+      // Use a proper join query to get user data with roles
+      const { data: userData, error } = await supabase
         .from('profiles')
-        .select('*');
+        .select(`
+          user_id,
+          display_name,
+          email,
+          created_at,
+          user_roles!inner(role)
+        `);
 
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      // Convert to the expected format
+      const usersWithRoles = userData?.map(profile => ({
+        id: profile.user_id,
+        email: profile.email || 'No email set',
+        created_at: profile.created_at,
+        display_name: profile.display_name || 'No name set',
+        role: (profile.user_roles as any)?.[0]?.role || 'user'
+      })) || [];
+
+      setUsers(usersWithRoles as AuthUser[]);
+      
+      // Also fetch roles separately for the role management
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('*');
-
-      // Convert profiles to user format for display
-      const usersFromProfiles = profileData?.map(profile => ({
-        id: profile.user_id,
-        email: profile.email || profile.user_id, // Use email from profiles table
-        created_at: profile.created_at,
-        display_name: profile.display_name
-      })) || [];
-
-      setUsers(usersFromProfiles as AuthUser[]);
+      
       setUserRoles(roleData || []);
+      
+      console.log('Fetched users:', usersWithRoles);
+      console.log('Fetched roles:', roleData);
+      
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -1836,31 +1884,39 @@ function UserControlsSection() {
 
   const deleteUser = async (userId: string) => {
     try {
-      // Delete from user_roles first
-      await supabase
+      // Delete from user_roles first (foreign key constraint)
+      const { error: roleError } = await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', userId);
 
+      if (roleError) throw roleError;
+
       // Delete from profiles
-      await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .delete()
         .eq('user_id', userId);
 
-      // Note: We can't delete from auth.users directly, but removing from our tables is sufficient
+      if (profileError) throw profileError;
+
+      // Update local state immediately for responsive UI
       setUsers(users.filter(u => u.id !== userId));
       setUserRoles(userRoles.filter(r => r.user_id !== userId));
 
       toast({
-        title: "User Removed",
-        description: "User has been removed from the system",
+        title: "User Deleted",
+        description: "User has been permanently removed from the system",
       });
+      
+      // Refresh data to ensure consistency
+      setTimeout(() => fetchUsers(), 1000);
+      
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
-        title: "Error",
-        description: "Failed to remove user",
+        title: "Error", 
+        description: "Failed to delete user. Please try again.",
         variant: "destructive",
       });
     }
@@ -1870,7 +1926,7 @@ function UserControlsSection() {
     try {
       // Send password reset email
       const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-        redirectTo: `${window.location.origin}/password-reset`,
+        redirectTo: `${window.location.origin}/access-water-360`,
       });
 
       if (error) throw error;
@@ -1925,7 +1981,24 @@ function UserControlsSection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">User Management</h3>
+        <div className="flex gap-2 items-center">
+          <Button 
+            onClick={fetchUsers}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Total Users: {users.length}
+          </span>
+        </div>
+      </div>
+
       {users.length === 0 ? (
         <div className="text-center py-8">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -1938,10 +2011,11 @@ function UserControlsSection() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User ID</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Display Name</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>User ID</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -1950,7 +2024,9 @@ function UserControlsSection() {
               const userRole = userRoles.find(r => r.user_id === user.id);
               return (
                 <TableRow key={user.id}>
-                  <TableCell className="font-mono text-sm">{user.id}</TableCell>
+                  <TableCell className="font-medium">
+                    {(user as any).email || 'No email set'}
+                  </TableCell>
                   <TableCell>{(user as any).display_name || 'Not set'}</TableCell>
                   <TableCell>
                     <Select 
@@ -1967,6 +2043,9 @@ function UserControlsSection() {
                     </Select>
                   </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {user.id.substring(0, 8)}...
+                  </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button
