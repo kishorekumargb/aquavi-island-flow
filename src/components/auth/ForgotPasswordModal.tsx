@@ -23,7 +23,7 @@ export function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProp
     try {
       // First, check if user exists
       const { data: existingUser } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/password-reset`,
+        redirectTo: `${window.location.origin}/access-water-360`,
       });
 
       // Send custom password reset email via edge function
@@ -31,7 +31,7 @@ export function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProp
         await supabase.functions.invoke('send-password-reset', {
           body: { 
             email: email,
-            resetLink: `${window.location.origin}/password-reset`
+            resetLink: `${window.location.origin}/access-water-360`
           }
         });
       } catch (edgeFunctionError) {

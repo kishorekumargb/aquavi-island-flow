@@ -630,8 +630,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             console.error('Role creation error:', roleError);
           }
 
-          // Refresh the data immediately
-          await fetchData();
+          // Dispatch custom event to refresh user list
+          window.dispatchEvent(new CustomEvent('userCreated'));
           
         } catch (error) {
           console.error('Error creating user data:', error);
