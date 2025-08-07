@@ -870,7 +870,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
-            <TabsTrigger value="users">User Controls</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -1353,7 +1353,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </Card>
           </TabsContent>
 
-          {/* User Controls Tab */}
+          {/* User Management Tab */}
           <TabsContent value="users" className="space-y-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -1782,7 +1782,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   );
 }
 
-// User Controls Component
+// User Management Component
 function UserControlsSection() {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
@@ -1833,42 +1833,46 @@ function UserControlsSection() {
     try {
       setLoading(true);
       
-      // Use a proper join query to get user data with roles
-      const { data: userData, error } = await supabase
-        .from('profiles')
-        .select(`
-          user_id,
-          display_name,
-          email,
-          created_at,
-          user_roles!inner(role)
-        `);
+      // Fetch profiles and roles separately for better data handling
+      const [profilesResponse, rolesResponse] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('user_id, display_name, email, created_at'),
+        supabase
+          .from('user_roles')
+          .select('user_id, role, created_at, id')
+      ]);
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
+      if (profilesResponse.error) {
+        console.error('Profiles error:', profilesResponse.error);
+        throw profilesResponse.error;
       }
 
-      // Convert to the expected format
-      const usersWithRoles = userData?.map(profile => ({
-        id: profile.user_id,
-        email: profile.email || 'No email set',
-        created_at: profile.created_at,
-        display_name: profile.display_name || 'No name set',
-        role: (profile.user_roles as any)?.[0]?.role || 'user'
-      })) || [];
+      if (rolesResponse.error) {
+        console.error('Roles error:', rolesResponse.error);
+        throw rolesResponse.error;
+      }
+
+      const profiles = profilesResponse.data || [];
+      const roles = rolesResponse.data || [];
+      
+      // Combine the data properly
+      const usersWithRoles = profiles.map(profile => {
+        const userRole = roles.find(role => role.user_id === profile.user_id);
+        return {
+          id: profile.user_id,
+          email: profile.email || 'No email set',
+          created_at: profile.created_at,
+          display_name: profile.display_name || 'No name set',
+          role: userRole?.role || 'user'
+        };
+      });
 
       setUsers(usersWithRoles as AuthUser[]);
-      
-      // Also fetch roles separately for the role management
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('*');
-      
-      setUserRoles(roleData || []);
+      setUserRoles(roles || []);
       
       console.log('Fetched users:', usersWithRoles);
-      console.log('Fetched roles:', roleData);
+      console.log('Fetched roles:', roles);
       
     } catch (error) {
       console.error('Error fetching users:', error);
