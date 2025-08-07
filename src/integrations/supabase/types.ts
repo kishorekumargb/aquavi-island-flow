@@ -264,6 +264,17 @@ export type Database = {
         Args: Record<PropertyKey, never> | { user_uuid: string }
         Returns: string
       }
+      get_users_with_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          display_name: string
+          created_at: string
+          role: string
+          last_sign_in_at: string
+        }[]
+      }
       is_admin: {
         Args: { user_uuid: string }
         Returns: boolean
