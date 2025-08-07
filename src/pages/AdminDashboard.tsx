@@ -1832,54 +1832,70 @@ function UserControlsSection() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log('Starting to fetch users...');
       
-      // Use direct SQL query to get proper user data with emails from auth.users
-      const { data: usersData, error } = await supabase
-        .from('profiles')
-        .select(`
-          user_id,
-          display_name,
-          email,
-          created_at,
-          user_roles(role)
-        `);
-
+      // Use the database function to get users with roles and emails
+      const { data, error } = await supabase.rpc('get_users_with_roles');
+      
       if (error) {
-        console.error('Users fetch error:', error);
-        throw error;
+        console.error('Supabase error fetching users:', error);
+        toast({
+          title: "Error",
+          description: `Failed to fetch users: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
       }
-
-      // Transform the data to proper format
-      const transformedUsers = (usersData || []).map(profile => {
-        // Handle the user_roles relation properly
-        const userRole = Array.isArray(profile.user_roles) 
-          ? profile.user_roles[0] 
-          : profile.user_roles;
+      
+      console.log('Raw fetched users data:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('No users found in database');
+        setUsers([]);
+        setUserRoles([]);
+        return;
+      }
+      
+      // Transform the data for display - group by user ID to avoid duplicates
+      const userMap = new Map();
+      const rolesList: UserRole[] = [];
+      
+      data.forEach((item: any) => {
+        const userId = item.id;
         
-        return {
-          id: profile.user_id,
-          email: profile.email || 'No email available',
-          created_at: profile.created_at,
-          display_name: profile.display_name || 'No name set',
-          role: userRole?.role || 'user'
-        };
+        // Add or update user in map
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            id: userId,
+            email: item.email || 'No email',
+            created_at: item.created_at,
+            email_confirmed_at: null,
+            last_sign_in_at: item.last_sign_in_at,
+          });
+        }
+        
+        // Add role entry
+        rolesList.push({
+          id: `${userId}-${item.role}`,
+          user_id: userId,
+          role: item.role,
+          created_at: item.created_at,
+        });
       });
-
-      setUsers(transformedUsers as AuthUser[]);
       
-      // Also fetch roles separately for role management functionality
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('user_id, role, created_at, id');
-      setUserRoles(roles || []);
+      const transformedUsers = Array.from(userMap.values());
       
-      console.log('Fetched users successfully:', transformedUsers);
+      console.log('Transformed users:', transformedUsers);
+      console.log('User roles:', rolesList);
+      
+      setUsers(transformedUsers);
+      setUserRoles(rolesList);
       
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Unexpected error in fetchUsers:', error);
       toast({
         title: "Error",
-        description: "Failed to load users. Please check your connection.",
+        description: "Unexpected error occurred while fetching users",
         variant: "destructive",
       });
     } finally {
