@@ -1833,52 +1833,62 @@ function UserControlsSection() {
     try {
       setLoading(true);
       
-      // Fetch profiles and roles separately for better data handling
-      const [profilesResponse, rolesResponse] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('user_id, display_name, email, created_at'),
-        supabase
+      // Use a more comprehensive query that gets email from auth.users through database function
+      const { data: usersData, error } = await supabase.rpc('get_users_with_roles');
+      
+      if (error) {
+        console.error('Users fetch error:', error);
+        
+        // Fallback to manual fetch
+        const [profilesResponse, rolesResponse] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('user_id, display_name, email, created_at'),
+          supabase
+            .from('user_roles')
+            .select('user_id, role, created_at, id')
+        ]);
+
+        if (profilesResponse.error || rolesResponse.error) {
+          throw new Error('Failed to fetch user data');
+        }
+
+        const profiles = profilesResponse.data || [];
+        const roles = rolesResponse.data || [];
+        
+        // Combine the data properly
+        const usersWithRoles = profiles.map(profile => {
+          const userRole = roles.find(role => role.user_id === profile.user_id);
+          return {
+            id: profile.user_id,
+            email: profile.email || 'No email available',
+            created_at: profile.created_at,
+            display_name: profile.display_name || 'No name set',
+            role: userRole?.role || 'user'
+          };
+        });
+
+        setUsers(usersWithRoles as AuthUser[]);
+        setUserRoles(roles || []);
+        
+      } else {
+        // Use the RPC function result
+        setUsers(usersData || []);
+        
+        // Also fetch roles for role management
+        const { data: roles } = await supabase
           .from('user_roles')
-          .select('user_id, role, created_at, id')
-      ]);
-
-      if (profilesResponse.error) {
-        console.error('Profiles error:', profilesResponse.error);
-        throw profilesResponse.error;
+          .select('user_id, role, created_at, id');
+        setUserRoles(roles || []);
       }
-
-      if (rolesResponse.error) {
-        console.error('Roles error:', rolesResponse.error);
-        throw rolesResponse.error;
-      }
-
-      const profiles = profilesResponse.data || [];
-      const roles = rolesResponse.data || [];
       
-      // Combine the data properly
-      const usersWithRoles = profiles.map(profile => {
-        const userRole = roles.find(role => role.user_id === profile.user_id);
-        return {
-          id: profile.user_id,
-          email: profile.email || 'No email set',
-          created_at: profile.created_at,
-          display_name: profile.display_name || 'No name set',
-          role: userRole?.role || 'user'
-        };
-      });
-
-      setUsers(usersWithRoles as AuthUser[]);
-      setUserRoles(roles || []);
-      
-      console.log('Fetched users:', usersWithRoles);
-      console.log('Fetched roles:', roles);
+      console.log('Fetched users successfully');
       
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
         title: "Error",
-        description: "Failed to load users",
+        description: "Failed to load users. Please refresh the page.",
         variant: "destructive",
       });
     } finally {
