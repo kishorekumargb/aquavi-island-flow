@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminAuth } from './AdminAuth';
-import { AdminDashboard } from './AdminDashboard';
+import AdminDashboard from './AdminDashboard';
 
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,7 +80,7 @@ export default function Admin() {
 
   // Only admins can access this page
   if (userRole === 'admin') {
-    return <AdminDashboard onLogout={handleLogout} />;
+    return <AdminDashboard />;
   } else {
     // Non-admin users should be redirected or shown access denied
     return (
