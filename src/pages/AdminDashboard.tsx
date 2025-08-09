@@ -6,6 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { CreateUserModal } from '@/components/CreateUserModal';
 import { EditUserModal } from '@/components/EditUserModal';
+import { CreateProductModal } from '@/components/CreateProductModal';
+import { EditProductModal } from '@/components/EditProductModal';
+import { CreateTestimonialModal } from '@/components/CreateTestimonialModal';
+import { EditTestimonialModal } from '@/components/EditTestimonialModal';
 import {
   Table,
   TableBody,
@@ -146,6 +150,9 @@ const AdminDashboard = () => {
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showCreateTestimonial, setShowCreateTestimonial] = useState(false);
   const [siteSettings, setSiteSettings] = useState<any[]>([]);
+  const [editedSettings, setEditedSettings] = useState<Record<string, string>>({});
+  const [newSettingKey, setNewSettingKey] = useState('');
+  const [newSettingValue, setNewSettingValue] = useState('');
   const { toast } = useToast();
 
   // Fetch functions
@@ -335,7 +342,8 @@ const AdminDashboard = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      window.location.href = '/admin-auth';
+      sessionStorage.removeItem('admin_authenticated');
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
       toast({
@@ -348,19 +356,22 @@ const AdminDashboard = () => {
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      // Optimistic update
+      setOrders(prev =>
+        prev.map(o => (o.id === orderId ? { ...o, status: newStatus } as Order : o))
+      );
+
+      const allowed = ['pending', 'processing', 'delivered', 'cancelled'];
+      const status = allowed.includes(newStatus) ? newStatus : 'pending';
+
       const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus })
+        .update({ status })
         .eq('id', orderId);
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Order status updated successfully",
-      });
-
-      fetchOrders();
+      toast({ title: "Success", description: "Order status updated" });
     } catch (error) {
       console.error('Error updating order:', error);
       toast({
@@ -368,6 +379,8 @@ const AdminDashboard = () => {
         description: "Failed to update order status",
         variant: "destructive",
       });
+      // Revert to server state
+      fetchOrders();
     }
   };
 
@@ -443,6 +456,143 @@ const AdminDashboard = () => {
         description: "Failed to update message status",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCreateProduct = async (productData: Omit<Product, 'id' | 'created_at'>) => {
+    try {
+      const { error } = await supabase.from('products').insert({
+        name: productData.name,
+        size: productData.size,
+        price: productData.price,
+        stock: productData.stock ?? 0,
+        description: productData.description ?? '',
+        image_url: productData.image_url ?? '',
+        is_active: productData.is_active ?? true,
+      });
+      if (error) throw error;
+      toast({ title: 'Success', description: 'Product created' });
+      setShowCreateProduct(false);
+      fetchProducts();
+    } catch (error) {
+      console.error('Error creating product:', error);
+      toast({ title: 'Error', description: 'Failed to create product', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateProduct = async (product: Product) => {
+    try {
+      const { error } = await supabase.from('products').update({
+        name: product.name,
+        size: product.size,
+        price: product.price,
+        stock: product.stock,
+        description: product.description,
+        image_url: product.image_url,
+        is_active: product.is_active,
+      }).eq('id', product.id);
+      if (error) throw error;
+      toast({ title: 'Success', description: 'Product updated' });
+      setEditingProduct(null);
+      fetchProducts();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast({ title: 'Error', description: 'Failed to update product', variant: 'destructive' });
+    }
+  };
+
+  const handleCreateTestimonial = async (t: Omit<Testimonial, 'id' | 'created_at'>) => {
+    try {
+      const { error } = await supabase.from('testimonials').insert({
+        name: t.name,
+        location: t.location,
+        review: t.review,
+        rating: t.rating ?? 5,
+        verified: t.verified ?? true,
+        is_active: t.is_active ?? true,
+        avatar: t.avatar ?? '',
+        order_type: t.order_type ?? null,
+      });
+      if (error) throw error;
+      toast({ title: 'Success', description: 'Testimonial created' });
+      setShowCreateTestimonial(false);
+      fetchTestimonials();
+    } catch (error) {
+      console.error('Error creating testimonial:', error);
+      toast({ title: 'Error', description: 'Failed to create testimonial', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateTestimonial = async (t: Testimonial) => {
+    try {
+      const { error } = await supabase.from('testimonials').update({
+        name: t.name,
+        location: t.location,
+        review: t.review,
+        rating: t.rating,
+        verified: t.verified,
+        is_active: t.is_active,
+        avatar: t.avatar,
+        order_type: t.order_type,
+      }).eq('id', t.id);
+      if (error) throw error;
+      toast({ title: 'Success', description: 'Testimonial updated' });
+      setEditingTestimonial(null);
+      fetchTestimonials();
+    } catch (error) {
+      console.error('Error updating testimonial:', error);
+      toast({ title: 'Error', description: 'Failed to update testimonial', variant: 'destructive' });
+    }
+  };
+
+  const exportOrdersCSV = () => {
+    const headers = ['order_number','customer_name','customer_email','customer_phone','delivery_type','delivery_address','items','total_amount','status','created_at'];
+    const rows = orders.map(o => [
+      o.order_number,
+      o.customer_name,
+      o.customer_email,
+      o.customer_phone,
+      o.delivery_type,
+      o.delivery_address,
+      typeof o.items === 'string' ? o.items : JSON.stringify(o.items),
+      o.total_amount,
+      o.status,
+      o.created_at,
+    ]);
+    const escape = (v: any) => '"' + String(v ?? '').replaceAll('"','""') + '"';
+    const csv = [headers.join(','), ...rows.map(r => r.map(escape).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders_export_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleUpdateSetting = async (id: string, value: string) => {
+    try {
+      const { error } = await supabase.from('site_settings').update({ setting_value: value }).eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Saved', description: 'Setting updated' });
+      fetchSiteSettings();
+    } catch (error) {
+      console.error('Error updating setting:', error);
+      toast({ title: 'Error', description: 'Failed to update setting', variant: 'destructive' });
+    }
+  };
+
+  const handleAddSetting = async (key: string, value: string) => {
+    try {
+      const { error } = await supabase.from('site_settings').insert({ setting_key: key, setting_value: value });
+      if (error) throw error;
+      toast({ title: 'Added', description: 'New setting added' });
+      fetchSiteSettings();
+    } catch (error) {
+      console.error('Error adding setting:', error);
+      toast({ title: 'Error', description: 'Failed to add setting', variant: 'destructive' });
     }
   };
 
@@ -626,6 +776,12 @@ const AdminDashboard = () => {
           <h3 className="text-lg font-semibold">Orders Management</h3>
           <p className="text-sm text-muted-foreground">Manage customer orders</p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={exportOrdersCSV}>Export CSV</Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={exportOrdersCSV}>Export CSV</Button>
+        </div>
       </div>
 
       <Card>
@@ -705,7 +861,25 @@ const AdminDashboard = () => {
           <h3 className="text-lg font-semibold">Products Management</h3>
           <p className="text-sm text-muted-foreground">Manage product catalog</p>
         </div>
+        <Button onClick={() => setShowCreateProduct(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Create Product
+        </Button>
       </div>
+
+      {/* Modals */}
+      <CreateProductModal
+        isOpen={showCreateProduct}
+        onClose={() => setShowCreateProduct(false)}
+        onCreate={handleCreateProduct}
+      />
+      {editingProduct && (
+        <EditProductModal
+          isOpen={!!editingProduct}
+          onClose={() => setEditingProduct(null)}
+          product={editingProduct}
+          onSave={handleUpdateProduct}
+        />
+      )}
 
       <Card>
         <CardContent className="p-0">
@@ -746,6 +920,9 @@ const AdminDashboard = () => {
                       <TableCell>{format(new Date(product.created_at), 'MMM d, yyyy')}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
+                          <Button size="sm" variant="outline" onClick={() => setEditingProduct(product)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -773,7 +950,25 @@ const AdminDashboard = () => {
           <h3 className="text-lg font-semibold">Testimonials Management</h3>
           <p className="text-sm text-muted-foreground">Manage customer testimonials</p>
         </div>
+        <Button onClick={() => setShowCreateTestimonial(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Create Testimonial
+        </Button>
       </div>
+
+      {/* Modals */}
+      <CreateTestimonialModal
+        isOpen={showCreateTestimonial}
+        onClose={() => setShowCreateTestimonial(false)}
+        onCreate={handleCreateTestimonial}
+      />
+      {editingTestimonial && (
+        <EditTestimonialModal
+          isOpen={!!editingTestimonial}
+          onClose={() => setEditingTestimonial(null)}
+          testimonial={editingTestimonial}
+          onSave={handleUpdateTestimonial}
+        />
+      )}
 
       <Card>
         <CardContent className="p-0">
@@ -819,6 +1014,9 @@ const AdminDashboard = () => {
                       <TableCell>{format(new Date(testimonial.created_at), 'MMM d, yyyy')}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
+                          <Button size="sm" variant="outline" onClick={() => setEditingTestimonial(testimonial)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -1046,7 +1244,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <Package className="h-8 w-8 text-blue-600" />
-              <h1 className="text-xl font-semibold text-gray-900">Aqua VI Admin</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Access Water 360</h1>
             </div>
             <Button variant="outline" onClick={handleLogout}>
               Logout
@@ -1228,6 +1426,30 @@ const AdminDashboard = () => {
                     <h3 className="text-lg font-semibold">Site Settings</h3>
                     <p className="text-sm text-muted-foreground">Configure application settings</p>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Setting key (e.g., phone)"
+                      value={newSettingKey}
+                      onChange={(e) => setNewSettingKey(e.target.value)}
+                      className="w-48"
+                    />
+                    <Input
+                      placeholder="Value"
+                      value={newSettingValue}
+                      onChange={(e) => setNewSettingValue(e.target.value)}
+                      className="w-64"
+                    />
+                    <Button
+                      onClick={() => {
+                        if (!newSettingKey.trim()) return;
+                        handleAddSetting(newSettingKey.trim(), newSettingValue);
+                        setNewSettingKey('');
+                        setNewSettingValue('');
+                      }}
+                    >
+                      Add Setting
+                    </Button>
+                  </div>
                 </div>
                 <Card>
                   <CardContent className="p-0">
@@ -1240,12 +1462,13 @@ const AdminDashboard = () => {
                             <TableHead>Setting</TableHead>
                             <TableHead>Value</TableHead>
                             <TableHead>Last Updated</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {siteSettings.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={3} className="text-center text-muted-foreground p-6">
+                              <TableCell colSpan={4} className="text-center text-muted-foreground p-6">
                                 No settings configured yet
                               </TableCell>
                             </TableRow>
@@ -1253,8 +1476,29 @@ const AdminDashboard = () => {
                             siteSettings.map((setting) => (
                               <TableRow key={setting.id}>
                                 <TableCell className="font-medium">{setting.setting_key}</TableCell>
-                                <TableCell>{setting.setting_value}</TableCell>
+                                <TableCell>
+                                  <Input
+                                    value={editedSettings[setting.id] ?? setting.setting_value ?? ''}
+                                    onChange={(e) =>
+                                      setEditedSettings((prev) => ({ ...prev, [setting.id]: e.target.value }))
+                                    }
+                                  />
+                                </TableCell>
                                 <TableCell>{format(new Date(setting.updated_at), 'MMM d, yyyy')}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleUpdateSetting(
+                                        setting.id,
+                                        editedSettings[setting.id] ?? setting.setting_value ?? ''
+                                      )
+                                    }
+                                  >
+                                    Save
+                                  </Button>
+                                </TableCell>
                               </TableRow>
                             ))
                           )}
