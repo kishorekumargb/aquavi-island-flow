@@ -480,6 +480,243 @@ const AdminDashboard = () => {
     }
   };
 
+  // Render functions for all tabs
+  const renderOrders = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">Orders Management</h3>
+          <p className="text-sm text-muted-foreground">Manage customer orders</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-6 text-center">Loading orders...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order #</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      No orders found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.order_number}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{order.customer_name}</div>
+                          <div className="text-sm text-muted-foreground">{order.customer_email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {Array.isArray(order.items) ? order.items.length : 1} item(s)
+                      </TableCell>
+                      <TableCell>${order.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
+                          {order.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy')}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderProducts = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">Products Management</h3>
+          <p className="text-sm text-muted-foreground">Manage product catalog</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-6 text-center">Loading products...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      No products found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>{product.size}</TableCell>
+                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>{product.stock}</TableCell>
+                      <TableCell>
+                        <Badge variant={product.is_active ? 'default' : 'secondary'}>
+                          {product.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{format(new Date(product.created_at), 'MMM d, yyyy')}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderTestimonials = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">Testimonials Management</h3>
+          <p className="text-sm text-muted-foreground">Manage customer testimonials</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-6 text-center">Loading testimonials...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Rating</TableHead>
+                  <TableHead>Review</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {testimonials.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      No testimonials found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  testimonials.map((testimonial) => (
+                    <TableRow key={testimonial.id}>
+                      <TableCell className="font-medium">{testimonial.name}</TableCell>
+                      <TableCell>{testimonial.location}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
+                          {testimonial.rating}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{testimonial.review}</TableCell>
+                      <TableCell>
+                        <Badge variant={testimonial.is_active ? 'default' : 'secondary'}>
+                          {testimonial.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{format(new Date(testimonial.created_at), 'MMM d, yyyy')}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderMessages = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">Contact Messages</h3>
+          <p className="text-sm text-muted-foreground">Manage customer inquiries</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-6 text-center">Loading messages...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Message</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messages.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      No messages found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  messages.map((message) => (
+                    <TableRow key={message.id}>
+                      <TableCell className="font-medium">{message.name}</TableCell>
+                      <TableCell>{message.email}</TableCell>
+                      <TableCell>{message.phone}</TableCell>
+                      <TableCell className="max-w-xs truncate">{message.message}</TableCell>
+                      <TableCell>
+                        <Badge variant={message.status === 'responded' ? 'default' : 'secondary'}>
+                          {message.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{format(new Date(message.created_at), 'MMM d, yyyy')}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   // Initialize data
   useEffect(() => {
     fetchOrders();
@@ -702,19 +939,36 @@ const AdminDashboard = () => {
 
           <div className="p-6">
             {activeTab === 'user-management' && renderUserManagement()}
-            {activeTab === 'orders' && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Orders Management</h3>
-                <p className="text-muted-foreground">Orders management coming soon...</p>
+            {activeTab === 'orders' && renderOrders()}
+            {activeTab === 'products' && renderProducts()}
+            {activeTab === 'testimonials' && renderTestimonials()}
+            {activeTab === 'messages' && renderMessages()}
+            {activeTab === 'customers' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold">Customers</h3>
+                  <p className="text-sm text-muted-foreground">Customer data is tracked through orders</p>
+                </div>
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-muted-foreground">Customer information is available in the Orders tab</p>
+                  </CardContent>
+                </Card>
               </div>
             )}
-            {activeTab === 'products' && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Products Management</h3>
-                <p className="text-muted-foreground">Products management coming soon...</p>
+            {activeTab === 'settings' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold">Site Settings</h3>
+                  <p className="text-sm text-muted-foreground">Configure application settings</p>
+                </div>
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-muted-foreground">Settings management coming soon...</p>
+                  </CardContent>
+                </Card>
               </div>
             )}
-            {/* Add other tab content as needed */}
           </div>
         </div>
       </div>
