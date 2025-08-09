@@ -142,8 +142,10 @@ const AdminDashboard = () => {
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showCreateTestimonial, setShowCreateTestimonial] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Fetch functions
@@ -305,6 +307,142 @@ const AdminDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSiteSettings = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .order('setting_key', { ascending: true });
+
+      if (error) throw error;
+      setSiteSettings(data || []);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load settings",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      window.location.href = '/admin-auth';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Order status updated successfully",
+      });
+
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleProductStatus = async (productId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: !isActive })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product status updated successfully",
+      });
+
+      fetchProducts();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update product status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleTestimonialStatus = async (testimonialId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('testimonials')
+        .update({ is_active: !isActive })
+        .eq('id', testimonialId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Testimonial status updated successfully",
+      });
+
+      fetchTestimonials();
+    } catch (error) {
+      console.error('Error updating testimonial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update testimonial status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateMessageStatus = async (messageId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({ status: newStatus })
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Message status updated successfully",
+      });
+
+      fetchMessages();
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update message status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -504,12 +642,13 @@ const AdminDashboard = () => {
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       No orders found
                     </TableCell>
                   </TableRow>
@@ -533,6 +672,21 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Select value={order.status} onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}>
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="processing">Processing</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -567,12 +721,13 @@ const AdminDashboard = () => {
                   <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {products.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       No products found
                     </TableCell>
                   </TableRow>
@@ -589,6 +744,17 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{format(new Date(product.created_at), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleProductStatus(product.id, product.is_active)}
+                          >
+                            {product.is_active ? 'Deactivate' : 'Activate'}
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -623,12 +789,13 @@ const AdminDashboard = () => {
                   <TableHead>Review</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {testimonials.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       No testimonials found
                     </TableCell>
                   </TableRow>
@@ -650,6 +817,17 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{format(new Date(testimonial.created_at), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleTestimonialStatus(testimonial.id, testimonial.is_active)}
+                          >
+                            {testimonial.is_active ? 'Deactivate' : 'Activate'}
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -684,12 +862,13 @@ const AdminDashboard = () => {
                   <TableHead>Message</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {messages.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       No messages found
                     </TableCell>
                   </TableRow>
@@ -706,6 +885,20 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{format(new Date(message.created_at), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Select value={message.status} onValueChange={(value) => handleUpdateMessageStatus(message.id, value)}>
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="unread">Unread</SelectItem>
+                              <SelectItem value="responded">Responded</SelectItem>
+                              <SelectItem value="resolved">Resolved</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -724,6 +917,7 @@ const AdminDashboard = () => {
     fetchTestimonials();
     fetchMessages();
     fetchUsers();
+    fetchSiteSettings();
   }, []);
 
   const renderUserManagement = () => {
@@ -854,7 +1048,7 @@ const AdminDashboard = () => {
               <Package className="h-8 w-8 text-blue-600" />
               <h1 className="text-xl font-semibold text-gray-900">Aqua VI Admin</h1>
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleLogout}>
               Logout
             </Button>
           </div>
@@ -946,25 +1140,127 @@ const AdminDashboard = () => {
             {activeTab === 'customers' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold">Customers</h3>
-                  <p className="text-sm text-muted-foreground">Customer data is tracked through orders</p>
+                  <h3 className="text-lg font-semibold">Customer Analytics</h3>
+                  <p className="text-sm text-muted-foreground">Customer insights from order data</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {new Set(orders.map(order => order.customer_email)).size}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm font-medium">Repeat Customers</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {orders.reduce((acc, order) => {
+                          const customerOrders = orders.filter(o => o.customer_email === order.customer_email);
+                          return customerOrders.length > 1 ? acc + 1 : acc;
+                        }, 0)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        ${orders.length ? (orders.reduce((sum, order) => sum + order.total_amount, 0) / orders.length).toFixed(2) : '0.00'}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
                 <Card>
-                  <CardContent className="p-6">
-                    <p className="text-muted-foreground">Customer information is available in the Orders tab</p>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Customer Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Orders</TableHead>
+                          <TableHead>Total Spent</TableHead>
+                          <TableHead>Last Order</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Array.from(new Set(orders.map(order => order.customer_email)))
+                          .map(email => {
+                            const customerOrders = orders.filter(order => order.customer_email === email);
+                            const lastOrder = customerOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+                            return {
+                              name: lastOrder.customer_name,
+                              email: email,
+                              phone: lastOrder.customer_phone,
+                              orderCount: customerOrders.length,
+                              totalSpent: customerOrders.reduce((sum, order) => sum + order.total_amount, 0),
+                              lastOrderDate: lastOrder.created_at
+                            };
+                          })
+                          .map((customer, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{customer.name}</TableCell>
+                              <TableCell>{customer.email}</TableCell>
+                              <TableCell>{customer.phone}</TableCell>
+                              <TableCell>{customer.orderCount}</TableCell>
+                              <TableCell>${customer.totalSpent.toFixed(2)}</TableCell>
+                              <TableCell>{format(new Date(customer.lastOrderDate), 'MMM d, yyyy')}</TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>
             )}
             {activeTab === 'settings' && (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold">Site Settings</h3>
-                  <p className="text-sm text-muted-foreground">Configure application settings</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold">Site Settings</h3>
+                    <p className="text-sm text-muted-foreground">Configure application settings</p>
+                  </div>
                 </div>
                 <Card>
-                  <CardContent className="p-6">
-                    <p className="text-muted-foreground">Settings management coming soon...</p>
+                  <CardContent className="p-0">
+                    {loading ? (
+                      <div className="p-6 text-center">Loading settings...</div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Setting</TableHead>
+                            <TableHead>Value</TableHead>
+                            <TableHead>Last Updated</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {siteSettings.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center text-muted-foreground p-6">
+                                No settings configured yet
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            siteSettings.map((setting) => (
+                              <TableRow key={setting.id}>
+                                <TableCell className="font-medium">{setting.setting_key}</TableCell>
+                                <TableCell>{setting.setting_value}</TableCell>
+                                <TableCell>{format(new Date(setting.updated_at), 'MMM d, yyyy')}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    )}
                   </CardContent>
                 </Card>
               </div>
