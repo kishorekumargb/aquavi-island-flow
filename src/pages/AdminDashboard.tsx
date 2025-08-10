@@ -10,6 +10,7 @@ import { CreateProductModal } from '@/components/CreateProductModal';
 import { EditProductModal } from '@/components/EditProductModal';
 import { CreateTestimonialModal } from '@/components/CreateTestimonialModal';
 import { EditTestimonialModal } from '@/components/EditTestimonialModal';
+import { OrderDetailsModal } from '@/components/OrderDetailsModal';
 import {
   Table,
   TableBody,
@@ -50,6 +51,10 @@ import {
   Star,
   UserX,
   Key,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Eye,
 } from 'lucide-react';
 
 // Types
@@ -57,14 +62,20 @@ interface Order {
   id: string;
   order_number: string;
   customer_name: string;
-  customer_email: string;
-  customer_phone: string;
+  customer_email: string | null;
+  customer_phone: string | null;
+  delivery_address: string;
+  items: Array<{
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
   total_amount: number;
   status: string;
+  payment_method: string;
   delivery_type: string;
-  delivery_address: string;
   created_at: string;
-  items: any;
+  updated_at: string;
 }
 
 interface Product {
@@ -153,7 +164,40 @@ const AdminDashboard = () => {
   const [editedSettings, setEditedSettings] = useState<Record<string, string>>({});
   const [newSettingKey, setNewSettingKey] = useState('');
   const [newSettingValue, setNewSettingValue] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
   const { toast } = useToast();
+
+  // Status icon helper functions
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'processing':
+        return <AlertCircle className="w-4 h-4 text-blue-500" />;
+      case 'delivered':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'cancelled':
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'delivered':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
   // Fetch functions
   const fetchOrders = async () => {
@@ -165,7 +209,10 @@ const AdminDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      setOrders((data || []).map(order => ({
+        ...order,
+        items: Array.isArray(order.items) ? order.items : []
+      })) as Order[]);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
@@ -779,9 +826,6 @@ const AdminDashboard = () => {
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={exportOrdersCSV}>Export CSV</Button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={exportOrdersCSV}>Export CSV</Button>
-        </div>
       </div>
 
       <Card>
@@ -823,13 +867,26 @@ const AdminDashboard = () => {
                       </TableCell>
                       <TableCell>${order.total_amount.toFixed(2)}</TableCell>
                       <TableCell>
-                        <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
-                          {order.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(order.status)}
+                          <Badge className={`${getStatusColor(order.status)} capitalize`}>
+                            {order.status}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy')}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowOrderDetails(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Select value={order.status} onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}>
                             <SelectTrigger className="w-32">
                               <SelectValue />
@@ -1148,6 +1205,17 @@ const AdminDashboard = () => {
             isUpdating={updatingUser}
           />
         )}
+
+        <OrderDetailsModal
+          order={selectedOrder}
+          isOpen={showOrderDetails}
+          onClose={() => {
+            setShowOrderDetails(false);
+            setSelectedOrder(null);
+          }}
+          onUpdateStatus={handleUpdateOrderStatus}
+          isUpdating={loading}
+        />
 
         <Card>
           <CardContent className="p-0">
