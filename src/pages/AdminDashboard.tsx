@@ -559,7 +559,7 @@ const AdminDashboard = () => {
       o.status,
       o.created_at,
     ]);
-    const escape = (v: any) => '"' + String(v ?? '').replaceAll('"','""') + '"';
+    const escape = (v: any) => '"' + String(v ?? '').replace(/"/g,'""') + '"';
     const csv = [headers.join(','), ...rows.map(r => r.map(escape).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -870,14 +870,14 @@ const AdminDashboard = () => {
       <CreateProductModal
         isOpen={showCreateProduct}
         onClose={() => setShowCreateProduct(false)}
-        onCreate={handleCreateProduct}
+        onSuccess={fetchProducts}
       />
       {editingProduct && (
         <EditProductModal
           isOpen={!!editingProduct}
           onClose={() => setEditingProduct(null)}
           product={editingProduct}
-          onSave={handleUpdateProduct}
+          onSuccess={fetchProducts}
         />
       )}
 
@@ -959,14 +959,14 @@ const AdminDashboard = () => {
       <CreateTestimonialModal
         isOpen={showCreateTestimonial}
         onClose={() => setShowCreateTestimonial(false)}
-        onCreate={handleCreateTestimonial}
+        onSuccess={fetchTestimonials}
       />
       {editingTestimonial && (
         <EditTestimonialModal
           isOpen={!!editingTestimonial}
           onClose={() => setEditingTestimonial(null)}
           testimonial={editingTestimonial}
-          onSave={handleUpdateTestimonial}
+          onSuccess={fetchTestimonials}
         />
       )}
 
