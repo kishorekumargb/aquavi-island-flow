@@ -673,20 +673,28 @@ const AdminDashboard = () => {
     
     try {
       // Delete from profiles and user_roles tables first
-      await supabase.from('profiles').delete().eq('user_id', userId);
-      await supabase.from('user_roles').delete().eq('user_id', userId);
+      const { error: profileError } = await supabase.from('profiles').delete().eq('user_id', userId);
+      if (profileError) throw profileError;
+      
+      const { error: roleError } = await supabase.from('user_roles').delete().eq('user_id', userId);
+      if (roleError) throw roleError;
+      
+      // Delete from auth.users using admin client
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) throw authError;
       
       toast({
         title: "Success",
         description: "User deleted successfully",
       });
       
+      // Refresh the users list
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
       toast({
         title: "Error",
-        description: "Failed to delete user",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     }
@@ -1206,16 +1214,6 @@ const AdminDashboard = () => {
           />
         )}
 
-        <OrderDetailsModal
-          order={selectedOrder}
-          isOpen={showOrderDetails}
-          onClose={() => {
-            setShowOrderDetails(false);
-            setSelectedOrder(null);
-          }}
-          onUpdateStatus={handleUpdateOrderStatus}
-          isUpdating={loading}
-        />
 
         <Card>
           <CardContent className="p-0">
@@ -1579,6 +1577,18 @@ const AdminDashboard = () => {
             )}
           </div>
         </div>
+
+        {/* Global Modals */}
+        <OrderDetailsModal
+          order={selectedOrder}
+          isOpen={showOrderDetails}
+          onClose={() => {
+            setShowOrderDetails(false);
+            setSelectedOrder(null);
+          }}
+          onUpdateStatus={handleUpdateOrderStatus}
+          isUpdating={loading}
+        />
       </div>
     </div>
   );

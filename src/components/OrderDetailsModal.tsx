@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Phone, Mail, Calendar, CreditCard, Package, Truck, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
 
 interface Order {
@@ -187,17 +188,36 @@ export function OrderDetailsModal({
           </div>
 
           {/* Actions */}
-          {order.status !== 'delivered' && order.status !== 'cancelled' && (
-            <div className="flex gap-2 pt-4">
+          <div className="flex gap-2 pt-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium">Update Status:</label>
+              <Select 
+                value={order.status} 
+                onValueChange={(value) => onUpdateStatus(order.id, value)}
+                disabled={isUpdating}
+              >
+                <SelectTrigger className="w-full mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {order.status !== 'delivered' && order.status !== 'cancelled' && (
               <Button
                 onClick={handleMarkAsDelivered}
                 disabled={isUpdating}
-                className="flex-1"
+                variant="default"
+                className="self-end"
               >
                 {isUpdating ? 'Updating...' : 'Mark as Delivered'}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
