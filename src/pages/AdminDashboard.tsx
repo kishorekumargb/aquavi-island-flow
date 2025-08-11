@@ -605,29 +605,6 @@ const AdminDashboard = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleUpdateSetting = async (id: string, value: string) => {
-    try {
-      const { error } = await supabase.from('site_settings').update({ setting_value: value }).eq('id', id);
-      if (error) throw error;
-      toast({ title: 'Saved', description: 'Setting updated' });
-      fetchSiteSettings();
-    } catch (error) {
-      console.error('Error updating setting:', error);
-      toast({ title: 'Error', description: 'Failed to update setting', variant: 'destructive' });
-    }
-  };
-
-  const handleAddSetting = async (key: string, value: string) => {
-    try {
-      const { error } = await supabase.from('site_settings').insert({ setting_key: key, setting_value: value });
-      if (error) throw error;
-      toast({ title: 'Added', description: 'New setting added' });
-      fetchSiteSettings();
-    } catch (error) {
-      console.error('Error adding setting:', error);
-      toast({ title: 'Error', description: 'Failed to add setting', variant: 'destructive' });
-    }
-  };
 
   // User management functions
   const handleResetPassword = async (email: string) => {

@@ -449,7 +449,6 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                 
                 try {
                   const orderDetails = {
-                    order_number: `AQ${Date.now()}`,
                     customer_name: customerInfo.name,
                     customer_email: customerInfo.email || null,
                     customer_phone: customerInfo.phone || null,
@@ -465,20 +464,23 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                     payment_method: 'cash'
                   };
                   
-                  const { error } = await supabase
+                  const { data: insertedOrder, error } = await supabase
                     .from('orders')
-                    .insert([orderDetails]);
+                    .insert([orderDetails])
+                    .select()
+                    .single();
                   
                   if (error) throw error;
                   
-                  // Navigate to order confirmation page instead of toast
+                  // Navigate to order confirmation page
+                  const orderItemsArray = Array.isArray(insertedOrder.items) ? insertedOrder.items : [];
                   const orderParams = new URLSearchParams({
-                    orderNumber: orderDetails.order_number,
-                    customerName: orderDetails.customer_name,
-                    total: orderDetails.total_amount.toString(),
-                    items: orderDetails.items.map(item => `${item.name} x${item.quantity}`).join(', '),
-                    deliveryAddress: orderDetails.delivery_address || '',
-                    customerPhone: orderDetails.customer_phone || ''
+                    orderNumber: insertedOrder.order_number,
+                    customerName: insertedOrder.customer_name,
+                    total: insertedOrder.total_amount.toString(),
+                    items: orderItemsArray.map((item: any) => `${item.name} x${item.quantity}`).join(', '),
+                    deliveryAddress: insertedOrder.delivery_address || '',
+                    customerPhone: insertedOrder.customer_phone || ''
                   });
                   
                   navigate(`/order-confirmation?${orderParams.toString()}`);

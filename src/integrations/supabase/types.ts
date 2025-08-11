@@ -72,7 +72,7 @@ export type Database = {
           delivery_type?: string | null
           id?: string
           items: Json
-          order_number: string
+          order_number?: string
           payment_method?: string | null
           status?: string
           total_amount: number
@@ -256,6 +256,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_aquavi_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string
