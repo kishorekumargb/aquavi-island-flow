@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 import { CreateUserModal } from '@/components/CreateUserModal';
 import { EditUserModal } from '@/components/EditUserModal';
 import { CreateProductModal } from '@/components/CreateProductModal';
@@ -142,6 +144,8 @@ interface UserRole {
 }
 
 const AdminDashboard = () => {
+  const { user, userRole, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -160,13 +164,16 @@ const AdminDashboard = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showCreateTestimonial, setShowCreateTestimonial] = useState(false);
-  const [siteSettings, setSiteSettings] = useState<any[]>([]);
-  const [editedSettings, setEditedSettings] = useState<Record<string, string>>({});
-  const [newSettingKey, setNewSettingKey] = useState('');
-  const [newSettingValue, setNewSettingValue] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const { toast } = useToast();
+
+  // Authentication check
+  useEffect(() => {
+    if (!authLoading && (!user || userRole !== 'admin')) {
+      navigate('/');
+    }
+  }, [user, userRole, authLoading, navigate]);
 
   // Status icon helper functions
   const getStatusIcon = (status: string) => {
@@ -364,27 +371,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchSiteSettings = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('*')
-        .order('setting_key', { ascending: true });
-
-      if (error) throw error;
-      setSiteSettings(data || []);
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load settings",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -1180,7 +1166,6 @@ const AdminDashboard = () => {
     fetchTestimonials();
     fetchMessages();
     fetchUsers();
-    fetchSiteSettings();
   }, []);
 
   const renderUserManagement = () => {
@@ -1374,7 +1359,6 @@ const AdminDashboard = () => {
                 { id: 'customers', label: 'Customers', icon: Users },
                 { id: 'user-management', label: 'User Management', icon: Users },
                 { id: 'messages', label: 'Messages', icon: MessageSquare },
-                { id: 'settings', label: 'Settings', icon: BarChart3 },
               ].map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -1481,96 +1465,6 @@ const AdminDashboard = () => {
                           ))}
                       </TableBody>
                     </Table>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-            {activeTab === 'settings' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-semibold">Site Settings</h3>
-                    <p className="text-sm text-muted-foreground">Configure application settings</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Setting key (e.g., phone)"
-                      value={newSettingKey}
-                      onChange={(e) => setNewSettingKey(e.target.value)}
-                      className="w-48"
-                    />
-                    <Input
-                      placeholder="Value"
-                      value={newSettingValue}
-                      onChange={(e) => setNewSettingValue(e.target.value)}
-                      className="w-64"
-                    />
-                    <Button
-                      onClick={() => {
-                        if (!newSettingKey.trim()) return;
-                        handleAddSetting(newSettingKey.trim(), newSettingValue);
-                        setNewSettingKey('');
-                        setNewSettingValue('');
-                      }}
-                    >
-                      Add Setting
-                    </Button>
-                  </div>
-                </div>
-                <Card>
-                  <CardContent className="p-0">
-                    {loading ? (
-                      <div className="p-6 text-center">Loading settings...</div>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Setting</TableHead>
-                            <TableHead>Value</TableHead>
-                            <TableHead>Last Updated</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {siteSettings.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={4} className="text-center text-muted-foreground p-6">
-                                No settings configured yet
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            siteSettings.map((setting) => (
-                              <TableRow key={setting.id}>
-                                <TableCell className="font-medium">{setting.setting_key}</TableCell>
-                                <TableCell>
-                                  <Input
-                                    value={editedSettings[setting.id] ?? setting.setting_value ?? ''}
-                                    onChange={(e) =>
-                                      setEditedSettings((prev) => ({ ...prev, [setting.id]: e.target.value }))
-                                    }
-                                  />
-                                </TableCell>
-                                <TableCell>{format(new Date(setting.updated_at), 'MMM d, yyyy')}</TableCell>
-                                <TableCell>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleUpdateSetting(
-                                        setting.id,
-                                        editedSettings[setting.id] ?? setting.setting_value ?? ''
-                                      )
-                                    }
-                                  >
-                                    Save
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    )}
                   </CardContent>
                 </Card>
               </div>

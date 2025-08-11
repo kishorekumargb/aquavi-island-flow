@@ -67,7 +67,7 @@ export function Contact() {
             Contact us today to schedule your Aqua VI delivery
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Delivery available in the greater Road Town area with FREE delivery service.
+            FREE Delivery available in the greater Road Town area.
           </p>
         </div>
 

@@ -71,7 +71,7 @@ export function Hero() {
             </p>
             
             <p className="text-base sm:text-lg max-w-3xl mx-auto leading-relaxed mb-12 sm:mb-16 text-muted-foreground">
-              Enjoy Aqua VI—the sweet taste of purity, delivered to you for FREE.
+              Enjoy Aqua VI—the sweet taste of purity, delivered to you for <span className="text-primary font-semibold">"FREE"</span>.
             </p>
             
             <div className="flex justify-center mb-12">
