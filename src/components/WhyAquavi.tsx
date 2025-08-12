@@ -18,7 +18,7 @@ const features = [
   {
     icon: Truck,
     title: "Free Delivery",
-    description: "Same-day delivery across all major BVI locations",
+    description: "Same-day delivery across Road Town",
     highlight: "No Extra Cost"
   }
 ];

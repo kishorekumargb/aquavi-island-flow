@@ -13,7 +13,7 @@ import { EditProductModal } from '@/components/EditProductModal';
 import { CreateTestimonialModal } from '@/components/CreateTestimonialModal';
 import { EditTestimonialModal } from '@/components/EditTestimonialModal';
 import { OrderDetailsModal } from '@/components/OrderDetailsModal';
-import { AuthModal } from '@/components/auth/AuthModal';
+import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal';
 import {
   Table,
   TableBody,
@@ -27,8 +27,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -167,15 +169,18 @@ const AdminDashboard = () => {
   const [showCreateTestimonial, setShowCreateTestimonial] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '' });
+  const [userLoginForm, setUserLoginForm] = useState({ email: '', password: '' });
+  const [showUserLogin, setShowUserLogin] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
   const { toast } = useToast();
 
   // Authentication check
   useEffect(() => {
     if (!authLoading && (!user || userRole !== 'admin')) {
-      setShowAuthModal(true);
-    } else if (user && userRole === 'admin') {
-      setShowAuthModal(false);
+      setShowAdminLogin(true);
     }
   }, [user, userRole, authLoading]);
 
@@ -375,6 +380,65 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoginLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: adminLoginForm.email,
+        password: adminLoginForm.password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
+      
+      setShowAdminLogin(false);
+      setAdminLoginForm({ email: '', password: '' });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log in",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
+
+  const handleUserLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoginLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: userLoginForm.email,
+        password: userLoginForm.password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
+      
+      setShowAdminLogin(false);
+      setUserLoginForm({ email: '', password: '' });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log in",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoginLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -1478,10 +1542,92 @@ const AdminDashboard = () => {
           isUpdating={loading}
         />
 
-        <AuthModal 
-          open={showAuthModal}
-          onOpenChange={setShowAuthModal}
-          defaultTab="login"
+        {/* Admin Login Modal */}
+        <Dialog open={showAdminLogin} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center">Admin Access</DialogTitle>
+              <DialogDescription className="text-center">
+                Please sign in to access the admin dashboard
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Tabs defaultValue="admin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="admin">Admin Login</TabsTrigger>
+                <TabsTrigger value="user">User Login</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="admin" className="mt-4">
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <div>
+                    <Label htmlFor="admin-email">Admin Email</Label>
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      value={adminLoginForm.email}
+                      onChange={(e) => setAdminLoginForm({ ...adminLoginForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="admin-password">Admin Password</Label>
+                    <Input
+                      id="admin-password"
+                      type="password"
+                      value={adminLoginForm.password}
+                      onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoginLoading}>
+                    {isLoginLoading ? 'Signing in...' : 'Sign In as Admin'}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="user" className="mt-4">
+                <form onSubmit={handleUserLogin} className="space-y-4">
+                  <div>
+                    <Label htmlFor="user-email">Email</Label>
+                    <Input
+                      id="user-email"
+                      type="email"
+                      value={userLoginForm.email}
+                      onChange={(e) => setUserLoginForm({ ...userLoginForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="user-password">Password</Label>
+                    <Input
+                      id="user-password"
+                      type="password"
+                      value={userLoginForm.password}
+                      onChange={(e) => setUserLoginForm({ ...userLoginForm, password: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoginLoading}>
+                    {isLoginLoading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="w-full text-sm"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot your password?
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </DialogContent>
+        </Dialog>
+
+        <ForgotPasswordModal 
+          isOpen={showForgotPassword}
+          onClose={() => setShowForgotPassword(false)}
         />
       </div>
     </div>
