@@ -13,6 +13,7 @@ import { EditProductModal } from '@/components/EditProductModal';
 import { CreateTestimonialModal } from '@/components/CreateTestimonialModal';
 import { EditTestimonialModal } from '@/components/EditTestimonialModal';
 import { OrderDetailsModal } from '@/components/OrderDetailsModal';
+import { AuthModal } from '@/components/auth/AuthModal';
 import {
   Table,
   TableBody,
@@ -166,20 +167,15 @@ const AdminDashboard = () => {
   const [showCreateTestimonial, setShowCreateTestimonial] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { toast } = useToast();
 
-  // Authentication check and login modal state
-  const [showLogin, setShowLogin] = useState(false);
-  
+  // Authentication check
   useEffect(() => {
-    if (!authLoading) {
-      if (!user || userRole !== 'admin') {
-        setShowLogin(true);
-      } else {
-        setShowLogin(false);
-      }
+    if (!authLoading && (!user || userRole !== 'admin')) {
+      setShowAuthModal(true);
+    } else if (user && userRole === 'admin') {
+      setShowAuthModal(false);
     }
   }, [user, userRole, authLoading]);
 
@@ -739,35 +735,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: loginForm.email,
-        password: loginForm.password,
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Logged in successfully",
-      });
-      
-      setShowLogin(false);
-    } catch (error: any) {
-      console.error('Error logging in:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to log in",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
 
   const handleUpdateUser = async (updatedUser: any) => {
     try {
@@ -1302,43 +1269,14 @@ const AdminDashboard = () => {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
 
-  // Show login modal if user is not authenticated
-  if (showLogin) {
+  // Show loading while checking auth
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Water 360</CardTitle>
-            <p className="text-center text-muted-foreground">Admin Login</p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={loginForm.email}
-                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoggingIn}>
-                {isLoggingIn ? 'Logging in...' : 'Login'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -1538,6 +1476,12 @@ const AdminDashboard = () => {
           }}
           onUpdateStatus={handleUpdateOrderStatus}
           isUpdating={loading}
+        />
+
+        <AuthModal 
+          open={showAuthModal}
+          onOpenChange={setShowAuthModal}
+          defaultTab="login"
         />
       </div>
     </div>
