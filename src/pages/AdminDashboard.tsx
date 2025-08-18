@@ -181,6 +181,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!authLoading && (!user || userRole !== 'admin')) {
       setShowAdminLogin(true);
+    } else if (!authLoading && user && userRole === 'admin') {
+      setShowAdminLogin(false);
     }
   }, [user, userRole, authLoading]);
 
