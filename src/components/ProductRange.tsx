@@ -100,15 +100,15 @@ export function ProductRange() {
                 )}
                 
                 <CardHeader className="text-center pb-4">
-                  <div className="flex items-center justify-center mb-4">
+                  <div className="flex items-center justify-center mb-4 bg-grey">
                     {product.image_url ? (
                       <img 
                         src={product.image_url} 
                         alt={`Aqua VI ${product.name}`}
-                        className="w-32 h-48 object-contain"
+                        className="w-32 h-48 object-cover rounded-lg"
                       />
                     ) : (
-                      <div className="w-32 h-48 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <div className="w-32 h-48 bg-primary/10 flex items-center justify-center rounded-lg">
                         <Droplets className="w-12 h-12 text-primary" />
                       </div>
                     )}
