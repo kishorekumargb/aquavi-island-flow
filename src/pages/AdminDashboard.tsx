@@ -385,12 +385,18 @@ const AdminDashboard = () => {
     setIsLoginLoading(true);
     
     try {
+      console.log('Attempting admin login with email:', adminLoginForm.email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email: adminLoginForm.email,
         password: adminLoginForm.password,
       });
       
-      if (error) throw error;
+      console.log('Login response:', { data, error });
+      
+      if (error) {
+        console.error('Login error details:', error);
+        throw error;
+      }
       
       toast({
         title: "Success",
@@ -400,6 +406,7 @@ const AdminDashboard = () => {
       setShowAdminLogin(false);
       setAdminLoginForm({ email: '', password: '' });
     } catch (error: any) {
+      console.error('Caught login error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to log in",
