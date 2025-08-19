@@ -28,15 +28,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role
+          // Fetch user role - check specifically for admin role
           setTimeout(async () => {
             try {
               const { data } = await supabase
                 .from('user_roles')
                 .select('role')
                 .eq('user_id', session.user.id)
+                .eq('role', 'admin')
                 .single();
-              setUserRole(data?.role || 'user');
+              setUserRole(data ? 'admin' : 'user');
             } catch (error) {
               console.error('Error fetching user role:', error);
               setUserRole('user');

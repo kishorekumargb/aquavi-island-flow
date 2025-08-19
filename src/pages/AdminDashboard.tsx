@@ -188,15 +188,16 @@ const AdminDashboard = () => {
         setShowAdminLogin(false);
         setIsAuthenticated(true);
       } else if (user && userRole === null) {
-        // User is authenticated but role is still loading, keep modal closed but don't load data yet
+        // User is authenticated but role is still loading, wait for role
         setShowAdminLogin(false);
         setIsAuthenticated(false);
-      } else if (user && userRole && userRole !== 'admin') {
-        // User is authenticated but not admin, redirect to home
-        navigate('/');
+      } else if (user && userRole === 'user') {
+        // User is authenticated but not admin, show login modal again
+        setShowAdminLogin(true);
+        setIsAuthenticated(false);
       }
     }
-  }, [user, userRole, authLoading, navigate]);
+  }, [user, userRole, authLoading]);
 
   // Status icon helper functions
   const getStatusIcon = (status: string) => {
