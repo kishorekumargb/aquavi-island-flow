@@ -181,15 +181,22 @@ const AdminDashboard = () => {
   // Authentication check
   useEffect(() => {
     if (!authLoading) {
-      if (!user || userRole !== 'admin') {
+      if (!user) {
         setShowAdminLogin(true);
         setIsAuthenticated(false);
-      } else {
+      } else if (user && userRole === 'admin') {
         setShowAdminLogin(false);
         setIsAuthenticated(true);
+      } else if (user && userRole === null) {
+        // User is authenticated but role is still loading, keep modal closed but don't load data yet
+        setShowAdminLogin(false);
+        setIsAuthenticated(false);
+      } else if (user && userRole && userRole !== 'admin') {
+        // User is authenticated but not admin, redirect to home
+        navigate('/');
       }
     }
-  }, [user, userRole, authLoading]);
+  }, [user, userRole, authLoading, navigate]);
 
   // Status icon helper functions
   const getStatusIcon = (status: string) => {
