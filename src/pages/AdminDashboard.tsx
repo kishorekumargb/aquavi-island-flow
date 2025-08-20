@@ -182,22 +182,28 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
+        // No user logged in - show login modal
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'admin') {
+        // User is admin - grant access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
       } else if (user && userRole === null) {
-        // User is authenticated but role is still loading, wait for role
-        setShowAdminLogin(false);
-        setIsAuthenticated(false);
-      } else if (user && userRole === 'user') {
-        // User is authenticated but not admin, show login modal again
+        // User is authenticated but role is still loading - keep login modal open
         setShowAdminLogin(true);
         setIsAuthenticated(false);
+      } else if (user && userRole === 'user') {
+        // User is not admin - show access denied and redirect
+        toast({
+          title: "Access Denied",
+          description: "You do not have admin privileges",
+          variant: "destructive",
+        });
+        navigate('/');
       }
     }
-  }, [user, userRole, authLoading]);
+  }, [user, userRole, authLoading, navigate, toast]);
 
   // Status icon helper functions
   const getStatusIcon = (status: string) => {
