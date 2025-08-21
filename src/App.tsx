@@ -20,7 +20,7 @@ const AppContent = () => {
   const isDevelopment = import.meta.env.DEV;
   
   // TODO: Replace with your actual GA4 Measurement ID
-  const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX'; // Replace this with your actual ID
+  const GA_MEASUREMENT_ID = 'G-PMRHBJLL78'; // Replace this with your actual ID
   
   useAnalytics(GA_MEASUREMENT_ID, isDevelopment);
 
