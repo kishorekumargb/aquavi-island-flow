@@ -13,6 +13,7 @@ import { EditProductModal } from '@/components/EditProductModal';
 import { CreateTestimonialModal } from '@/components/CreateTestimonialModal';
 import { EditTestimonialModal } from '@/components/EditTestimonialModal';
 import { OrderDetailsModal } from '@/components/OrderDetailsModal';
+import { ViewMessageModal } from "@/components/ViewMessageModal";
 import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal';
 import {
   Table,
@@ -168,7 +169,9 @@ const AdminDashboard = () => {
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showCreateTestimonial, setShowCreateTestimonial] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showViewMessage, setShowViewMessage] = useState(false);
   const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '' });
   const [userLoginForm, setUserLoginForm] = useState({ email: '', password: '' });
   const [showUserLogin, setShowUserLogin] = useState(false);
@@ -596,7 +599,7 @@ const AdminDashboard = () => {
     try {
       const { error } = await supabase
         .from('contact_messages')
-        .update({ status: newStatus })
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
 
       if (error) throw error;
@@ -615,6 +618,11 @@ const AdminDashboard = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleViewMessage = (message: any) => {
+    setSelectedMessage(message);
+    setShowViewMessage(true);
   };
 
   const handleCreateProduct = async (productData: Omit<Product, 'id' | 'created_at'>) => {
@@ -1237,20 +1245,29 @@ const AdminDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{format(new Date(message.created_at), 'MMM d, yyyy')}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Select value={message.status} onValueChange={(value) => handleUpdateMessageStatus(message.id, value)}>
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="unread">Unread</SelectItem>
-                              <SelectItem value="responded">Responded</SelectItem>
-                              <SelectItem value="resolved">Resolved</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </TableCell>
+                       <TableCell>
+                         <div className="flex space-x-2">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleViewMessage(message)}
+                             className="flex items-center gap-1"
+                           >
+                             <Eye className="h-4 w-4" />
+                             View
+                           </Button>
+                           <Select value={message.status} onValueChange={(value) => handleUpdateMessageStatus(message.id, value)}>
+                             <SelectTrigger className="w-32">
+                               <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="unread">Unread</SelectItem>
+                               <SelectItem value="responded">Responded</SelectItem>
+                               <SelectItem value="resolved">Resolved</SelectItem>
+                             </SelectContent>
+                           </Select>
+                         </div>
+                       </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -1687,6 +1704,17 @@ const AdminDashboard = () => {
           }}
           onUpdateStatus={handleUpdateOrderStatus}
           isUpdating={loading}
+        />
+
+        {/* View Message Modal */}
+        <ViewMessageModal
+          isOpen={showViewMessage}
+          onClose={() => {
+            setShowViewMessage(false);
+            setSelectedMessage(null);
+          }}
+          message={selectedMessage}
+          onUpdateStatus={handleUpdateMessageStatus}
         />
 
         {/* Keep only the ForgotPasswordModal here */}
