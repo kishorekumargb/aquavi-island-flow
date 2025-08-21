@@ -172,21 +172,30 @@ const AdminDashboard = () => {
   const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '' });
   const [userLoginForm, setUserLoginForm] = useState({ email: '', password: '' });
   const [showUserLogin, setShowUserLogin] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(true); // Always start with login required
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminSessionVerified, setAdminSessionVerified] = useState(false);
   const { toast } = useToast();
 
-  // Authentication check
+  // Initial setup - always require admin login
   useEffect(() => {
-    if (!authLoading) {
+    // Clear any existing session when accessing admin dashboard
+    setIsAuthenticated(false);
+    setAdminSessionVerified(false);
+    setShowAdminLogin(true);
+  }, []);
+
+  // Authentication check - only allow access after explicit admin verification
+  useEffect(() => {
+    if (!authLoading && adminSessionVerified) {
       if (!user) {
         // No user logged in - show login modal
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'admin') {
-        // User is admin - grant access
+        // User is admin and session verified - grant access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
       } else if (user && userRole === null) {
@@ -203,7 +212,7 @@ const AdminDashboard = () => {
         navigate('/');
       }
     }
-  }, [user, userRole, authLoading, navigate, toast]);
+  }, [user, userRole, authLoading, adminSessionVerified, navigate, toast]);
 
   // Status icon helper functions
   const getStatusIcon = (status: string) => {
@@ -418,6 +427,9 @@ const AdminDashboard = () => {
         console.error('Login error details:', error);
         throw error;
       }
+      
+      // Mark admin session as verified after successful login
+      setAdminSessionVerified(true);
       
       toast({
         title: "Success",
@@ -1385,8 +1397,8 @@ const AdminDashboard = () => {
     );
   }
   
-  // Don't render main content until authenticated
-  if (!isAuthenticated || showAdminLogin) {
+  // Don't render main content until admin session is verified
+  if (!isAuthenticated || showAdminLogin || !adminSessionVerified) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Admin Login Modal */}
