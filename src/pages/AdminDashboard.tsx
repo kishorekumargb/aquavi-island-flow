@@ -182,6 +182,17 @@ const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminSessionVerified, setAdminSessionVerified] = useState(false);
   const [receiveOrders, setReceiveOrders] = useState(true);
+  const [siteSettings, setSiteSettings] = useState({
+    phone: '',
+    email: '',
+    address: '',
+    delivery_hours: '',
+    business_hours_monday_friday: '',
+    business_hours_saturday: '',
+    business_hours_sunday: '',
+    logo_url: ''
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
   const { toast } = useToast();
 
   // Initial setup - always require admin login
@@ -204,13 +215,17 @@ const AdminDashboard = () => {
         setShowAdminLogin(false);
         setIsAuthenticated(true);
         fetchReceiveOrdersSetting();
+        fetchSiteSettings();
       } else if (user && userRole === null) {
         // User is authenticated but role is still loading - keep login modal open
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'user') {
-        // User is not admin - redirect to user dashboard
-        navigate('/user-dashboard');
+        // User is authenticated - grant limited access
+        setShowAdminLogin(false);
+        setIsAuthenticated(true);
+        fetchReceiveOrdersSetting();
+        fetchSiteSettings();
       }
     }
   }, [user, userRole, authLoading, adminSessionVerified, navigate, toast]);
@@ -437,6 +452,8 @@ const AdminDashboard = () => {
         .upsert({
           setting_key: 'receive_orders',
           setting_value: enabled.toString()
+        }, {
+          onConflict: 'setting_key'
         });
 
       if (error) throw error;
@@ -453,6 +470,81 @@ const AdminDashboard = () => {
         description: "Failed to update setting",
         variant: "destructive",
       });
+    }
+  };
+
+  const fetchSiteSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', [
+          'phone',
+          'email',
+          'address',
+          'delivery_hours',
+          'business_hours_monday_friday',
+          'business_hours_saturday',
+          'business_hours_sunday',
+          'logo_url'
+        ]);
+
+      if (error) {
+        console.error('Error fetching site settings:', error);
+        return;
+      }
+
+      if (data) {
+        const settings = data.reduce((acc, setting) => {
+          acc[setting.setting_key] = setting.setting_value || '';
+          return acc;
+        }, {} as Record<string, string>);
+
+        setSiteSettings({
+          phone: settings.phone || '',
+          email: settings.email || '',
+          address: settings.address || '',
+          delivery_hours: settings.delivery_hours || '',
+          business_hours_monday_friday: settings.business_hours_monday_friday || '',
+          business_hours_saturday: settings.business_hours_saturday || '',
+          business_hours_sunday: settings.business_hours_sunday || '',
+          logo_url: settings.logo_url || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching site settings:', error);
+    }
+  };
+
+  const updateSiteSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const settingsToUpdate = Object.entries(siteSettings).map(([key, value]) => ({
+        setting_key: key,
+        setting_value: value
+      }));
+
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert(settingsToUpdate, {
+          onConflict: 'setting_key'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Settings updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update settings",
+        variant: "destructive",
+      });
+    } finally {
+      setSettingsLoading(false);
     }
   };
 
@@ -519,7 +611,7 @@ const AdminDashboard = () => {
       // Clear form
       setUserLoginForm({ email: '', password: '' });
       
-      // The modal will be closed by the useEffect when userRole updates
+      // Modal will close automatically when auth state updates
       
     } catch (error: any) {
       toast({
@@ -1441,6 +1533,121 @@ const AdminDashboard = () => {
     );
   };
 
+  const renderSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold">Site Settings</h3>
+        <p className="text-sm text-muted-foreground">Manage website contact information and business details</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Contact Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                value={siteSettings.phone}
+                onChange={(e) => setSiteSettings({ ...siteSettings, phone: e.target.value })}
+                placeholder="e.g., 1-499-4611"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={siteSettings.email}
+                onChange={(e) => setSiteSettings({ ...siteSettings, email: e.target.value })}
+                placeholder="e.g., info@aquavi.com"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="address">Business Address</Label>
+            <Textarea
+              id="address"
+              value={siteSettings.address}
+              onChange={(e) => setSiteSettings({ ...siteSettings, address: e.target.value })}
+              placeholder="e.g., MoneyGram, Flemming Street, Road Town, Tortola"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="logo_url">Logo URL</Label>
+            <Input
+              id="logo_url"
+              value={siteSettings.logo_url}
+              onChange={(e) => setSiteSettings({ ...siteSettings, logo_url: e.target.value })}
+              placeholder="e.g., /lovable-uploads/logo.png"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Business Hours</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="business_hours_monday_friday">Monday - Friday</Label>
+            <Input
+              id="business_hours_monday_friday"
+              value={siteSettings.business_hours_monday_friday}
+              onChange={(e) => setSiteSettings({ ...siteSettings, business_hours_monday_friday: e.target.value })}
+              placeholder="e.g., 8:00 AM - 6:00 PM"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="business_hours_saturday">Saturday</Label>
+            <Input
+              id="business_hours_saturday"
+              value={siteSettings.business_hours_saturday}
+              onChange={(e) => setSiteSettings({ ...siteSettings, business_hours_saturday: e.target.value })}
+              placeholder="e.g., 9:00 AM - 4:00 PM"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="business_hours_sunday">Sunday</Label>
+            <Input
+              id="business_hours_sunday"
+              value={siteSettings.business_hours_sunday}
+              onChange={(e) => setSiteSettings({ ...siteSettings, business_hours_sunday: e.target.value })}
+              placeholder="e.g., Emergency Only"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="delivery_hours">Delivery Hours</Label>
+            <Input
+              id="delivery_hours"
+              value={siteSettings.delivery_hours}
+              onChange={(e) => setSiteSettings({ ...siteSettings, delivery_hours: e.target.value })}
+              placeholder="e.g., 3:30 PM - 5:30 PM"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button 
+          onClick={updateSiteSettings}
+          disabled={settingsLoading}
+        >
+          {settingsLoading ? 'Saving...' : 'Save Settings'}
+        </Button>
+      </div>
+    </div>
+  );
+
   // Statistics
   const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
@@ -1631,11 +1838,14 @@ const AdminDashboard = () => {
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'orders', label: 'Orders', icon: ShoppingBag },
-                { id: 'products', label: 'Products', icon: Package },
-                { id: 'testimonials', label: 'Testimonials', icon: Star },
-                { id: 'customers', label: 'Customers', icon: Users },
-                { id: 'user-management', label: 'User Management', icon: Users },
-                { id: 'messages', label: 'Messages', icon: MessageSquare },
+                ...(userRole === 'admin' ? [
+                  { id: 'products', label: 'Products', icon: Package },
+                  { id: 'testimonials', label: 'Testimonials', icon: Star },
+                  { id: 'customers', label: 'Customers', icon: Users },
+                  { id: 'user-management', label: 'User Management', icon: Users },
+                  { id: 'messages', label: 'Messages', icon: MessageSquare },
+                  { id: 'settings', label: 'Settings', icon: Key },
+                ] : []),
               ].map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -1657,12 +1867,13 @@ const AdminDashboard = () => {
           </div>
 
           <div className="p-6">
-            {activeTab === 'user-management' && renderUserManagement()}
+            {activeTab === 'user-management' && userRole === 'admin' && renderUserManagement()}
             {activeTab === 'orders' && renderOrders()}
-            {activeTab === 'products' && renderProducts()}
-            {activeTab === 'testimonials' && renderTestimonials()}
-            {activeTab === 'messages' && renderMessages()}
-            {activeTab === 'customers' && (
+            {activeTab === 'products' && userRole === 'admin' && renderProducts()}
+            {activeTab === 'testimonials' && userRole === 'admin' && renderTestimonials()}
+            {activeTab === 'messages' && userRole === 'admin' && renderMessages()}
+            {activeTab === 'settings' && userRole === 'admin' && renderSettings()}
+            {activeTab === 'customers' && userRole === 'admin' && (
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold">Customer Analytics</h3>
