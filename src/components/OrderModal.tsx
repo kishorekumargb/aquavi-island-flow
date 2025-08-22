@@ -447,6 +447,27 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                 
                 setIsSubmitting(true);
                 
+                // Check if orders are being accepted
+                const { data: settingData, error: settingError } = await supabase
+                  .from('site_settings')
+                  .select('setting_value')
+                  .eq('setting_key', 'receive_orders')
+                  .single();
+
+                if (settingError) {
+                  console.error('Error checking receive orders setting:', settingError);
+                }
+
+                if (settingData?.setting_value === 'false') {
+                  toast({
+                    title: "Orders Currently Unavailable",
+                    description: "We're temporarily not accepting new orders. Please try again later.",
+                    variant: "destructive",
+                  });
+                  setIsSubmitting(false);
+                  return;
+                }
+                
                 try {
                   const orderDetails = {
                     customer_name: customerInfo.name,

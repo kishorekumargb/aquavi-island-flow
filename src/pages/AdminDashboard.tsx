@@ -62,6 +62,7 @@ import {
   AlertCircle,
   Eye,
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 // Types
 interface Order {
@@ -180,6 +181,7 @@ const AdminDashboard = () => {
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminSessionVerified, setAdminSessionVerified] = useState(false);
+  const [receiveOrders, setReceiveOrders] = useState(true);
   const { toast } = useToast();
 
   // Initial setup - always require admin login
@@ -201,18 +203,14 @@ const AdminDashboard = () => {
         // User is admin and session verified - grant access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
+        fetchReceiveOrdersSetting();
       } else if (user && userRole === null) {
         // User is authenticated but role is still loading - keep login modal open
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'user') {
-        // User is not admin - show access denied and redirect
-        toast({
-          title: "Access Denied",
-          description: "You do not have admin privileges",
-          variant: "destructive",
-        });
-        navigate('/');
+        // User is not admin - redirect to user dashboard
+        navigate('/user-dashboard');
       }
     }
   }, [user, userRole, authLoading, adminSessionVerified, navigate, toast]);
@@ -410,6 +408,51 @@ const AdminDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReceiveOrdersSetting = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'receive_orders')
+        .single();
+
+      if (error) {
+        console.error('Error fetching receive orders setting:', error);
+        return;
+      }
+
+      setReceiveOrders(data?.setting_value === 'true');
+    } catch (error) {
+      console.error('Error fetching receive orders setting:', error);
+    }
+  };
+
+  const updateReceiveOrdersSetting = async (enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({
+          setting_key: 'receive_orders',
+          setting_value: enabled.toString()
+        });
+
+      if (error) throw error;
+
+      setReceiveOrders(enabled);
+      toast({
+        title: "Success",
+        description: `Order receiving ${enabled ? 'enabled' : 'disabled'}`,
+      });
+    } catch (error) {
+      console.error('Error updating receive orders setting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update setting",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1519,9 +1562,21 @@ const AdminDashboard = () => {
               <Package className="h-8 w-8 text-blue-600" />
               <h1 className="text-xl font-semibold text-gray-900">Access Water 360</h1>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="receive-orders" className="text-sm font-medium">
+                  Receive Orders
+                </Label>
+                <Switch 
+                  id="receive-orders"
+                  checked={receiveOrders}
+                  onCheckedChange={updateReceiveOrdersSetting}
+                />
+              </div>
+              <Button variant="outline" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>
