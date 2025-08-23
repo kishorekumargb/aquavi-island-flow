@@ -15,7 +15,7 @@ export function Hero() {
   const fetchHeroImage = async () => {
     try {
       const { data, error } = await supabase
-        .from('site_settings')
+        .from('public_site_config')
         .select('setting_value')
         .eq('setting_key', 'hero_image_url')
         .single();

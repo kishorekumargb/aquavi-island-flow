@@ -476,7 +476,7 @@ const AdminDashboard = () => {
   const fetchSiteSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from('site_settings')
+        .from('public_site_config')
         .select('setting_key, setting_value')
         .in('setting_key', [
           'phone',
@@ -525,7 +525,7 @@ const AdminDashboard = () => {
       }));
 
       const { error } = await supabase
-        .from('site_settings')
+        .from('public_site_config')
         .upsert(settingsToUpdate, {
           onConflict: 'setting_key'
         });

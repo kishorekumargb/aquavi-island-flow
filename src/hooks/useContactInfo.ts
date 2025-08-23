@@ -34,7 +34,7 @@ export function useContactInfo() {
   const fetchContactInfo = async () => {
     try {
       const { data, error } = await supabase
-        .from('site_settings')
+        .from('public_site_config')
         .select('setting_key, setting_value')
         .in('setting_key', [
           'phone',
