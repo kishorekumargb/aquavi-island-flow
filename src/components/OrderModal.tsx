@@ -493,6 +493,39 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   
                   if (error) throw error;
                   
+                  // Send email notifications
+                  try {
+                    // Safely handle items array
+                    const orderItems = Array.isArray(insertedOrder.items) ? insertedOrder.items : [];
+                    
+                    const emailData = {
+                      orderNumber: insertedOrder.order_number,
+                      customerName: insertedOrder.customer_name,
+                      customerEmail: insertedOrder.customer_email,
+                      customerPhone: insertedOrder.customer_phone,
+                      deliveryAddress: insertedOrder.delivery_address,
+                      items: orderItems.map((item: any) => ({
+                        id: item.id || '',
+                        name: item.name,
+                        size: '1L', // Default size, you may want to get this from the product data
+                        price: item.price,
+                        quantity: item.quantity
+                      })),
+                      totalAmount: insertedOrder.total_amount,
+                      paymentMethod: insertedOrder.payment_method || 'cash',
+                      deliveryType: insertedOrder.delivery_type || 'delivery'
+                    };
+                    
+                    await supabase.functions.invoke('send-order-confirmation', {
+                      body: emailData
+                    });
+                    
+                    console.log('Order confirmation emails sent successfully');
+                  } catch (emailError) {
+                    console.error('Failed to send confirmation emails:', emailError);
+                    // Don't block order completion if email fails
+                  }
+                  
                   // Navigate to order confirmation page
                   const orderItemsArray = Array.isArray(insertedOrder.items) ? insertedOrder.items : [];
                   const orderParams = new URLSearchParams({
