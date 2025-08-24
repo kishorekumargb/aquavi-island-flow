@@ -485,6 +485,11 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                     payment_method: 'cash'
                   };
                   
+                  console.log('Order details being submitted:', orderDetails);
+                  console.log('Customer info:', customerInfo);
+                  console.log('Order data:', orderData);
+                  console.log('Order items:', getOrderItems());
+                  
                   const { data: insertedOrder, error } = await supabase
                     .from('orders')
                     .insert([orderDetails])
@@ -556,9 +561,12 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   
                 } catch (error) {
                   console.error('Error placing order:', error);
+                  console.error('Full error object:', JSON.stringify(error, null, 2));
+                  console.error('Error message:', error.message);
+                  console.error('Error code:', error.code);
                   toast({
                     title: "Error",
-                    description: "Failed to place order. Please try again.",
+                    description: `Failed to place order: ${error.message}. Please try again.`,
                     variant: "destructive",
                   });
                 } finally {
