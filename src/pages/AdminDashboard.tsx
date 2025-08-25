@@ -180,6 +180,7 @@ const AdminDashboard = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentAccessLevel, setCurrentAccessLevel] = useState<'user' | 'admin' | null>(null); // Track login method
   const [receiveOrders, setReceiveOrders] = useState(true);
   const [siteSettings, setSiteSettings] = useState({
     phone: '',
@@ -198,6 +199,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     // Clear any existing session when accessing admin dashboard
     setIsAuthenticated(false);
+    setCurrentAccessLevel(null);
     setShowAdminLogin(true);
   }, []);
 
@@ -208,8 +210,9 @@ const AdminDashboard = () => {
         // No user logged in - show login modal
         setShowAdminLogin(true);
         setIsAuthenticated(false);
-      } else if (user && userRole === 'admin') {
-        // Admin user logged in - grant full access
+        setCurrentAccessLevel(null);
+      } else if (user && currentAccessLevel === 'admin') {
+        // User logged in through admin portal - grant full access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
         setActiveTab('orders'); 
@@ -220,16 +223,16 @@ const AdminDashboard = () => {
         fetchUsers();
         fetchReceiveOrdersSetting();
         fetchSiteSettings();
-      } else if (user && userRole === null) {
-        // User is authenticated but role is still loading - keep login modal open
-        setShowAdminLogin(true);
-        setIsAuthenticated(false);
-      } else if (user && userRole === 'user') {
-        // Regular user logged in - grant limited access (orders only)
+      } else if (user && currentAccessLevel === 'user') {
+        // User logged in through user portal - grant limited access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
         setActiveTab('orders'); // Only orders tab for regular users
         fetchOrders(); // Only fetch orders for regular users
+      } else if (user && currentAccessLevel === null) {
+        // User is authenticated but access level not set - keep login modal open
+        setShowAdminLogin(true);
+        setIsAuthenticated(false);
       }
     }
   }, [user, userRole, authLoading, navigate, toast]);
@@ -570,16 +573,17 @@ const AdminDashboard = () => {
         throw error;
       }
       
-      // Show success and close modal
+      // Set admin access level
+      setCurrentAccessLevel('admin');
+      
+      // Show success
       toast({
         title: "Success",
-        description: "Logged in successfully",
+        description: "Logged in successfully as admin",
       });
       
       // Clear form
       setAdminLoginForm({ email: '', password: '' });
-      
-      // The modal will be closed by the useEffect when userRole updates
       
     } catch (error: any) {
       console.error('Caught login error:', error);
@@ -604,6 +608,9 @@ const AdminDashboard = () => {
       });
       
       if (error) throw error;
+      
+      // Set user access level
+      setCurrentAccessLevel('user');
       
       toast({
         title: "Success",
@@ -630,6 +637,7 @@ const AdminDashboard = () => {
     try {
       await supabase.auth.signOut();
       setIsAuthenticated(false);
+      setCurrentAccessLevel(null);
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
@@ -1774,12 +1782,12 @@ const AdminDashboard = () => {
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">Access Water 360</h1>
                 <p className="text-sm text-gray-500">
-                  {userRole === 'admin' ? 'Admin Dashboard' : 'Order Management'}
+                  {currentAccessLevel === 'admin' ? 'Admin Dashboard' : 'Order Management'}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {userRole === 'admin' && (
+              {currentAccessLevel === 'admin' && (
                 <div className="flex items-center space-x-2">
                   <Label htmlFor="receive-orders" className="text-sm font-medium">
                     Receive Orders
@@ -1823,7 +1831,7 @@ const AdminDashboard = () => {
           </Card>
 
           {/* Admin-only statistics */}
-          {userRole === 'admin' && (
+          {currentAccessLevel === 'admin' && (
             <>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1854,7 +1862,7 @@ const AdminDashboard = () => {
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'orders', label: 'Orders', icon: ShoppingBag },
-                ...(userRole === 'admin' ? [
+                ...(currentAccessLevel === 'admin' ? [
                   { id: 'products', label: 'Products', icon: Package },
                   { id: 'testimonials', label: 'Testimonials', icon: Star },
                   { id: 'customers', label: 'Customers', icon: Users },
@@ -1883,13 +1891,13 @@ const AdminDashboard = () => {
           </div>
 
           <div className="p-6">
-            {activeTab === 'user-management' && userRole === 'admin' && renderUserManagement()}
+            {activeTab === 'user-management' && currentAccessLevel === 'admin' && renderUserManagement()}
             {activeTab === 'orders' && renderOrders()}
-            {activeTab === 'products' && userRole === 'admin' && renderProducts()}
-            {activeTab === 'testimonials' && userRole === 'admin' && renderTestimonials()}
-            {activeTab === 'messages' && userRole === 'admin' && renderMessages()}
-            {activeTab === 'settings' && userRole === 'admin' && renderSettings()}
-            {activeTab === 'customers' && userRole === 'admin' && (
+            {activeTab === 'products' && currentAccessLevel === 'admin' && renderProducts()}
+            {activeTab === 'testimonials' && currentAccessLevel === 'admin' && renderTestimonials()}
+            {activeTab === 'messages' && currentAccessLevel === 'admin' && renderMessages()}
+            {activeTab === 'settings' && currentAccessLevel === 'admin' && renderSettings()}
+            {activeTab === 'customers' && currentAccessLevel === 'admin' && (
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold">Customer Analytics</h3>
