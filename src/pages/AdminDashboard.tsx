@@ -175,12 +175,11 @@ const AdminDashboard = () => {
   const [showViewMessage, setShowViewMessage] = useState(false);
   const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '' });
   const [userLoginForm, setUserLoginForm] = useState({ email: '', password: '' });
-  const [showUserLogin, setShowUserLogin] = useState(false);
+  const [showUserLogin, setShowUserLogin] = useState(true); // Start with user login as default
   const [showAdminLogin, setShowAdminLogin] = useState(true); // Always start with login required
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminSessionVerified, setAdminSessionVerified] = useState(false);
   const [receiveOrders, setReceiveOrders] = useState(true);
   const [siteSettings, setSiteSettings] = useState({
     phone: '',
@@ -195,25 +194,26 @@ const AdminDashboard = () => {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Initial setup - always require admin login
+  // Initial setup - always require login
   useEffect(() => {
     // Clear any existing session when accessing admin dashboard
     setIsAuthenticated(false);
-    setAdminSessionVerified(false);
     setShowAdminLogin(true);
   }, []);
 
-  // Authentication check - only allow access after explicit admin verification
+  // Authentication check - only allow access after explicit verification
   useEffect(() => {
-    if (!authLoading && adminSessionVerified) {
+    if (!authLoading) {
       if (!user) {
         // No user logged in - show login modal
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'admin') {
-        // User is admin and session verified - grant access
+        // User is admin - grant full access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
+        setActiveTab('orders'); // Default to orders for authenticated users
+        fetchOrders(); // Fetch orders immediately
         fetchReceiveOrdersSetting();
         fetchSiteSettings();
       } else if (user && userRole === null) {
@@ -221,14 +221,16 @@ const AdminDashboard = () => {
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'user') {
-        // User is authenticated - grant limited access
+        // User is authenticated - grant limited access (orders only)
         setShowAdminLogin(false);
         setIsAuthenticated(true);
+        setActiveTab('orders'); // Only orders tab for regular users
+        fetchOrders(); // Fetch orders immediately
         fetchReceiveOrdersSetting();
         fetchSiteSettings();
       }
     }
-  }, [user, userRole, authLoading, adminSessionVerified, navigate, toast]);
+  }, [user, userRole, authLoading, navigate, toast]);
 
   // Status icon helper functions
   const getStatusIcon = (status: string) => {
@@ -566,15 +568,13 @@ const AdminDashboard = () => {
         throw error;
       }
       
-      // Mark admin session as verified after successful login
-      setAdminSessionVerified(true);
-      
+      // Show success and close modal
       toast({
         title: "Success",
         description: "Logged in successfully",
       });
       
-      // Clear form first
+      // Clear form
       setAdminLoginForm({ email: '', password: '' });
       
       // The modal will be closed by the useEffect when userRole updates
@@ -1666,21 +1666,28 @@ const AdminDashboard = () => {
     );
   }
   
-  // Don't render main content until admin session is verified
-  if (!isAuthenticated || showAdminLogin || !adminSessionVerified) {
+  // Don't render main content until user is authenticated
+  if (!isAuthenticated || showAdminLogin) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Admin Login Modal */}
-        <Dialog open={showAdminLogin} onOpenChange={setShowAdminLogin}>
+        <Dialog open={showAdminLogin} onOpenChange={(open) => {
+          if (!open && !isAuthenticated) {
+            // If user tries to close modal without authentication, redirect to home
+            navigate('/');
+          } else {
+            setShowAdminLogin(open);
+          }
+        }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-center">Admin Access</DialogTitle>
+              <DialogTitle className="text-center">Dashboard Access</DialogTitle>
               <DialogDescription className="text-center">
-                Please sign in to access the admin dashboard
+                Please sign in to access the dashboard
               </DialogDescription>
             </DialogHeader>
             
-            <Tabs defaultValue="admin" className="w-full">
+            <Tabs defaultValue="user" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="admin">Admin Login</TabsTrigger>
                 <TabsTrigger value="user">User Login</TabsTrigger>
