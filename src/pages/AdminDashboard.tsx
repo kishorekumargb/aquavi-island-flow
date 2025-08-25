@@ -1649,7 +1649,9 @@ const AdminDashboard = () => {
   );
 
   // Statistics
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
+  const totalRevenue = orders
+    .filter(order => order.status === 'delivered')
+    .reduce((sum, order) => sum + order.total_amount, 0);
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
 
   // Show loading while checking auth
