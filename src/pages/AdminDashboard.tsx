@@ -209,11 +209,15 @@ const AdminDashboard = () => {
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'admin') {
-        // User is admin - grant full access
+        // Admin user logged in - grant full access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
-        setActiveTab('orders'); // Default to orders for authenticated users
-        fetchOrders(); // Fetch orders immediately
+        setActiveTab('orders'); 
+        fetchOrders();
+        fetchProducts();  
+        fetchTestimonials();
+        fetchMessages();
+        fetchUsers();
         fetchReceiveOrdersSetting();
         fetchSiteSettings();
       } else if (user && userRole === null) {
@@ -221,13 +225,11 @@ const AdminDashboard = () => {
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       } else if (user && userRole === 'user') {
-        // User is authenticated - grant limited access (orders only)
+        // Regular user logged in - grant limited access (orders only)
         setShowAdminLogin(false);
         setIsAuthenticated(true);
         setActiveTab('orders'); // Only orders tab for regular users
-        fetchOrders(); // Fetch orders immediately
-        fetchReceiveOrdersSetting();
-        fetchSiteSettings();
+        fetchOrders(); // Only fetch orders for regular users
       }
     }
   }, [user, userRole, authLoading, navigate, toast]);
@@ -1671,14 +1673,7 @@ const AdminDashboard = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Admin Login Modal */}
-        <Dialog open={showAdminLogin} onOpenChange={(open) => {
-          if (!open && !isAuthenticated) {
-            // If user tries to close modal without authentication, redirect to home
-            navigate('/');
-          } else {
-            setShowAdminLogin(open);
-          }
-        }}>
+        <Dialog open={showAdminLogin} onOpenChange={() => {}} modal={true}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-center">Dashboard Access</DialogTitle>
@@ -1776,19 +1771,26 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <Package className="h-8 w-8 text-blue-600" />
-              <h1 className="text-xl font-semibold text-gray-900">Access Water 360</h1>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Access Water 360</h1>
+                <p className="text-sm text-gray-500">
+                  {userRole === 'admin' ? 'Admin Dashboard' : 'Order Management'}
+                </p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="receive-orders" className="text-sm font-medium">
-                  Receive Orders
-                </Label>
-                <Switch 
-                  id="receive-orders"
-                  checked={receiveOrders}
-                  onCheckedChange={updateReceiveOrdersSetting}
-                />
-              </div>
+              {userRole === 'admin' && (
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="receive-orders" className="text-sm font-medium">
+                    Receive Orders
+                  </Label>
+                  <Switch 
+                    id="receive-orders"
+                    checked={receiveOrders}
+                    onCheckedChange={updateReceiveOrdersSetting}
+                  />
+                </div>
+              )}
               <Button variant="outline" onClick={handleLogout}>
                 Logout
               </Button>
@@ -1820,25 +1822,30 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-            </CardContent>
-          </Card>
+          {/* Admin-only statistics */}
+          {userRole === 'admin' && (
+            <>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{products.length}</div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{products.length}</div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
         {/* Navigation Tabs */}
