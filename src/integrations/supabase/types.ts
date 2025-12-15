@@ -280,20 +280,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_aquavi_order_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_order_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_user_role: {
-        Args: Record<PropertyKey, never> | { user_uuid: string }
-        Returns: string
-      }
+      generate_aquavi_order_number: { Args: never; Returns: string }
+      generate_order_number: { Args: never; Returns: string }
+      get_user_role:
+        | { Args: never; Returns: string }
+        | { Args: { user_uuid: string }; Returns: string }
       get_users_with_roles: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           display_name: string
@@ -303,14 +296,8 @@ export type Database = {
           role: string
         }[]
       }
-      is_admin: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
-      is_session_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: { user_uuid: string }; Returns: boolean }
+      is_session_admin: { Args: never; Returns: boolean }
       validate_admin_login: {
         Args: { email_input: string; password_input: string }
         Returns: boolean
