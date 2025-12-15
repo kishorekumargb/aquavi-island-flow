@@ -4,13 +4,22 @@ import { Badge } from '@/components/ui/badge';
 import { Droplets, Award, Shield } from 'lucide-react';
 import { OrderModal } from '@/components/OrderModal';
 import { supabase } from '@/integrations/supabase/client';
+import fallbackHeroImage from '@/assets/aqua-vi-hero-banner.jpg';
 
 export function Hero() {
-  const [heroImageUrl, setHeroImageUrl] = useState('');
+  const [heroImageUrl, setHeroImageUrl] = useState(fallbackHeroImage);
 
   useEffect(() => {
     fetchHeroImage();
   }, []);
+
+  const isValidImageUrl = (url: string): boolean => {
+    // Check if URL is a direct image URL (not Google Drive view links)
+    if (url.includes('drive.google.com/file') && url.includes('/view')) {
+      return false;
+    }
+    return url.startsWith('http://') || url.startsWith('https://');
+  };
 
   const fetchHeroImage = async () => {
     try {
@@ -22,7 +31,7 @@ export function Hero() {
 
       if (error) throw error;
       
-      if (data?.setting_value) {
+      if (data?.setting_value && isValidImageUrl(data.setting_value)) {
         setHeroImageUrl(data.setting_value);
       }
     } catch (error) {
