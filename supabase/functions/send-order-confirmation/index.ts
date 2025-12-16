@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -38,6 +39,50 @@ const handler = async (req: Request): Promise<Response> => {
     const orderData: OrderConfirmationRequest = await req.json();
     
     console.log("Processing order confirmation emails for order:", orderData.orderNumber);
+
+    // Verify order exists in database to prevent abuse
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Service configuration error" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Verify the order exists and matches provided data
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('order_number, customer_email, total_amount')
+      .eq('order_number', orderData.orderNumber)
+      .single();
+    
+    if (orderError || !order) {
+      console.error("Order not found:", orderData.orderNumber);
+      return new Response(
+        JSON.stringify({ error: "Invalid order" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email matches the order (if email was provided in order)
+    if (order.customer_email && orderData.customerEmail && 
+        order.customer_email.toLowerCase() !== orderData.customerEmail.toLowerCase()) {
+      console.error("Email mismatch for order:", orderData.orderNumber);
+      return new Response(
+        JSON.stringify({ error: "Invalid request" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Skip sending if no customer email provided
+    if (!orderData.customerEmail) {
+      console.log("No customer email provided, skipping customer notification");
+    }
 
     // Generate order items HTML
     const itemsHtml = orderData.items.map(item => `
@@ -118,7 +163,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div style="background-color: #fef2f2; padding: 20px; border-left: 4px solid #dc2626; margin: 20px 0;">
             <h3 style="margin: 0 0 15px 0; color: #dc2626;">Order: ${orderData.orderNumber}</h3>
             <p><strong>Customer:</strong> ${orderData.customerName}</p>
-            <p><strong>Email:</strong> ${orderData.customerEmail}</p>
+            <p><strong>Email:</strong> ${orderData.customerEmail || 'Not provided'}</p>
             ${orderData.customerPhone ? `<p><strong>Phone:</strong> ${orderData.customerPhone}</p>` : ''}
             <p><strong>Delivery Address:</strong> ${orderData.deliveryAddress}</p>
             <p><strong>Payment Method:</strong> ${orderData.paymentMethod}</p>
@@ -148,18 +193,22 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // Send customer confirmation email
-    const customerEmailResponse = await resend.emails.send({
-      from: "Aqua VI <noreply@aquavi.com>",
-      to: [orderData.customerEmail],
-      subject: `Order Confirmation - ${orderData.orderNumber}`,
-      html: customerEmailHtml,
-    });
+    let customerEmailResponse = null;
+    let businessEmailResponse = null;
 
-    console.log("Customer email sent:", customerEmailResponse);
+    // Send customer confirmation email only if email provided
+    if (orderData.customerEmail) {
+      customerEmailResponse = await resend.emails.send({
+        from: "Aqua VI <noreply@aquavi.com>",
+        to: [orderData.customerEmail],
+        subject: `Order Confirmation - ${orderData.orderNumber}`,
+        html: customerEmailHtml,
+      });
+      console.log("Customer email sent:", customerEmailResponse);
+    }
 
     // Send business notification email
-    const businessEmailResponse = await resend.emails.send({
+    businessEmailResponse = await resend.emails.send({
       from: "Aqua VI Orders <orders@aquavi.com>",
       to: ["aquavidistributor@gmail.com"],
       subject: `🚨 New Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
@@ -184,8 +233,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in send-order-confirmation function:", error);
+    // Return generic error to client, log detailed error server-side
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Unable to send confirmation emails. Please try again later." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
