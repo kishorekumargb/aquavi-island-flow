@@ -1734,7 +1734,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="admin">Admin Login</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="user" className="mt-4">
+              <TabsContent value="user" className="mt-4 outline-none focus:outline-none ring-0 focus:ring-0">
                 <form onSubmit={handleUserLogin} className="space-y-4">
                   <div>
                     <Label htmlFor="user-email">Email</Label>
@@ -1770,7 +1770,7 @@ const AdminDashboard = () => {
                 </form>
               </TabsContent>
               
-              <TabsContent value="admin" className="mt-4">
+              <TabsContent value="admin" className="mt-4 outline-none focus:outline-none ring-0 focus:ring-0">
                 <form onSubmit={handleAdminLogin} className="space-y-4">
                   <div>
                     <Label htmlFor="admin-email">Admin Email</Label>
