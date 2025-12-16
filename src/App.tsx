@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import Index from "./pages/Index";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { OrderConfirmation } from "./components/OrderConfirmation";
 
@@ -27,7 +28,8 @@ const AppContent = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-        <Route path="/access-water-360" element={<AdminDashboard />} />
+      <Route path="/access-water-360" element={<AdminDashboard />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/order-confirmation" element={<OrderConfirmation />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
