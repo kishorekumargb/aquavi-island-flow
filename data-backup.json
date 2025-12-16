@@ -1,0 +1,204 @@
+{
+  "backup_date": "2025-12-16",
+  "backup_source_project": "qscyapmuiqaijvuitlyv",
+  
+  "products": [
+    {
+      "id": "dfc50dae-6858-44cc-aa43-386b7068c1aa",
+      "name": "Family Pack",
+      "size": "Family Pack",
+      "price": 44.99,
+      "description": "2 cases 16oz - 3 cases 8oz",
+      "stock": 0,
+      "is_active": true
+    },
+    {
+      "id": "another-product",
+      "name": "Medium",
+      "size": "16oz",
+      "price": 8.99,
+      "is_active": true
+    },
+    {
+      "id": "small-product",
+      "name": "Small",
+      "size": "8oz",
+      "price": 9.99,
+      "is_active": true
+    },
+    {
+      "id": "large-product",
+      "name": "Large",
+      "size": "20L",
+      "price": 12.99,
+      "is_active": true
+    }
+  ],
+
+  "testimonials": [
+    {
+      "name": "Marina Rodriguez",
+      "location": "Road Town, Tortola",
+      "order_type": "Office Subscription",
+      "rating": 5,
+      "review": "AQUAVI has completely changed our office hydration game. The taste is incredible and the delivery service is always punctual. We've been subscribers for 8 months now.",
+      "verified": true,
+      "is_active": true
+    },
+    {
+      "name": "James Thompson",
+      "location": "Spanish Town, Virgin Gorda",
+      "order_type": "Luxury Service",
+      "rating": 5,
+      "review": "As a yacht captain, I demand the highest quality water for my guests. AQUAVI delivers premium quality that matches our luxury standards perfectly.",
+      "verified": true,
+      "is_active": true
+    },
+    {
+      "name": "Roberto Silva",
+      "location": "West End, Tortola",
+      "order_type": "Family Plan",
+      "rating": 5,
+      "review": "Been ordering the family size bottles for over a year. Kids love the taste and we love supporting a local BVI business that cares about quality.",
+      "verified": true,
+      "is_active": true
+    },
+    {
+      "name": "Lisa Williams",
+      "location": "Cane Garden Bay, Tortola",
+      "order_type": "Monthly Subscription",
+      "rating": 5,
+      "review": "The subscription service is so convenient! Never have to worry about running out of premium water. Customer service is outstanding too.",
+      "verified": true,
+      "is_active": true
+    },
+    {
+      "name": "Sarah Chen",
+      "location": "The Valley, Virgin Gorda",
+      "order_type": "Personal Use",
+      "rating": 5,
+      "review": "The mineral composition in AQUAVI is exceptional. As a healthcare professional, I recommend it to patients for optimal hydration and taste.",
+      "verified": true,
+      "is_active": true
+    }
+  ],
+
+  "orders": [
+    {
+      "order_number": "AQVI2508211001",
+      "customer_name": "Brenda Fahie",
+      "customer_email": "phenomenaldiva@hotmail.com",
+      "customer_phone": "2844960404",
+      "delivery_address": "",
+      "delivery_type": "pickup",
+      "items": [
+        {"name": "Medium", "price": 8.99, "quantity": 3},
+        {"name": "Small", "price": 9.99, "quantity": 2},
+        {"name": "Large", "price": 12.99, "quantity": 1}
+      ],
+      "total_amount": 59.94,
+      "status": "delivered",
+      "payment_method": "cash"
+    },
+    {
+      "order_number": "AQVI2508241001",
+      "customer_name": "Kishore GB",
+      "customer_email": "kishorekumargb@gmail.com",
+      "customer_phone": "7418247421",
+      "delivery_address": "6/737 Pillaiyar Kovil Street, Pattanam, Tindivanam. Villupuram(DT) - 604001",
+      "delivery_type": "delivery",
+      "items": [{"name": "Medium", "price": 8.99, "quantity": 3}],
+      "total_amount": 26.97,
+      "status": "cancelled",
+      "payment_method": "cash"
+    },
+    {
+      "order_number": "AQVI2508211002",
+      "customer_name": "maria sooklal",
+      "customer_email": "msooklal@mwmglobalhld.com",
+      "customer_phone": "2844417935",
+      "delivery_address": "",
+      "delivery_type": "pickup",
+      "items": [
+        {"name": "Medium", "price": 8.99, "quantity": 1},
+        {"name": "Large", "price": 12.99, "quantity": 1},
+        {"name": "Small", "price": 9.99, "quantity": 1}
+      ],
+      "total_amount": 31.97,
+      "status": "cancelled",
+      "payment_method": "cash"
+    },
+    {
+      "order_number": "AQ1754770607790",
+      "customer_name": "Meade Malone",
+      "customer_email": "mmalone@mwmglobalhld.com",
+      "customer_phone": "12844417891",
+      "delivery_address": "",
+      "delivery_type": "pickup",
+      "items": [
+        {"name": "Medium", "price": 8.99, "quantity": 1},
+        {"name": "Small", "price": 9.99, "quantity": 2},
+        {"name": "Large", "price": 12.99, "quantity": 1}
+      ],
+      "total_amount": 41.96,
+      "status": "cancelled",
+      "payment_method": "cash"
+    }
+  ],
+
+  "site_settings": [
+    {"setting_key": "phone", "setting_value": "1-284-443-4353"},
+    {"setting_key": "email", "setting_value": "aquavidistributor@gmail.com"},
+    {"setting_key": "address", "setting_value": "Money Gram, Flemming Street, Road Town Tortola"},
+    {"setting_key": "delivery_hours", "setting_value": "5:30 PM - 6:30 PM"},
+    {"setting_key": "business_hours_monday_friday", "setting_value": "8:30 AM - 5:30 PM"},
+    {"setting_key": "business_hours_saturday", "setting_value": "NA"},
+    {"setting_key": "business_hours_sunday", "setting_value": "NA"},
+    {"setting_key": "receive_orders", "setting_value": "true"}
+  ],
+
+  "public_site_config": [
+    {"setting_key": "phone", "setting_value": "1-284-443-4353"},
+    {"setting_key": "email", "setting_value": "aquavidistributor@gmail.com"},
+    {"setting_key": "address", "setting_value": "Money Gram, Flemming Street, Road Town Tortola"},
+    {"setting_key": "delivery_hours", "setting_value": "5:30 PM - 6:30 PM"},
+    {"setting_key": "business_hours_monday_friday", "setting_value": "8:30 AM - 5:30 PM"},
+    {"setting_key": "business_hours_saturday", "setting_value": "NA"},
+    {"setting_key": "business_hours_sunday", "setting_value": "NA"},
+    {"setting_key": "hero_image_url", "setting_value": "https://drive.google.com/file/d/109kZWlnskRQq3XdgdMQZH2aSsCwV6Jux/view?usp=drive_link"}
+  ],
+
+  "contact_messages": [
+    {
+      "name": "karthik",
+      "email": "tte@gmail.com",
+      "phone": "8",
+      "message": "test messge",
+      "status": "unread"
+    },
+    {
+      "name": "Elvin Leonard",
+      "email": "elvin.leonard2@gmail.com",
+      "phone": "12102102101",
+      "message": "Hi, With your permission, I'd love to send you a detailed SEO overview along with pricing...",
+      "status": "unread"
+    }
+  ],
+
+  "profiles": [
+    {
+      "user_id": "7d814d78-c23f-4e47-8422-263ea4d36fd6",
+      "display_name": "Kishore",
+      "email": "kkumar@mwmglobalhld.com"
+    },
+    {
+      "user_id": "b54232fe-f396-4a99-9d36-e1069e85e0c0",
+      "display_name": "Kishore GB",
+      "email": "kishorekumargb@gmail.com"
+    }
+  ],
+
+  "admin_emails": [
+    "kishorekumargb@gmail.com"
+  ]
+}
