@@ -595,8 +595,11 @@ const AdminDashboard = () => {
         }
       }
       
-      // Set admin access level only after verifying role
+      // Set admin access level and immediately authenticate
       setCurrentAccessLevel('admin');
+      setIsAuthenticated(true);
+      setShowAdminLogin(false);
+      setActiveTab('orders');
       
       // Show success
       toast({
@@ -606,6 +609,15 @@ const AdminDashboard = () => {
       
       // Clear form
       setAdminLoginForm({ email: '', password: '' });
+      
+      // Fetch all data for admin
+      fetchOrders();
+      fetchProducts();
+      fetchTestimonials();
+      fetchMessages();
+      fetchUsers();
+      fetchReceiveOrdersSetting();
+      fetchSiteSettings();
       
     } catch (error: any) {
       console.error('Caught login error:', error);
@@ -631,8 +643,11 @@ const AdminDashboard = () => {
       
       if (error) throw error;
       
-      // Set user access level
+      // Set user access level and immediately authenticate
       setCurrentAccessLevel('user');
+      setIsAuthenticated(true);
+      setShowAdminLogin(false);
+      setActiveTab('orders');
       
       toast({
         title: "Success",
@@ -642,7 +657,8 @@ const AdminDashboard = () => {
       // Clear form
       setUserLoginForm({ email: '', password: '' });
       
-      // Modal will close automatically when auth state updates
+      // Fetch orders for user
+      fetchOrders();
       
     } catch (error: any) {
       toast({
@@ -1714,37 +1730,9 @@ const AdminDashboard = () => {
             
             <Tabs defaultValue="user" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="admin">Admin Login</TabsTrigger>
                 <TabsTrigger value="user">User Login</TabsTrigger>
+                <TabsTrigger value="admin">Admin Login</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="admin" className="mt-4">
-                <form onSubmit={handleAdminLogin} className="space-y-4">
-                  <div>
-                    <Label htmlFor="admin-email">Admin Email</Label>
-                    <Input
-                      id="admin-email"
-                      type="email"
-                      value={adminLoginForm.email}
-                      onChange={(e) => setAdminLoginForm({ ...adminLoginForm, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="admin-password">Admin Password</Label>
-                    <Input
-                      id="admin-password"
-                      type="password"
-                      value={adminLoginForm.password}
-                      onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoginLoading}>
-                    {isLoginLoading ? 'Signing in...' : 'Sign In as Admin'}
-                  </Button>
-                </form>
-              </TabsContent>
               
               <TabsContent value="user" className="mt-4">
                 <form onSubmit={handleUserLogin} className="space-y-4">
@@ -1770,6 +1758,42 @@ const AdminDashboard = () => {
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoginLoading}>
                     {isLoginLoading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="w-full text-sm"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot your password?
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="admin" className="mt-4">
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <div>
+                    <Label htmlFor="admin-email">Admin Email</Label>
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      value={adminLoginForm.email}
+                      onChange={(e) => setAdminLoginForm({ ...adminLoginForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="admin-password">Admin Password</Label>
+                    <Input
+                      id="admin-password"
+                      type="password"
+                      value={adminLoginForm.password}
+                      onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoginLoading}>
+                    {isLoginLoading ? 'Signing in...' : 'Sign In as Admin'}
                   </Button>
                   <Button 
                     type="button" 
