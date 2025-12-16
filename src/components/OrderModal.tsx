@@ -447,78 +447,67 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                 
                 setIsSubmitting(true);
                 
-                // Check if orders are being accepted
-                const { data: settingData, error: settingError } = await supabase
-                  .from('site_settings')
-                  .select('setting_value')
-                  .eq('setting_key', 'receive_orders')
-                  .single();
-
-                if (settingError) {
-                  console.error('Error checking receive orders setting:', settingError);
-                }
-
-                if (settingData?.setting_value === 'false') {
-                  toast({
-                    title: "Orders Currently Unavailable",
-                    description: "We're temporarily not accepting new orders. Please try again later.",
-                    variant: "destructive",
-                  });
-                  setIsSubmitting(false);
-                  return;
-                }
-                
                 try {
-                  const orderDetails = {
-                    customer_name: customerInfo.name,
-                    customer_email: customerInfo.email || null,
-                    customer_phone: customerInfo.phone || null,
-                    delivery_address: orderData.address,
-                    delivery_type: orderData.deliveryType,
-                    items: getOrderItems().map(item => ({
-                      name: item.product?.name,
-                      quantity: item.quantity,
-                      price: item.product?.price
-                    })),
-                    total_amount: calculateTotal(),
-                    status: 'pending',
-                    payment_method: 'cash'
+                  // Use server-side validated order creation
+                  const orderItems = getOrderItems().map(item => ({
+                    product_id: item.product?.id,
+                    quantity: item.quantity
+                  }));
+                  
+                  const { data: rpcResult, error } = await supabase.rpc('create_validated_order', {
+                    p_customer_name: customerInfo.name,
+                    p_customer_email: customerInfo.email || null,
+                    p_customer_phone: customerInfo.phone,
+                    p_delivery_address: orderData.address || '',
+                    p_delivery_type: orderData.deliveryType,
+                    p_items: orderItems,
+                    p_payment_method: 'cash'
+                  });
+                  
+                  if (error) {
+                    // Handle specific validation errors
+                    if (error.message.includes('not being accepted')) {
+                      toast({
+                        title: "Orders Currently Unavailable",
+                        description: "We're temporarily not accepting new orders. Please try again later.",
+                        variant: "destructive",
+                      });
+                    } else {
+                      throw error;
+                    }
+                    setIsSubmitting(false);
+                    return;
+                  }
+                  
+                  // Cast result to expected shape
+                  const orderResult = rpcResult as {
+                    success: boolean;
+                    order_id: string;
+                    order_number: string;
+                    total_amount: number;
+                    items: Array<{ name: string; price: number; quantity: number }>;
                   };
                   
-                  console.log('Order details being submitted:', orderDetails);
-                  console.log('Customer info:', customerInfo);
-                  console.log('Order data:', orderData);
-                  console.log('Order items:', getOrderItems());
-                  
-                  const { data: insertedOrder, error } = await supabase
-                    .from('orders')
-                    .insert([orderDetails])
-                    .select()
-                    .single();
-                  
-                  if (error) throw error;
+                  console.log('Order created successfully:', orderResult);
                   
                   // Send email notifications
                   try {
-                    // Safely handle items array
-                    const orderItems = Array.isArray(insertedOrder.items) ? insertedOrder.items : [];
-                    
                     const emailData = {
-                      orderNumber: insertedOrder.order_number,
-                      customerName: insertedOrder.customer_name,
-                      customerEmail: insertedOrder.customer_email,
-                      customerPhone: insertedOrder.customer_phone,
-                      deliveryAddress: insertedOrder.delivery_address,
-                      items: orderItems.map((item: any) => ({
-                        id: item.id || '',
+                      orderNumber: orderResult.order_number,
+                      customerName: customerInfo.name,
+                      customerEmail: customerInfo.email,
+                      customerPhone: customerInfo.phone,
+                      deliveryAddress: orderData.address,
+                      items: orderResult.items.map((item) => ({
+                        id: '',
                         name: item.name,
-                        size: '1L', // Default size, you may want to get this from the product data
+                        size: '1L',
                         price: item.price,
                         quantity: item.quantity
                       })),
-                      totalAmount: insertedOrder.total_amount,
-                      paymentMethod: insertedOrder.payment_method || 'cash',
-                      deliveryType: insertedOrder.delivery_type || 'delivery'
+                      totalAmount: orderResult.total_amount,
+                      paymentMethod: 'cash',
+                      deliveryType: orderData.deliveryType
                     };
                     
                     await supabase.functions.invoke('send-order-confirmation', {
@@ -532,14 +521,13 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   }
                   
                   // Navigate to order confirmation page
-                  const orderItemsArray = Array.isArray(insertedOrder.items) ? insertedOrder.items : [];
                   const orderParams = new URLSearchParams({
-                    orderNumber: insertedOrder.order_number,
-                    customerName: insertedOrder.customer_name,
-                    total: insertedOrder.total_amount.toString(),
-                    items: orderItemsArray.map((item: any) => `${item.name} x${item.quantity}`).join(', '),
-                    deliveryAddress: insertedOrder.delivery_address || '',
-                    customerPhone: insertedOrder.customer_phone || ''
+                    orderNumber: orderResult.order_number,
+                    customerName: customerInfo.name,
+                    total: orderResult.total_amount.toString(),
+                    items: orderResult.items.map((item) => `${item.name} x${item.quantity}`).join(', '),
+                    deliveryAddress: orderData.address || '',
+                    customerPhone: customerInfo.phone || ''
                   });
                   
                   navigate(`/order-confirmation?${orderParams.toString()}`);
@@ -559,14 +547,11 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                     autoRenew: false
                   });
                   
-                } catch (error) {
+                } catch (error: any) {
                   console.error('Error placing order:', error);
-                  console.error('Full error object:', JSON.stringify(error, null, 2));
-                  console.error('Error message:', error.message);
-                  console.error('Error code:', error.code);
                   toast({
                     title: "Error",
-                    description: `Failed to place order: ${error.message}. Please try again.`,
+                    description: error.message || "Failed to place order. Please try again.",
                     variant: "destructive",
                   });
                 } finally {
