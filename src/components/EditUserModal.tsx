@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -28,13 +28,15 @@ export function EditUserModal({
 }: EditUserModalProps) {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [selectedRole, setSelectedRole] = useState('user');
 
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
       setDisplayName(user.display_name || '');
-      setSelectedRoles(user.roles || ['user']);
+      // Take the first role or default to 'user'
+      const role = user.roles?.[0] || 'user';
+      setSelectedRole(role);
     }
   }, [user]);
 
@@ -49,16 +51,8 @@ export function EditUserModal({
       ...user,
       email,
       display_name: displayName,
-      roles: selectedRoles.length > 0 ? selectedRoles : ['user'],
+      roles: [selectedRole],
     });
-  };
-
-  const handleRoleChange = (role: string, checked: boolean) => {
-    if (checked) {
-      setSelectedRoles(prev => [...prev, role]);
-    } else {
-      setSelectedRoles(prev => prev.filter(r => r !== role));
-    }
   };
 
   const availableRoles = ['user', 'admin'];
@@ -94,21 +88,17 @@ export function EditUserModal({
           </div>
           
           <div className="space-y-2">
-            <Label>Roles</Label>
-            <div className="space-y-2">
+            <Label>Role</Label>
+            <RadioGroup value={selectedRole} onValueChange={setSelectedRole}>
               {availableRoles.map(role => (
                 <div key={role} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={role}
-                    checked={selectedRoles.includes(role)}
-                    onCheckedChange={(checked) => handleRoleChange(role, checked as boolean)}
-                  />
-                  <Label htmlFor={role} className="capitalize">
+                  <RadioGroupItem value={role} id={role} />
+                  <Label htmlFor={role} className="capitalize cursor-pointer">
                     {role}
                   </Label>
                 </div>
               ))}
-            </div>
+            </RadioGroup>
           </div>
           
           <DialogFooter>
