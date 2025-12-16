@@ -21,22 +21,12 @@ export function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProp
     setIsLoading(true);
 
     try {
-      // First, check if user exists
-      const { data: existingUser } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/access-water-360`,
+      // Send password reset email with redirect to reset-password page
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      // Send custom password reset email via edge function
-      try {
-        await supabase.functions.invoke('send-password-reset', {
-          body: { 
-            email: email,
-            resetLink: `${window.location.origin}/access-water-360`
-          }
-        });
-      } catch (edgeFunctionError) {
-        console.warn('Edge function failed, continuing with standard reset:', edgeFunctionError);
-      }
+      if (error) throw error;
 
       toast({
         title: "Password Reset Email Sent",
