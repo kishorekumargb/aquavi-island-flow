@@ -573,7 +573,29 @@ const AdminDashboard = () => {
         throw error;
       }
       
-      // Set admin access level
+      // Verify user has admin role in database
+      if (data.user) {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .eq('role', 'admin')
+          .single();
+        
+        if (roleError || !roleData) {
+          // User doesn't have admin role - sign them out and show error
+          await supabase.auth.signOut();
+          toast({
+            title: "Access Denied",
+            description: "You don't have admin privileges. Please use User Login instead.",
+            variant: "destructive",
+          });
+          setAdminLoginForm({ email: '', password: '' });
+          return;
+        }
+      }
+      
+      // Set admin access level only after verifying role
       setCurrentAccessLevel('admin');
       
       // Show success
