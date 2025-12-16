@@ -309,6 +309,7 @@ export type Database = {
         }[]
       }
       is_admin: { Args: { user_uuid: string }; Returns: boolean }
+      is_authenticated_user: { Args: { user_uuid: string }; Returns: boolean }
       is_session_admin: { Args: never; Returns: boolean }
       validate_admin_login: {
         Args: { email_input: string; password_input: string }
