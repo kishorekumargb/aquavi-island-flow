@@ -143,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p>If you have any questions about your order, please contact us at:</p>
           <ul>
             <li>Phone: 1-499-4611</li>
-            <li>Email: aquadistributor@gmail.com</li>
+            <li>Email: aquavidistributor@gmail.com</li>
           </ul>
 
           <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
@@ -200,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (orderData.customerEmail) {
       customerEmailResponse = await resend.emails.send({
         from: "Aqua VI <onboarding@resend.dev>",
-        replyTo: "aquadistributor@gmail.com",
+        replyTo: "aquavidistributor@gmail.com",
         to: [orderData.customerEmail],
         subject: `Order Confirmation - ${orderData.orderNumber}`,
         html: customerEmailHtml,
@@ -211,7 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send business notification email
     businessEmailResponse = await resend.emails.send({
       from: "Aqua VI Orders <onboarding@resend.dev>",
-      replyTo: "aquadistributor@gmail.com",
+      replyTo: "aquavidistributor@gmail.com",
       to: ["aquavidistributor@gmail.com"],
       subject: `🚨 New Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
       html: businessEmailHtml,
