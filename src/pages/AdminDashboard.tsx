@@ -687,16 +687,18 @@ const AdminDashboard = () => {
     }
   };
 
-  // Load data only when authenticated
+  // Load data only when authenticated - fetch admin-specific data only for admins
   useEffect(() => {
     if (isAuthenticated) {
       fetchOrders();
-      fetchProducts();
-      fetchTestimonials();
-      fetchMessages();
-      fetchUsers();
+      if (currentAccessLevel === 'admin') {
+        fetchProducts();
+        fetchTestimonials();
+        fetchMessages();
+        fetchUsers();
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentAccessLevel]);
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
