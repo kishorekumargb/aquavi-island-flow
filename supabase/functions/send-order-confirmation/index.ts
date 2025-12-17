@@ -1,13 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import nodemailer from "npm:nodemailer@6.9.10";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Gmail SMTP configuration
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: "aquavidistributor@gmail.com",
+    pass: Deno.env.get("GMAIL_APP_PASSWORD"),
+  },
+});
 
 interface OrderItem {
   id: string;
@@ -198,32 +207,37 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send customer confirmation email only if email provided
     if (orderData.customerEmail) {
-      customerEmailResponse = await resend.emails.send({
-        from: "Aqua VI <onboarding@resend.dev>",
-        replyTo: "aquavidistributor@gmail.com",
-        to: [orderData.customerEmail],
-        subject: `Order Confirmation - ${orderData.orderNumber}`,
-        html: customerEmailHtml,
-      });
-      console.log("Customer email sent:", customerEmailResponse);
+      try {
+        customerEmailResponse = await transporter.sendMail({
+          from: '"Aqua VI" <aquavidistributor@gmail.com>',
+          to: orderData.customerEmail,
+          subject: `Order Confirmation - ${orderData.orderNumber}`,
+          html: customerEmailHtml,
+        });
+        console.log("Customer email sent:", customerEmailResponse.messageId);
+      } catch (emailError) {
+        console.error("Error sending customer email:", emailError);
+      }
     }
 
     // Send business notification email
-    businessEmailResponse = await resend.emails.send({
-      from: "Aqua VI Orders <onboarding@resend.dev>",
-      replyTo: "aquavidistributor@gmail.com",
-      to: ["aquavidistributor@gmail.com"],
-      subject: `🚨 New Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
-      html: businessEmailHtml,
-    });
-
-    console.log("Business email sent:", businessEmailResponse);
+    try {
+      businessEmailResponse = await transporter.sendMail({
+        from: '"Aqua VI Orders" <aquavidistributor@gmail.com>',
+        to: "aquavidistributor@gmail.com",
+        subject: `🚨 New Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
+        html: businessEmailHtml,
+      });
+      console.log("Business email sent:", businessEmailResponse.messageId);
+    } catch (emailError) {
+      console.error("Error sending business email:", emailError);
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        customerEmail: customerEmailResponse,
-        businessEmail: businessEmailResponse,
+        customerEmail: customerEmailResponse ? { messageId: customerEmailResponse.messageId } : null,
+        businessEmail: businessEmailResponse ? { messageId: businessEmailResponse.messageId } : null,
       }),
       {
         status: 200,
