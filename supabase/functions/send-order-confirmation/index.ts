@@ -250,7 +250,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (orderData.customerEmail) {
       try {
         customerEmailResponse = await transporter.sendMail({
-          from: '"Aqua VI" <aquavidistributor@gmail.com>',
+          from: '"Aqua VI Distributor" <aquavidistributor@gmail.com>',
           to: orderData.customerEmail,
           subject: `Order Confirmation - ${orderData.orderNumber}`,
           html: customerEmailHtml,
@@ -264,7 +264,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send business notification email (always send for ALL order types)
     try {
       businessEmailResponse = await transporter.sendMail({
-        from: '"Aqua VI Orders" <aquavidistributor@gmail.com>',
+        from: '"Aqua VI Distributor" <aquavidistributor@gmail.com>',
         to: "aquavidistributor@gmail.com",
         subject: `🚨 New ${isPickup ? 'Pickup' : 'Delivery'} Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
         html: businessEmailHtml,

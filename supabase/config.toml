@@ -1,5 +1,8 @@
 project_id = "qscyapmuiqaijvuitlyv"
 
+[functions.delete-user]
+verify_jwt = true
+
 [functions.send-cancellation-notification]
 verify_jwt = true
 

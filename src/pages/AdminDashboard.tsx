@@ -1008,16 +1008,16 @@ const AdminDashboard = () => {
     }
     
     try {
-      // Delete from profiles and user_roles tables first
-      const { error: profileError } = await supabase.from('profiles').delete().eq('user_id', userId);
-      if (profileError) throw profileError;
+      // Call edge function with service role to delete user
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId },
+      });
       
-      const { error: roleError } = await supabase.from('user_roles').delete().eq('user_id', userId);
-      if (roleError) throw roleError;
+      if (error) throw error;
       
-      // Delete from auth.users using admin client
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      if (authError) throw authError;
+      if (data?.error) {
+        throw new Error(data.error);
+      }
       
       toast({
         title: "Success",
