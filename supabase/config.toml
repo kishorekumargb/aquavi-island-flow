@@ -4,10 +4,10 @@ project_id = "qscyapmuiqaijvuitlyv"
 verify_jwt = false
 
 [functions.send-delivery-confirmation]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-password-reset]
 verify_jwt = false
 
 [functions.send-welcome-email]
-verify_jwt = false
+verify_jwt = true

@@ -32,15 +32,22 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { orderId }: DeliveryConfirmationRequest = await req.json();
-    
-    console.log("Processing delivery confirmation for order ID:", orderId);
+    // Verify admin authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Get Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       console.error("Missing Supabase configuration");
       return new Response(
         JSON.stringify({ error: "Service configuration error" }),
@@ -48,7 +55,45 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Create client with user's auth token to verify identity
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get the authenticated user
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !user) {
+      console.error("User authentication failed:", userError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Use service role for admin check and data access
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify user is admin
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .single();
+
+    if (roleError || !roleData) {
+      console.error("User is not an admin:", user.id);
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Admin access required" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log("Admin verified, processing delivery confirmation");
+
+    const { orderId }: DeliveryConfirmationRequest = await req.json();
+    
+    console.log("Processing delivery confirmation for order ID:", orderId);
     
     // Fetch order details from database
     const { data: order, error: orderError } = await supabase
