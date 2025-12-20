@@ -70,14 +70,18 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
   const handleQuantityChange = (productId: string, quantity: string) => {
     const product = products.find(p => p.id === productId);
-    const stock = product?.stock ?? 0;
+    const stock = product?.stock;
     
-    // Don't allow any quantity for out-of-stock products
-    if (stock <= 0) return;
+    // If stock is null/undefined, treat as unlimited
+    // If stock is 0, it's out of stock
+    if (stock !== null && stock !== undefined && stock <= 0) return;
     
     let parsedQuantity = parseInt(quantity) || 0;
-    // Limit to available stock
-    parsedQuantity = Math.min(parsedQuantity, stock);
+    
+    // Only limit if stock is set (not null/undefined)
+    if (stock !== null && stock !== undefined) {
+      parsedQuantity = Math.min(parsedQuantity, stock);
+    }
     
     setQuantities(prev => ({
       ...prev,
@@ -85,8 +89,14 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
     }));
   };
   
+  // Out of stock only when stock is explicitly 0
   const isOutOfStock = (product: Product) => {
-    return (product.stock ?? 0) <= 0;
+    return product.stock !== null && product.stock !== undefined && product.stock <= 0;
+  };
+  
+  // Check if stock is limited (has a number set)
+  const hasLimitedStock = (product: Product) => {
+    return product.stock !== null && product.stock !== undefined;
   };
 
   const calculateTotal = () => {
@@ -146,7 +156,8 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {products.map((product) => {
                 const outOfStock = isOutOfStock(product);
-                const lowStock = (product.stock ?? 0) > 0 && (product.stock ?? 0) <= 5;
+                const limited = hasLimitedStock(product);
+                const lowStock = limited && product.stock! > 0 && product.stock! <= 5;
                 
                 return (
                   <Card key={product.id} className={`p-4 ${outOfStock ? 'opacity-60 bg-muted/50' : ''}`}>
@@ -161,12 +172,15 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                         {lowStock && (
                           <Badge variant="secondary" className="mt-1">Only {product.stock} left</Badge>
                         )}
+                        {!limited && (
+                          <Badge variant="outline" className="mt-1">In Stock</Badge>
+                        )}
                       </div>
                       <div className="w-20">
                         <Input
                           type="number"
                           min="0"
-                          max={product.stock ?? 0}
+                          max={limited ? product.stock! : 999}
                           placeholder="0"
                           value={quantities[product.id] || ''}
                           onChange={(e) => handleQuantityChange(product.id, e.target.value)}
