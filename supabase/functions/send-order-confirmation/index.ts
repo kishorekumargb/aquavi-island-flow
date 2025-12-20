@@ -38,6 +38,11 @@ interface OrderConfirmationRequest {
   deliveryType: string;
 }
 
+// Logo URL for email headers
+const logoUrl = "https://qscyapmuiqaijvuitlyv.supabase.co/storage/v1/object/public/products/aquavi-email-logo.png";
+// Admin dashboard URL
+const adminDashboardUrl = "https://aquavi.lovable.app/admin";
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -48,6 +53,7 @@ const handler = async (req: Request): Promise<Response> => {
     const orderData: OrderConfirmationRequest = await req.json();
     
     console.log("Processing order confirmation emails for order:", orderData.orderNumber);
+    console.log("Order data received:", JSON.stringify(orderData));
 
     // Verify order exists in database to prevent abuse
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -66,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify the order exists and matches provided data
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('order_number, customer_email, total_amount')
+      .select('order_number, customer_email, total_amount, delivery_type')
       .eq('order_number', orderData.orderNumber)
       .single();
     
@@ -77,6 +83,8 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    console.log("Order verified from database:", order);
 
     // Validate email matches the order (if email was provided in order)
     if (order.customer_email && orderData.customerEmail && 
@@ -93,6 +101,12 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("No customer email provided, skipping customer notification");
     }
 
+    // Determine delivery info text based on delivery type
+    const isPickup = orderData.deliveryType === 'pickup';
+    const deliveryInfoText = isPickup 
+      ? 'Pickup Location: Aqua VI Store - Contact us for pickup details'
+      : orderData.deliveryAddress || 'To be confirmed';
+
     // Generate order items HTML
     const itemsHtml = orderData.items.map(item => `
       <tr style="border-bottom: 1px solid #eee;">
@@ -103,12 +117,12 @@ const handler = async (req: Request): Promise<Response> => {
       </tr>
     `).join('');
 
-    // Customer confirmation email
+    // Customer confirmation email with logo
     const customerEmailHtml = `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
         <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">Aqua VI</h1>
+            <img src="${logoUrl}" alt="Aqua VI Logo" style="max-width: 180px; height: auto; margin-bottom: 15px;" />
             <p style="color: #666; margin: 5px 0 0 0;">Premium Water Delivery</p>
           </div>
           
@@ -120,9 +134,9 @@ const handler = async (req: Request): Promise<Response> => {
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
             <h3 style="margin: 0 0 15px 0; color: #333;">Order Details</h3>
             <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
-            <p><strong>Delivery Address:</strong> ${orderData.deliveryAddress}</p>
+            <p><strong>${isPickup ? 'Pickup Location' : 'Delivery Address'}:</strong> ${deliveryInfoText}</p>
             <p><strong>Payment Method:</strong> ${orderData.paymentMethod}</p>
-            <p><strong>Delivery Type:</strong> ${orderData.deliveryType}</p>
+            <p><strong>Order Type:</strong> ${isPickup ? 'Pickup' : 'Delivery'}</p>
             ${orderData.customerPhone ? `<p><strong>Phone:</strong> ${orderData.customerPhone}</p>` : ''}
           </div>
 
@@ -145,8 +159,10 @@ const handler = async (req: Request): Promise<Response> => {
           </table>
 
           <div style="background-color: #e7f3ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
-            <p style="margin: 0; color: #1e40af;"><strong>Delivery Information:</strong></p>
-            <p style="margin: 5px 0 0 0;">Our delivery team will contact you shortly to confirm the delivery time. Standard delivery is between 3:30 PM - 5:30 PM.</p>
+            <p style="margin: 0; color: #1e40af;"><strong>${isPickup ? 'Pickup Information:' : 'Delivery Information:'}</strong></p>
+            <p style="margin: 5px 0 0 0;">${isPickup 
+              ? 'We will contact you shortly to confirm pickup time. Please bring your order confirmation.' 
+              : 'Our delivery team will contact you shortly to confirm the delivery time. Standard delivery is between 3:30 PM - 5:30 PM.'}</p>
           </div>
 
           <p>If you have any questions about your order, please contact us at:</p>
@@ -163,20 +179,24 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // Business notification email
+    // Business notification email with logo and Process Order button
     const businessEmailHtml = `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
         <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <h1 style="color: #dc2626; margin: 0 0 20px 0; font-size: 24px;">🚨 New Order Received!</h1>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="${logoUrl}" alt="Aqua VI Logo" style="max-width: 150px; height: auto;" />
+          </div>
+          
+          <h1 style="color: #dc2626; margin: 0 0 20px 0; font-size: 24px; text-align: center;">🚨 New Order Received!</h1>
           
           <div style="background-color: #fef2f2; padding: 20px; border-left: 4px solid #dc2626; margin: 20px 0;">
             <h3 style="margin: 0 0 15px 0; color: #dc2626;">Order: ${orderData.orderNumber}</h3>
             <p><strong>Customer:</strong> ${orderData.customerName}</p>
             <p><strong>Email:</strong> ${orderData.customerEmail || 'Not provided'}</p>
             ${orderData.customerPhone ? `<p><strong>Phone:</strong> ${orderData.customerPhone}</p>` : ''}
-            <p><strong>Delivery Address:</strong> ${orderData.deliveryAddress}</p>
+            <p><strong>${isPickup ? 'Pickup Location' : 'Delivery Address'}:</strong> ${deliveryInfoText}</p>
             <p><strong>Payment Method:</strong> ${orderData.paymentMethod}</p>
-            <p><strong>Delivery Type:</strong> ${orderData.deliveryType}</p>
+            <p><strong>Order Type:</strong> <span style="background-color: ${isPickup ? '#fef3c7' : '#dbeafe'}; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${isPickup ? '📦 PICKUP' : '🚚 DELIVERY'}</span></p>
             <p><strong>Total Amount:</strong> <span style="color: #dc2626; font-weight: bold;">$${orderData.totalAmount.toFixed(2)}</span></p>
           </div>
 
@@ -195,8 +215,11 @@ const handler = async (req: Request): Promise<Response> => {
             </tbody>
           </table>
 
-          <div style="text-align: center; margin-top: 20px; padding: 15px; background-color: #f0fdf4; border-radius: 6px;">
-            <p style="margin: 0; color: #15803d; font-weight: bold;">Action Required: Process this order in the admin dashboard</p>
+          <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f0fdf4; border-radius: 6px;">
+            <p style="margin: 0 0 15px 0; color: #15803d; font-weight: bold;">Action Required: Process this order</p>
+            <a href="${adminDashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+              Process Order
+            </a>
           </div>
         </div>
       </div>
@@ -220,12 +243,12 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send business notification email
+    // Send business notification email (always send for ALL order types)
     try {
       businessEmailResponse = await transporter.sendMail({
         from: '"Aqua VI Orders" <aquavidistributor@gmail.com>',
         to: "aquavidistributor@gmail.com",
-        subject: `🚨 New Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
+        subject: `🚨 New ${isPickup ? 'Pickup' : 'Delivery'} Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
         html: businessEmailHtml,
       });
       console.log("Business email sent:", businessEmailResponse.messageId);
