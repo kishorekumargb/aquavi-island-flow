@@ -701,6 +701,29 @@ const AdminDashboard = () => {
   }, [isAuthenticated, currentAccessLevel]);
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    // Find the current order to check previous status
+    const currentOrder = orders.find(o => o.id === orderId);
+    const previousStatus = currentOrder?.status;
+
+    // Industry standard: Prevent status changes from terminal states
+    if (previousStatus === 'delivered' || previousStatus === 'cancelled') {
+      toast({
+        title: "Cannot Update",
+        description: `Order is already ${previousStatus}. Status cannot be changed.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent setting the same status (no duplicate emails)
+    if (previousStatus === newStatus) {
+      toast({
+        title: "No Change",
+        description: "Order is already in this status.",
+      });
+      return;
+    }
+
     try {
       // Optimistic update
       setOrders(prev =>
@@ -717,8 +740,8 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
-      // Send delivery confirmation email when status changes to 'delivered'
-      if (status === 'delivered') {
+      // Send delivery confirmation email only on TRANSITION to 'delivered'
+      if (status === 'delivered' && previousStatus !== 'delivered') {
         try {
           const { error: emailError } = await supabase.functions.invoke('send-delivery-confirmation', {
             body: { orderId },
@@ -730,6 +753,22 @@ const AdminDashboard = () => {
           }
         } catch (emailError) {
           console.error('Error invoking delivery confirmation function:', emailError);
+        }
+      }
+
+      // Send cancellation notification email only on TRANSITION to 'cancelled'
+      if (status === 'cancelled' && previousStatus !== 'cancelled') {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-cancellation-notification', {
+            body: { orderId },
+          });
+          if (emailError) {
+            console.error('Error sending cancellation notification email:', emailError);
+          } else {
+            console.log('Cancellation notification email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Error invoking cancellation notification function:', emailError);
         }
       }
 
