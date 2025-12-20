@@ -14,8 +14,6 @@ interface Product {
   description: string;
   price: number;
   size: string;
-  features?: string[];
-  category?: string;
   image_url: string | null;
   is_active: boolean;
 }
@@ -35,8 +33,6 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
     description: "",
     price: "",
     size: "",
-    features: "",
-    category: "bottles",
     is_active: true
   });
 
@@ -44,11 +40,9 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
     if (product) {
       setFormData({
         name: product.name,
-        description: product.description,
+        description: product.description || "",
         price: product.price.toString(),
         size: product.size,
-        features: product.features ? product.features.join(', ') : '',
-        category: product.category || 'bottles',
         is_active: product.is_active
       });
     }
@@ -90,8 +84,6 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
           description: formData.description,
           price: parseFloat(formData.price),
           size: formData.size,
-          features: formData.features.split(',').map(f => f.trim()),
-          category: formData.category,
           image_url: imageUrl,
           is_active: formData.is_active
         })
@@ -159,29 +151,6 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
               onChange={(e) => setFormData({ ...formData, size: e.target.value })}
               required
             />
-          </div>
-
-          <div>
-            <Label htmlFor="features">Features (comma-separated)</Label>
-            <Textarea
-              id="features"
-              value={formData.features}
-              onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="bottles">Bottles</SelectItem>
-                <SelectItem value="accessories">Accessories</SelectItem>
-                <SelectItem value="special">Special Edition</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div>
