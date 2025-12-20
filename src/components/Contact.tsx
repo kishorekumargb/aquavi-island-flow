@@ -26,15 +26,13 @@ export function Contact() {
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase
-        .from('contact_messages')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          message: formData.message,
-          status: 'unread'
-        });
+      // Use server-side validated RPC function
+      const { data, error } = await supabase.rpc('submit_contact_message', {
+        p_name: formData.name,
+        p_email: formData.email,
+        p_phone: formData.phone || null,
+        p_message: formData.message
+      });
 
       if (error) throw error;
 
@@ -43,11 +41,24 @@ export function Contact() {
         description: "We'll get back to you within 24 hours.",
       });
       setFormData({ name: '', email: '', phone: '', message: '' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      
+      // Parse server-side validation errors for user-friendly messages
+      let errorMessage = "Failed to send message. Please try again.";
+      if (error?.message?.includes('Invalid name')) {
+        errorMessage = "Please enter a name between 2-100 characters.";
+      } else if (error?.message?.includes('Invalid email')) {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error?.message?.includes('Invalid phone')) {
+        errorMessage = "Phone number must be 5-20 characters.";
+      } else if (error?.message?.includes('Invalid message')) {
+        errorMessage = "Message must be between 10-5000 characters.";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
