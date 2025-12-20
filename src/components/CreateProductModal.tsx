@@ -22,8 +22,7 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
     description: "",
     price: "",
     size: "",
-    features: "",
-    category: "bottles"
+    stock: ""
   });
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -60,8 +59,7 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
           description: formData.description,
           price: parseFloat(formData.price),
           size: formData.size,
-          features: formData.features.split(',').map(f => f.trim()),
-          category: formData.category,
+          stock: formData.stock === "" ? null : parseInt(formData.stock),
           image_url: imageUrl,
           is_active: true
         }]);
@@ -71,7 +69,7 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
       toast.success("Product created successfully!");
       onSuccess();
       onClose();
-      setFormData({ name: "", description: "", price: "", size: "", features: "", category: "bottles" });
+      setFormData({ name: "", description: "", price: "", size: "", stock: "" });
       setImageFile(null);
     } catch (error) {
       console.error('Error creating product:', error);
@@ -132,27 +130,16 @@ export function CreateProductModal({ isOpen, onClose, onSuccess }: CreateProduct
           </div>
 
           <div>
-            <Label htmlFor="features">Features (comma-separated)</Label>
-            <Textarea
-              id="features"
-              value={formData.features}
-              onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-              placeholder="Pure, Alkaline, Natural minerals"
+            <Label htmlFor="stock">Stock Quantity</Label>
+            <Input
+              id="stock"
+              type="number"
+              min="0"
+              value={formData.stock}
+              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+              placeholder="Leave empty for unlimited stock"
             />
-          </div>
-
-          <div>
-            <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="bottles">Bottles</SelectItem>
-                <SelectItem value="accessories">Accessories</SelectItem>
-                <SelectItem value="special">Special Edition</SelectItem>
-              </SelectContent>
-            </Select>
+            <p className="text-sm text-muted-foreground mt-1">Leave empty for unlimited availability</p>
           </div>
 
           <div>

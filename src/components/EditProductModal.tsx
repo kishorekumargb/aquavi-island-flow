@@ -16,6 +16,7 @@ interface Product {
   size: string;
   image_url: string | null;
   is_active: boolean;
+  stock: number | null;
 }
 
 interface EditProductModalProps {
@@ -33,6 +34,7 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
     description: "",
     price: "",
     size: "",
+    stock: "",
     is_active: true
   });
 
@@ -43,6 +45,7 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
         description: product.description || "",
         price: product.price.toString(),
         size: product.size,
+        stock: product.stock !== null ? product.stock.toString() : "",
         is_active: product.is_active
       });
     }
@@ -84,6 +87,7 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
           description: formData.description,
           price: parseFloat(formData.price),
           size: formData.size,
+          stock: formData.stock === "" ? null : parseInt(formData.stock),
           image_url: imageUrl,
           is_active: formData.is_active
         })
@@ -151,6 +155,19 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
               onChange={(e) => setFormData({ ...formData, size: e.target.value })}
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="stock">Stock Quantity</Label>
+            <Input
+              id="stock"
+              type="number"
+              min="0"
+              value={formData.stock}
+              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+              placeholder="Leave empty for unlimited stock"
+            />
+            <p className="text-sm text-muted-foreground mt-1">Leave empty for unlimited availability</p>
           </div>
 
           <div>
