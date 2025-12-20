@@ -717,6 +717,22 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
+      // Send delivery confirmation email when status changes to 'delivered'
+      if (status === 'delivered') {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-delivery-confirmation', {
+            body: { orderId },
+          });
+          if (emailError) {
+            console.error('Error sending delivery confirmation email:', emailError);
+          } else {
+            console.log('Delivery confirmation email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Error invoking delivery confirmation function:', emailError);
+        }
+      }
+
       toast({ title: "Success", description: "Order status updated" });
     } catch (error) {
       console.error('Error updating order:', error);
