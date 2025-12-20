@@ -69,10 +69,24 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
   const [quantities, setQuantities] = useState({});
 
   const handleQuantityChange = (productId: string, quantity: string) => {
+    const product = products.find(p => p.id === productId);
+    const stock = product?.stock ?? 0;
+    
+    // Don't allow any quantity for out-of-stock products
+    if (stock <= 0) return;
+    
+    let parsedQuantity = parseInt(quantity) || 0;
+    // Limit to available stock
+    parsedQuantity = Math.min(parsedQuantity, stock);
+    
     setQuantities(prev => ({
       ...prev,
-      [productId]: parseInt(quantity) || 0
+      [productId]: parsedQuantity
     }));
+  };
+  
+  const isOutOfStock = (product: Product) => {
+    return (product.stock ?? 0) <= 0;
   };
 
   const calculateTotal = () => {
@@ -130,27 +144,40 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
           <div className="space-y-6">
             <h3 className="text-xl font-heading font-semibold">Select Products</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.map((product) => (
-                <Card key={product.id} className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <div className="font-semibold">{product.name}</div>
-                      <div className="text-sm text-muted-foreground">{product.size}</div>
-                      <div className="text-lg font-bold text-primary">${product.price}</div>
+              {products.map((product) => {
+                const outOfStock = isOutOfStock(product);
+                const lowStock = (product.stock ?? 0) > 0 && (product.stock ?? 0) <= 5;
+                
+                return (
+                  <Card key={product.id} className={`p-4 ${outOfStock ? 'opacity-60 bg-muted/50' : ''}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div className="font-semibold">{product.name}</div>
+                        <div className="text-sm text-muted-foreground">{product.size}</div>
+                        <div className="text-lg font-bold text-primary">${product.price}</div>
+                        {outOfStock && (
+                          <Badge variant="destructive" className="mt-1">Out of Stock</Badge>
+                        )}
+                        {lowStock && (
+                          <Badge variant="secondary" className="mt-1">Only {product.stock} left</Badge>
+                        )}
+                      </div>
+                      <div className="w-20">
+                        <Input
+                          type="number"
+                          min="0"
+                          max={product.stock ?? 0}
+                          placeholder="0"
+                          value={quantities[product.id] || ''}
+                          onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                          disabled={outOfStock}
+                          className={outOfStock ? 'cursor-not-allowed' : ''}
+                        />
+                      </div>
                     </div>
-                    <div className="w-20">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="99"
-                        placeholder="0"
-                        value={quantities[product.id] || ''}
-                        onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
             
             {getOrderItems().length > 0 && (
