@@ -107,15 +107,33 @@ const handler = async (req: Request): Promise<Response> => {
       ? 'Pickup Location: Aqua VI Store - Contact us for pickup details'
       : orderData.deliveryAddress || 'To be confirmed';
 
-    // Generate order items HTML
-    const itemsHtml = orderData.items.map(item => `
+    // Fetch product details from database to get actual size descriptions
+    const productNames = orderData.items.map(item => item.name);
+    const { data: products } = await supabase
+      .from('products')
+      .select('name, size')
+      .in('name', productNames);
+    
+    // Create a map for quick lookup of product sizes
+    const productSizeMap: Record<string, string> = {};
+    if (products) {
+      products.forEach((product: { name: string; size: string }) => {
+        productSizeMap[product.name] = product.size;
+      });
+    }
+
+    // Generate order items HTML with actual product size descriptions
+    const itemsHtml = orderData.items.map(item => {
+      const sizeDescription = productSizeMap[item.name] || item.size;
+      return `
       <tr style="border-bottom: 1px solid #eee;">
-        <td style="padding: 12px; text-align: left;">${item.name} (${item.size})</td>
+        <td style="padding: 12px; text-align: left;">${item.name} (${sizeDescription})</td>
         <td style="padding: 12px; text-align: center;">${item.quantity}</td>
         <td style="padding: 12px; text-align: right;">$${item.price.toFixed(2)}</td>
         <td style="padding: 12px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
 
     // Customer confirmation email with logo
     const customerEmailHtml = `
