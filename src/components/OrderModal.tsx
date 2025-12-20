@@ -18,9 +18,9 @@ interface Product {
   name: string;
   size: string;
   price: number;
-  description: string;
-  image_url: string;
-  stock: number;
+  description: string | null;
+  image_url: string | null;
+  stock: number | null;
   is_active: boolean;
 }
 
