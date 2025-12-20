@@ -11,9 +11,9 @@ interface Product {
   name: string;
   size: string;
   price: number;
-  description: string;
-  image_url: string;
-  stock: number;
+  description: string | null;
+  image_url: string | null;
+  stock: number | null;
   is_active: boolean;
 }
 
@@ -91,6 +91,10 @@ export function ProductRange() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((product, index) => {
             const isPopular = index === 1; // Make second product popular by default
+            const hasLimitedStock = product.stock !== null && product.stock !== undefined;
+            const isOutOfStock = hasLimitedStock && product.stock <= 0;
+            const isLowStock = hasLimitedStock && product.stock > 0 && product.stock < 10;
+
             return (
               <Card key={product.id} className="relative group hover:shadow-elegant transition-smooth">
                 {isPopular && (
@@ -98,14 +102,15 @@ export function ProductRange() {
                     Most Popular
                   </Badge>
                 )}
-                
+
                 <CardHeader className="text-center pb-4">
                   <div className="flex items-center justify-center mb-4 bg-grey">
                     {product.image_url ? (
-                      <img 
-                        src={product.image_url} 
+                      <img
+                        src={product.image_url}
                         alt={`Aqua VI ${product.name}`}
                         className="w-32 h-48 object-cover rounded-lg"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-32 h-48 bg-primary/10 flex items-center justify-center rounded-lg">
@@ -114,13 +119,13 @@ export function ProductRange() {
                     )}
                   </div>
                   <CardTitle className="text-xl font-heading">{product.name}</CardTitle>
-                  <CardDescription>{product.description}</CardDescription>
+                  <CardDescription>{product.description ?? ''}</CardDescription>
                 </CardHeader>
 
                 <CardContent className="text-center">
                   <div className="text-3xl font-bold text-primary mb-2">${product.price.toFixed(2)}</div>
                   <div className="text-sm text-muted-foreground">{product.size}</div>
-                  {product.stock < 10 && (
+                  {isLowStock && (
                     <Badge variant="destructive" className="mt-2">
                       Low Stock ({product.stock} left)
                     </Badge>
@@ -129,8 +134,8 @@ export function ProductRange() {
 
                 <CardFooter className="flex flex-col space-y-3">
                   <OrderModal>
-                    <Button variant="premium" className="w-full" disabled={product.stock === 0}>
-                      {product.stock === 0 ? 'Out of Stock' : 'Add to Order'}
+                    <Button variant="premium" className="w-full" disabled={isOutOfStock}>
+                      {isOutOfStock ? 'Out of Stock' : 'Add to Order'}
                     </Button>
                   </OrderModal>
                 </CardFooter>

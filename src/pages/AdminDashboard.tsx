@@ -90,9 +90,9 @@ interface Product {
   name: string;
   size: string;
   price: number;
-  stock: number;
-  description: string;
-  image_url: string;
+  stock: number | null;
+  description: string | null;
+  image_url: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -871,7 +871,7 @@ const AdminDashboard = () => {
         name: productData.name,
         size: productData.size,
         price: productData.price,
-        stock: productData.stock ?? 0,
+        stock: productData.stock ?? null,
         description: productData.description ?? '',
         image_url: productData.image_url ?? '',
         is_active: productData.is_active ?? true,
@@ -1313,7 +1313,7 @@ const AdminDashboard = () => {
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.size}</TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
+                      <TableCell>{product.stock ?? 'Unlimited'}</TableCell>
                       <TableCell>
                         <Badge variant={product.is_active ? 'default' : 'secondary'}>
                           {product.is_active ? 'Active' : 'Inactive'}
