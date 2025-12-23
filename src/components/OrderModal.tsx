@@ -30,6 +30,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [ordersEnabled, setOrdersEnabled] = useState<boolean | null>(null);
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     email: '',
@@ -38,7 +39,29 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchProducts();
+    checkOrdersEnabled();
   }, []);
+
+  const checkOrdersEnabled = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'receive_orders')
+        .single();
+      
+      if (error) {
+        console.error('Error checking orders status:', error);
+        setOrdersEnabled(true); // Default to enabled if error
+        return;
+      }
+      
+      setOrdersEnabled(data?.setting_value === 'true');
+    } catch (error) {
+      console.error('Error checking orders status:', error);
+      setOrdersEnabled(true);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -131,25 +154,47 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Progress Indicator */}
-        <div className="flex items-center justify-between mb-6">
-          {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
-                currentStep >= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-              }`}>
-                {step}
-              </div>
-              {step < 4 && (
-                <div className={`h-1 w-16 ml-2 ${
-                  currentStep > step ? 'bg-primary' : 'bg-muted'
-                }`}></div>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* Orders Disabled Message */}
+        {ordersEnabled === false && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 text-center">
+            <h3 className="text-lg font-heading font-semibold text-destructive mb-2">
+              Orders Currently Unavailable
+            </h3>
+            <p className="text-muted-foreground">
+              We're temporarily not accepting new orders. Please check back later.
+            </p>
+          </div>
+        )}
 
-        {/* Step Content */}
+        {/* Loading state */}
+        {ordersEnabled === null && (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
+
+        {/* Main content - only show when orders are enabled */}
+        {ordersEnabled === true && (
+          <>
+            {/* Progress Indicator */}
+            <div className="flex items-center justify-between mb-6">
+              {[1, 2, 3, 4].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                    currentStep >= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {step}
+                  </div>
+                  {step < 4 && (
+                    <div className={`h-1 w-16 ml-2 ${
+                      currentStep > step ? 'bg-primary' : 'bg-muted'
+                    }`}></div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Step Content */}
         {currentStep === 1 && (
           <div className="space-y-6">
             <h3 className="text-xl font-heading font-semibold">Select Products</h3>
@@ -172,7 +217,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                         {lowStock && (
                           <Badge variant="secondary" className="mt-1">Only {product.stock} left</Badge>
                         )}
-                        {!limited && (
+                        {limited && !outOfStock && !lowStock && (
                           <Badge variant="outline" className="mt-1">In Stock</Badge>
                         )}
                       </div>
@@ -605,28 +650,30 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6 border-t border-border">
-          <Button 
-            variant="outline" 
-            onClick={prevStep}
-            disabled={currentStep === 1}
-          >
-            Previous
-          </Button>
-          {currentStep < 4 && (
-            <Button 
-              variant="premium" 
-              onClick={nextStep}
-              disabled={
-                (currentStep === 1 && getOrderItems().length === 0) ||
-                (currentStep === 2 && !customerInfo.name.trim())
-              }
-            >
-              Next Step
-            </Button>
-          )}
-        </div>
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-6 border-t border-border">
+              <Button 
+                variant="outline" 
+                onClick={prevStep}
+                disabled={currentStep === 1}
+              >
+                Previous
+              </Button>
+              {currentStep < 4 && (
+                <Button 
+                  variant="premium" 
+                  onClick={nextStep}
+                  disabled={
+                    (currentStep === 1 && getOrderItems().length === 0) ||
+                    (currentStep === 2 && !customerInfo.name.trim())
+                  }
+                >
+                  Next Step
+                </Button>
+              )}
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
