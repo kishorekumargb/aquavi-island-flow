@@ -217,7 +217,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                         {lowStock && (
                           <Badge variant="secondary" className="mt-1">Only {product.stock} left</Badge>
                         )}
-                        {limited && !outOfStock && !lowStock && (
+                        {!outOfStock && !lowStock && (
                           <Badge variant="outline" className="mt-1">In Stock</Badge>
                         )}
                       </div>

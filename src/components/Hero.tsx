@@ -85,7 +85,7 @@ export function Hero() {
             
             <div className="flex justify-center mb-12">
               <OrderModal>
-                <Button variant="hero" size="lg" className="shadow-glow text-base sm:text-lg px-8 py-4">
+                <Button variant="hero" size="lg" className="shadow-glow text-base sm:text-lg px-8 py-4 animate-[pulse_3s_ease-in-out_infinite]">
                   Order Now
                 </Button>
               </OrderModal>
