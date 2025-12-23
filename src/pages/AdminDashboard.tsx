@@ -152,6 +152,7 @@ const AdminDashboard = () => {
   const { user, userRole, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('orders');
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -1161,6 +1162,10 @@ const AdminDashboard = () => {
   };
 
   // Render functions for all tabs
+  const filteredOrders = orderStatusFilter === 'all' 
+    ? orders 
+    : orders.filter(order => order.status === orderStatusFilter);
+
   const renderOrders = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -1169,6 +1174,18 @@ const AdminDashboard = () => {
           <p className="text-sm text-muted-foreground">Manage customer orders</p>
         </div>
         <div className="flex items-center gap-2">
+          <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" onClick={exportOrdersCSV}>Export CSV</Button>
         </div>
       </div>
@@ -1191,14 +1208,14 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.length === 0 ? (
+                {filteredOrders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      No orders found
+                      {orderStatusFilter === 'all' ? 'No orders found' : `No ${orderStatusFilter} orders found`}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
+                  filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.order_number}</TableCell>
                       <TableCell>
