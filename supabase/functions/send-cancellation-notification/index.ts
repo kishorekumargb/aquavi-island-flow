@@ -70,26 +70,26 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Use service role for admin check and data access
+    // Use service role for role check and data access
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify user is admin
+    // Verify user has a valid role (admin or user)
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'user'])
       .single();
 
     if (roleError || !roleData) {
-      console.error("User is not an admin:", user.id);
+      console.error("User does not have required role:", user.id);
       return new Response(
-        JSON.stringify({ error: "Forbidden: Admin access required" }),
+        JSON.stringify({ error: "Forbidden: Access denied" }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log("Admin verified, processing cancellation notification");
+    console.log("User verified with role:", roleData.role, "- processing cancellation notification");
 
     const { orderId }: CancellationNotificationRequest = await req.json();
     
