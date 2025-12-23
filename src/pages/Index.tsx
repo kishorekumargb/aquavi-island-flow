@@ -42,7 +42,7 @@ const Index = () => {
       {/* Floating Order Button */}
       <div className="fixed bottom-6 right-6 z-40">
         <OrderModal>
-          <Button variant="hero" size="lg" className="shadow-glow animate-pulse">
+          <Button variant="hero" size="lg" className="shadow-glow animate-[pulse_4s_ease-in-out_infinite]">
             Order Now
           </Button>
         </OrderModal>
