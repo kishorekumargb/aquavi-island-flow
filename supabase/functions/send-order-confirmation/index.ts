@@ -162,16 +162,18 @@ const handler = async (req: Request): Promise<Response> => {
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
 
-          <!-- Logo Header -->
+          <!-- Logo Header (Integrated) -->
           <tr>
-            <td align="center" style="padding-bottom: 32px;">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px 16px 0 0; padding: 32px 0;">
                 <tr>
-                  <td style="vertical-align: middle; padding-right: 12px;">
-                    <img src="${logoUrl}" alt="Aqua VI" width="48" height="48" style="display: block; border-radius: 12px;">
-                  </td>
-                  <td style="vertical-align: middle;">
-                    <span style="font-size: 24px; font-weight: 700; color: #214B95;">Aqua VI Distributor</span>
+                  <td align="center" style="padding: 32px 20px;">
+                    <img src="${logoUrl}" alt="Aqua VI" width="80" height="80" style="display: block; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 28px; font-weight: 700;">
+                      <span style="color: #214B95;">AQUA </span><span style="color: #039C97;">VI</span>
+                    </p>
+                    <p style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #214B95;">DISTRIBUTOR</p>
+                    <p style="margin: 12px 0 0; font-size: 14px; color: #6b7280;">Premium Water Delivery</p>
                   </td>
                 </tr>
               </table>
@@ -181,21 +183,22 @@ const handler = async (req: Request): Promise<Response> => {
           <!-- Main Card -->
           <tr>
             <td>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
 
-                <!-- Success Header -->
+                <!-- Status Banner - Blue/Teal for Confirmation -->
                 <tr>
-                  <td style="background: linear-gradient(135deg, #214B95 0%, #039C97 100%); padding: 32px 40px;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <td style="padding: 0 32px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background: linear-gradient(135deg, #214B95 0%, #039C97 100%); border-radius: 16px; margin-top: -1px;">
                       <tr>
-                        <td>
+                        <td style="padding: 24px 32px;">
                           <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                             <tr>
                               <td style="background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; width: 48px; height: 48px; text-align: center; vertical-align: middle;">
-                                <span style="font-size: 24px;">✓</span>
+                                <span style="font-size: 24px; color: #ffffff;">✓</span>
                               </td>
                               <td style="padding-left: 16px;">
-                                <p style="margin: 0; font-size: 14px; color: rgba(255, 255, 255, 0.9); text-transform: uppercase; letter-spacing: 0.5px;">Order confirmed</p>
+                                <p style="margin: 0; font-size: 20px; font-weight: 700; color: #ffffff;">Order Confirmed!</p>
+                                <p style="margin: 4px 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.9);">We've received your order</p>
                               </td>
                             </tr>
                           </table>
@@ -466,16 +469,18 @@ const handler = async (req: Request): Promise<Response> => {
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
 
-          <!-- Logo Header -->
+          <!-- Logo Header (Integrated) -->
           <tr>
-            <td align="center" style="padding-bottom: 32px;">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px 16px 0 0; padding: 32px 0;">
                 <tr>
-                  <td style="vertical-align: middle; padding-right: 12px;">
-                    <img src="${logoUrl}" alt="Aqua VI" width="48" height="48" style="display: block; border-radius: 12px;">
-                  </td>
-                  <td style="vertical-align: middle;">
-                    <span style="font-size: 24px; font-weight: 700; color: #EA580C;">Aqua VI Distributor</span>
+                  <td align="center" style="padding: 32px 20px;">
+                    <img src="${logoUrl}" alt="Aqua VI" width="80" height="80" style="display: block; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 28px; font-weight: 700;">
+                      <span style="color: #214B95;">AQUA </span><span style="color: #039C97;">VI</span>
+                    </p>
+                    <p style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #214B95;">DISTRIBUTOR</p>
+                    <p style="margin: 12px 0 0; font-size: 14px; color: #6b7280;">Internal Notification</p>
                   </td>
                 </tr>
               </table>
@@ -485,14 +490,14 @@ const handler = async (req: Request): Promise<Response> => {
           <!-- Main Card -->
           <tr>
             <td>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
 
-                <!-- Alert Header -->
+                <!-- Status Banner - ORANGE for Internal Alert -->
                 <tr>
-                  <td style="background: linear-gradient(135deg, #EA580C 0%, #F97316 100%); padding: 32px 40px;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <td style="padding: 0 32px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background: linear-gradient(135deg, #EA580C 0%, #F97316 100%); border-radius: 16px; margin-top: -1px;">
                       <tr>
-                        <td>
+                        <td style="padding: 24px 32px;">
                           <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                             <tr>
                               <td style="background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; width: 48px; height: 48px; text-align: center; vertical-align: middle;">
