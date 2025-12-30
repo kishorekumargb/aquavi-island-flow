@@ -279,7 +279,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               )}
 
               {currentStep === 2 && (
-                <div className="space-y-4 pr-2">
+                <div className="space-y-4 px-1">
                   <h3 className="text-base font-heading font-semibold">Customer & Delivery Details</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -406,7 +406,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               )}
 
               {currentStep === 3 && (
-                <div className="space-y-4 pr-2">
+                <div className="space-y-4 px-1">
                   <h3 className="text-base font-heading font-semibold">Payment Method</h3>
                   
                   <div className="space-y-3">
@@ -434,7 +434,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               )}
 
               {currentStep === 4 && (
-                <div className="space-y-4 pr-2">
+                <div className="space-y-4 px-1">
                   <h3 className="text-base font-heading font-semibold">Review & Confirm</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -498,9 +498,9 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                   </div>
 
                   <Button 
-                    variant="hero" 
+                    variant="premium" 
                     size="default" 
-                    className="w-full"
+                    className="w-full rounded-lg py-4 text-base active:scale-[0.98] active:brightness-95"
                     disabled={isSubmitting}
                     onClick={async () => {
                       // Validation
