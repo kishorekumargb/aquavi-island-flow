@@ -146,47 +146,47 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-heading text-2xl">Order Aqua VI Water</DialogTitle>
-          <DialogDescription>
-            Complete your order in a few simple steps for same-day delivery
+      <DialogContent className="max-w-2xl h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0 pb-2">
+          <DialogTitle className="font-heading text-xl">Order Aqua VI Water</DialogTitle>
+          <DialogDescription className="text-sm">
+            Complete your order in a few simple steps
           </DialogDescription>
         </DialogHeader>
 
         {/* Orders Disabled Message */}
         {ordersEnabled === false && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-heading font-semibold text-destructive mb-2">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-center">
+            <h3 className="text-base font-heading font-semibold text-destructive mb-1">
               Orders Currently Unavailable
             </h3>
-            <p className="text-muted-foreground">
-              We're temporarily not accepting new orders. Please check back later.
+            <p className="text-sm text-muted-foreground">
+              We're temporarily not accepting new orders.
             </p>
           </div>
         )}
 
         {/* Loading state */}
         {ordersEnabled === null && (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </div>
         )}
 
         {/* Main content - only show when orders are enabled */}
         {ordersEnabled === true && (
-          <>
-            {/* Progress Indicator */}
-            <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Progress Indicator - Compact */}
+            <div className="flex items-center justify-center gap-2 pb-3 flex-shrink-0">
               {[1, 2, 3, 4].map((step) => (
                 <div key={step} className="flex items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
                     currentStep >= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                   }`}>
                     {step}
                   </div>
                   {step < 4 && (
-                    <div className={`h-1 w-16 ml-2 ${
+                    <div className={`h-0.5 w-8 ml-1 ${
                       currentStep > step ? 'bg-primary' : 'bg-muted'
                     }`}></div>
                   )}
@@ -194,472 +194,477 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               ))}
             </div>
 
-            {/* Step Content */}
-        {currentStep === 1 && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-heading font-semibold">Select Products</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.map((product) => {
-                const outOfStock = isOutOfStock(product);
-                const limited = hasLimitedStock(product);
-                const lowStock = limited && product.stock! > 0 && product.stock! <= 5;
-                
-                return (
-                  <Card key={product.id} className={`p-4 ${outOfStock ? 'opacity-60 bg-muted/50' : ''}`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <div className="font-semibold">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">{product.size}</div>
-                        <div className="text-lg font-bold text-primary">${product.price}</div>
-                        {outOfStock && (
-                          <Badge variant="destructive" className="mt-1">Out of Stock</Badge>
-                        )}
-                        {lowStock && (
-                          <Badge variant="secondary" className="mt-1">Only {product.stock} left</Badge>
-                        )}
-                        {!outOfStock && !lowStock && (
-                          <Badge variant="outline" className="mt-1">In Stock</Badge>
-                        )}
+            {/* Step Content - Scrollable area */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {currentStep === 1 && (
+                <div className="space-y-3 pr-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-heading font-semibold">Select Products</h3>
+                    {getOrderItems().length > 0 && (
+                      <div className="text-sm font-semibold text-primary">
+                        Total: ${calculateTotal().toFixed(2)}
                       </div>
-                      <div className="w-20">
-                        <Input
-                          type="number"
-                          min="0"
-                          max={limited ? product.stock! : 999}
-                          placeholder="0"
-                          value={quantities[product.id] || ''}
-                          onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                          disabled={outOfStock}
-                          className={outOfStock ? 'cursor-not-allowed' : ''}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-            
-            {getOrderItems().length > 0 && (
-              <Card className="bg-primary/5 border-primary/20">
-                <CardHeader>
-                  <CardTitle className="text-lg">Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {getOrderItems().map(({ product, quantity }) => (
-                    <div key={product?.id} className="flex justify-between items-center py-2">
-                      <span>{product?.name} × {quantity}</span>
-                      <span className="font-semibold">${((product?.price || 0) * quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
-                  <Separator className="my-3" />
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span>Total</span>
-                    <span className="text-primary">${calculateTotal().toFixed(2)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {currentStep === 2 && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-heading font-semibold">Customer & Delivery Details</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label className="text-base font-medium">Full Name *</Label>
-                <Input
-                  placeholder="Enter your full name"
-                  value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                  className="mt-2"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-base font-medium">Phone *</Label>
-                <Input
-                  type="tel"
-                  placeholder="Enter your phone"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                  className="mt-2"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-base font-medium">Email</Label>
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={customerInfo.email}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                  className="mt-2"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-base font-medium">Delivery Type</Label>
-                <Select value={orderData.deliveryType} onValueChange={(value) => 
-                  setOrderData(prev => ({ 
-                    ...prev, 
-                    deliveryType: value,
-                    time: value === 'delivery' ? '11:00-14:30' : '09:00-18:30'
-                  }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="delivery">
-                      <div className="flex items-center space-x-2">
-                        <Truck className="w-4 h-4" />
-                        <span>Delivery</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="pickup">
-                      <div className="flex items-center space-x-2">
-                        <Package className="w-4 h-4" />
-                        <span>Pickup</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-base font-medium">Frequency</Label>
-                <Select value={orderData.frequency} onValueChange={(value) =>
-                  setOrderData(prev => ({ ...prev, frequency: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="once">One-time Order</SelectItem>
-                    <SelectItem value="twice">Twice per Month</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {orderData.deliveryType === 'delivery' && (
-              <div>
-                <Label className="text-base font-medium">Delivery Address *</Label>
-                <Input
-                  placeholder="Enter your full address in BVI"
-                  value={orderData.address}
-                  onChange={(e) => setOrderData(prev => ({ ...prev, address: e.target.value }))}
-                  className="mt-2"
-                  required
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  We'll use Google Places to verify and optimize your address
-                </p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-base font-medium">Preferred Date *</Label>
-                <Input
-                  type="date"
-                  value={orderData.date}
-                  onChange={(e) => setOrderData(prev => ({ ...prev, date: e.target.value }))}
-                  className="mt-2"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label className="text-base font-medium">Preferred Time</Label>
-                <Select value={orderData.time} onValueChange={(value) =>
-                  setOrderData(prev => ({ ...prev, time: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {orderData.deliveryType === 'delivery' ? (
-                      <SelectItem value="11:00-14:30">11:00 AM - 2:30 PM</SelectItem>
-                    ) : (
-                      <SelectItem value="09:00-18:30">9:00 AM - 6:30 PM</SelectItem>
                     )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-heading font-semibold">Payment Method</h3>
-            
-            <div className="space-y-4">
-              <Card className="p-4 border-2 border-primary">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-primary rounded-full"></div>
-                  <div>
-                    <div className="font-semibold text-primary">Pay by Cash on Delivery</div>
-                    <div className="text-sm text-muted-foreground">Pay when your order arrives</div>
                   </div>
-                </div>
-              </Card>
-
-              <Card className="p-4 border border-muted bg-muted/30">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-muted rounded-full"></div>
-                  <div>
-                    <div className="font-semibold text-muted-foreground">Pay by Card</div>
-                    <div className="text-sm text-muted-foreground">Coming Soon</div>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 4 && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-heading font-semibold">Review & Payment</h3>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Order Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Package className="w-5 h-5" />
-                    <span>Order Summary</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {getOrderItems().map(({ product, quantity }) => (
-                    <div key={product?.id} className="flex justify-between">
-                      <span>{product?.name} × {quantity}</span>
-                      <span>${((product?.price || 0) * quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
                   
-                  <Separator />
-                  
+                  {/* Compact List View */}
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Delivery</span>
-                      <span>Free</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-primary">${calculateTotal().toFixed(2)}</span>
-                    </div>
+                    {products.map((product) => {
+                      const outOfStock = isOutOfStock(product);
+                      const limited = hasLimitedStock(product);
+                      const lowStock = limited && product.stock! > 0 && product.stock! <= 5;
+                      const quantity = quantities[product.id] || 0;
+                      
+                      return (
+                        <div 
+                          key={product.id} 
+                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                            quantity > 0 
+                              ? 'border-primary bg-primary/5' 
+                              : outOfStock 
+                                ? 'opacity-50 bg-muted/30 border-muted' 
+                                : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm truncate">{product.name}</span>
+                              {outOfStock && (
+                                <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Out</Badge>
+                              )}
+                              {lowStock && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{product.stock} left</Badge>
+                              )}
+                              {!outOfStock && !lowStock && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">In Stock</Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{product.size}</div>
+                          </div>
+                          <div className="text-sm font-bold text-primary whitespace-nowrap">
+                            ${product.price.toFixed(2)}
+                          </div>
+                          <div className="w-16 flex-shrink-0">
+                            <Input
+                              type="number"
+                              min="0"
+                              max={limited ? product.stock! : 999}
+                              placeholder="0"
+                              value={quantities[product.id] || ''}
+                              onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                              disabled={outOfStock}
+                              className={`h-8 text-center text-sm ${outOfStock ? 'cursor-not-allowed' : ''}`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Delivery Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <MapPin className="w-5 h-5" />
-                    <span>Delivery Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <div className="font-medium">Type</div>
-                    <div className="text-muted-foreground capitalize">{orderData.deliveryType}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Frequency</div>
-                    <div className="text-muted-foreground">
-                      {orderData.frequency === 'once' ? 'One-time order' : 'Twice per month'}
-                    </div>
-                  </div>
-                  {orderData.address && (
-                    <div>
-                      <div className="font-medium">Address</div>
-                      <div className="text-muted-foreground">{orderData.address}</div>
+                  
+                  {/* Compact Order Summary */}
+                  {getOrderItems().length > 0 && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-3">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Selected Items:</div>
+                      <div className="space-y-1">
+                        {getOrderItems().map(({ product, quantity }) => (
+                          <div key={product?.id} className="flex justify-between items-center text-sm">
+                            <span className="truncate">{product?.name} × {quantity}</span>
+                            <span className="font-medium">${((product?.price || 0) * quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  <div>
-                    <div className="font-medium">Scheduled</div>
-                    <div className="text-muted-foreground">{orderData.date} at {orderData.time}</div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div className="space-y-4 pr-2">
+                  <h3 className="text-base font-heading font-semibold">Customer & Delivery Details</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-sm font-medium">Full Name *</Label>
+                      <Input
+                        placeholder="Enter your full name"
+                        value={customerInfo.name}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                        className="mt-1 h-9"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Phone *</Label>
+                      <Input
+                        type="tel"
+                        placeholder="Enter your phone"
+                        value={customerInfo.phone}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                        className="mt-1 h-9"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Email</Label>
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={customerInfo.email}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                        className="mt-1 h-9"
+                      />
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-sm font-medium">Delivery Type</Label>
+                      <Select value={orderData.deliveryType} onValueChange={(value) => 
+                        setOrderData(prev => ({ 
+                          ...prev, 
+                          deliveryType: value,
+                          time: value === 'delivery' ? '11:00-14:30' : '09:00-18:30'
+                        }))}>
+                        <SelectTrigger className="mt-1 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="delivery">
+                            <div className="flex items-center space-x-2">
+                              <Truck className="w-3 h-3" />
+                              <span>Delivery</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="pickup">
+                            <div className="flex items-center space-x-2">
+                              <Package className="w-3 h-3" />
+                              <span>Pickup</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Frequency</Label>
+                      <Select value={orderData.frequency} onValueChange={(value) =>
+                        setOrderData(prev => ({ ...prev, frequency: value }))}>
+                        <SelectTrigger className="mt-1 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="once">One-time Order</SelectItem>
+                          <SelectItem value="twice">Twice per Month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {orderData.deliveryType === 'delivery' && (
+                    <div>
+                      <Label className="text-sm font-medium">Delivery Address *</Label>
+                      <Input
+                        placeholder="Enter your full address in BVI"
+                        value={orderData.address}
+                        onChange={(e) => setOrderData(prev => ({ ...prev, address: e.target.value }))}
+                        className="mt-1 h-9"
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-sm font-medium">Preferred Date *</Label>
+                      <Input
+                        type="date"
+                        value={orderData.date}
+                        onChange={(e) => setOrderData(prev => ({ ...prev, date: e.target.value }))}
+                        className="mt-1 h-9"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Preferred Time</Label>
+                      <Select value={orderData.time} onValueChange={(value) =>
+                        setOrderData(prev => ({ ...prev, time: value }))}>
+                        <SelectTrigger className="mt-1 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {orderData.deliveryType === 'delivery' ? (
+                            <SelectItem value="11:00-14:30">11:00 AM - 2:30 PM</SelectItem>
+                          ) : (
+                            <SelectItem value="09:00-18:30">9:00 AM - 6:30 PM</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div className="space-y-4 pr-2">
+                  <h3 className="text-base font-heading font-semibold">Payment Method</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-lg border-2 border-primary">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-primary rounded-full"></div>
+                        <div>
+                          <div className="font-semibold text-sm text-primary">Pay by Cash on Delivery</div>
+                          <div className="text-xs text-muted-foreground">Pay when your order arrives</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg border border-muted bg-muted/30">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-muted rounded-full"></div>
+                        <div>
+                          <div className="font-semibold text-sm text-muted-foreground">Pay by Card</div>
+                          <div className="text-xs text-muted-foreground">Coming Soon</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 4 && (
+                <div className="space-y-4 pr-2">
+                  <h3 className="text-base font-heading font-semibold">Review & Confirm</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Order Summary */}
+                    <div className="border rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Package className="w-4 h-4" />
+                        <span className="font-medium text-sm">Order Summary</span>
+                      </div>
+                      <div className="space-y-2">
+                        {getOrderItems().map(({ product, quantity }) => (
+                          <div key={product?.id} className="flex justify-between text-sm">
+                            <span className="truncate">{product?.name} × {quantity}</span>
+                            <span>${((product?.price || 0) * quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                        <Separator className="my-2" />
+                        <div className="flex justify-between text-sm">
+                          <span>Subtotal</span>
+                          <span>${calculateTotal().toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Delivery</span>
+                          <span>Free</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-bold">
+                          <span>Total</span>
+                          <span className="text-primary">${calculateTotal().toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Delivery Info */}
+                    <div className="border rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <MapPin className="w-4 h-4" />
+                        <span className="font-medium text-sm">Delivery Info</span>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Type</span>
+                          <span className="capitalize">{orderData.deliveryType}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Frequency</span>
+                          <span>{orderData.frequency === 'once' ? 'One-time' : 'Twice/month'}</span>
+                        </div>
+                        {orderData.address && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Address</span>
+                            <span className="text-right max-w-[150px] truncate">{orderData.address}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Date</span>
+                          <span>{orderData.date}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    variant="hero" 
+                    size="default" 
+                    className="w-full"
+                    disabled={isSubmitting}
+                    onClick={async () => {
+                      // Validation
+                      if (!customerInfo.name.trim()) {
+                        toast({
+                          title: "Missing Information",
+                          description: "Please enter your full name",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      if (!customerInfo.phone.trim()) {
+                        toast({
+                          title: "Missing Information", 
+                          description: "Please enter your phone number",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      if (orderData.deliveryType === 'delivery' && !orderData.address.trim()) {
+                        toast({
+                          title: "Missing Information",
+                          description: "Please enter your delivery address",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      if (!orderData.date.trim()) {
+                        toast({
+                          title: "Missing Information",
+                          description: "Please select a preferred date",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
+                      setIsSubmitting(true);
+                      
+                      try {
+                        // Use server-side validated order creation
+                        const orderItems = getOrderItems().map(item => ({
+                          product_id: item.product?.id,
+                          quantity: item.quantity
+                        }));
+                        
+                        const { data: rpcResult, error } = await supabase.rpc('create_validated_order', {
+                          p_customer_name: customerInfo.name,
+                          p_customer_email: customerInfo.email || null,
+                          p_customer_phone: customerInfo.phone,
+                          p_delivery_address: orderData.address || '',
+                          p_delivery_type: orderData.deliveryType,
+                          p_items: orderItems,
+                          p_payment_method: 'cash'
+                        });
+                        
+                        if (error) {
+                          // Handle specific validation errors
+                          if (error.message.includes('not being accepted')) {
+                            toast({
+                              title: "Orders Currently Unavailable",
+                              description: "We're temporarily not accepting new orders. Please try again later.",
+                              variant: "destructive",
+                            });
+                          } else {
+                            throw error;
+                          }
+                          setIsSubmitting(false);
+                          return;
+                        }
+                        
+                        // Cast result to expected shape
+                        const orderResult = rpcResult as {
+                          success: boolean;
+                          order_id: string;
+                          order_number: string;
+                          total_amount: number;
+                          items: Array<{ name: string; price: number; quantity: number }>;
+                        };
+                        
+                        console.log('Order created successfully:', orderResult);
+                        
+                        // Send email notifications
+                        try {
+                          const emailData = {
+                            orderNumber: orderResult.order_number,
+                            customerName: customerInfo.name,
+                            customerEmail: customerInfo.email,
+                            customerPhone: customerInfo.phone,
+                            deliveryAddress: orderData.address,
+                            items: orderResult.items.map((item) => ({
+                              id: '',
+                              name: item.name,
+                              size: '1L',
+                              price: item.price,
+                              quantity: item.quantity
+                            })),
+                            totalAmount: orderResult.total_amount,
+                            paymentMethod: 'cash',
+                            deliveryType: orderData.deliveryType
+                          };
+                          
+                          await supabase.functions.invoke('send-order-confirmation', {
+                            body: emailData
+                          });
+                          
+                          console.log('Order confirmation emails sent successfully');
+                        } catch (emailError) {
+                          console.error('Failed to send confirmation emails:', emailError);
+                          // Don't block order completion if email fails
+                        }
+                        
+                        // Navigate to order confirmation page
+                        const orderParams = new URLSearchParams({
+                          orderNumber: orderResult.order_number,
+                          customerName: customerInfo.name,
+                          total: orderResult.total_amount.toString(),
+                          items: orderResult.items.map((item) => `${item.name} x${item.quantity}`).join(', '),
+                          deliveryAddress: orderData.address || '',
+                          customerPhone: customerInfo.phone || ''
+                        });
+                        
+                        navigate(`/order-confirmation?${orderParams.toString()}`);
+                        
+                        // Reset form and close modal
+                        setCurrentStep(1);
+                        setQuantities({});
+                        setCustomerInfo({ name: '', email: '', phone: '' });
+                        setOrderData({
+                          deliveryType: 'delivery',
+                          frequency: 'once',
+                          address: '',
+                          date: '',
+                          time: '15:30',
+                          items: [],
+                          marketingConsent: false,
+                          autoRenew: false
+                        });
+                        
+                      } catch (error: any) {
+                        console.error('Error placing order:', error);
+                        toast({
+                          title: "Error",
+                          description: error.message || "Failed to place order. Please try again.",
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                  >
+                    {isSubmitting ? 'Placing Order...' : 'Confirm Order (Cash on Delivery)'}
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <Button 
-              variant="hero" 
-              size="lg" 
-              className="w-full"
-              disabled={isSubmitting}
-              onClick={async () => {
-                // Validation
-                if (!customerInfo.name.trim()) {
-                  toast({
-                    title: "Missing Information",
-                    description: "Please enter your full name",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                if (!customerInfo.phone.trim()) {
-                  toast({
-                    title: "Missing Information", 
-                    description: "Please enter your phone number",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                if (orderData.deliveryType === 'delivery' && !orderData.address.trim()) {
-                  toast({
-                    title: "Missing Information",
-                    description: "Please enter your delivery address",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                if (!orderData.date.trim()) {
-                  toast({
-                    title: "Missing Information",
-                    description: "Please select a preferred date",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                
-                setIsSubmitting(true);
-                
-                try {
-                  // Use server-side validated order creation
-                  const orderItems = getOrderItems().map(item => ({
-                    product_id: item.product?.id,
-                    quantity: item.quantity
-                  }));
-                  
-                  const { data: rpcResult, error } = await supabase.rpc('create_validated_order', {
-                    p_customer_name: customerInfo.name,
-                    p_customer_email: customerInfo.email || null,
-                    p_customer_phone: customerInfo.phone,
-                    p_delivery_address: orderData.address || '',
-                    p_delivery_type: orderData.deliveryType,
-                    p_items: orderItems,
-                    p_payment_method: 'cash'
-                  });
-                  
-                  if (error) {
-                    // Handle specific validation errors
-                    if (error.message.includes('not being accepted')) {
-                      toast({
-                        title: "Orders Currently Unavailable",
-                        description: "We're temporarily not accepting new orders. Please try again later.",
-                        variant: "destructive",
-                      });
-                    } else {
-                      throw error;
-                    }
-                    setIsSubmitting(false);
-                    return;
-                  }
-                  
-                  // Cast result to expected shape
-                  const orderResult = rpcResult as {
-                    success: boolean;
-                    order_id: string;
-                    order_number: string;
-                    total_amount: number;
-                    items: Array<{ name: string; price: number; quantity: number }>;
-                  };
-                  
-                  console.log('Order created successfully:', orderResult);
-                  
-                  // Send email notifications
-                  try {
-                    const emailData = {
-                      orderNumber: orderResult.order_number,
-                      customerName: customerInfo.name,
-                      customerEmail: customerInfo.email,
-                      customerPhone: customerInfo.phone,
-                      deliveryAddress: orderData.address,
-                      items: orderResult.items.map((item) => ({
-                        id: '',
-                        name: item.name,
-                        size: '1L',
-                        price: item.price,
-                        quantity: item.quantity
-                      })),
-                      totalAmount: orderResult.total_amount,
-                      paymentMethod: 'cash',
-                      deliveryType: orderData.deliveryType
-                    };
-                    
-                    await supabase.functions.invoke('send-order-confirmation', {
-                      body: emailData
-                    });
-                    
-                    console.log('Order confirmation emails sent successfully');
-                  } catch (emailError) {
-                    console.error('Failed to send confirmation emails:', emailError);
-                    // Don't block order completion if email fails
-                  }
-                  
-                  // Navigate to order confirmation page
-                  const orderParams = new URLSearchParams({
-                    orderNumber: orderResult.order_number,
-                    customerName: customerInfo.name,
-                    total: orderResult.total_amount.toString(),
-                    items: orderResult.items.map((item) => `${item.name} x${item.quantity}`).join(', '),
-                    deliveryAddress: orderData.address || '',
-                    customerPhone: customerInfo.phone || ''
-                  });
-                  
-                  navigate(`/order-confirmation?${orderParams.toString()}`);
-                  
-                  // Reset form and close modal
-                  setCurrentStep(1);
-                  setQuantities({});
-                  setCustomerInfo({ name: '', email: '', phone: '' });
-                  setOrderData({
-                    deliveryType: 'delivery',
-                    frequency: 'once',
-                    address: '',
-                    date: '',
-                    time: '15:30',
-                    items: [],
-                    marketingConsent: false,
-                    autoRenew: false
-                  });
-                  
-                } catch (error: any) {
-                  console.error('Error placing order:', error);
-                  toast({
-                    title: "Error",
-                    description: error.message || "Failed to place order. Please try again.",
-                    variant: "destructive",
-                  });
-                } finally {
-                  setIsSubmitting(false);
-                }
-              }}
-            >
-              {isSubmitting ? 'Placing Order...' : 'Confirm Order (Cash on Delivery)'}
-            </Button>
-          </div>
-        )}
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between pt-6 border-t border-border">
+            {/* Navigation Buttons - Fixed at bottom */}
+            <div className="flex justify-between pt-3 border-t border-border flex-shrink-0">
               <Button 
                 variant="outline" 
+                size="sm"
                 onClick={prevStep}
                 disabled={currentStep === 1}
               >
@@ -668,6 +673,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               {currentStep < 4 && (
                 <Button 
                   variant="premium" 
+                  size="sm"
                   onClick={nextStep}
                   disabled={
                     (currentStep === 1 && getOrderItems().length === 0) ||
@@ -678,7 +684,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                 </Button>
               )}
             </div>
-          </>
+          </div>
         )}
       </DialogContent>
     </Dialog>
