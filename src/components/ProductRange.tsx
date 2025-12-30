@@ -51,7 +51,7 @@ export function ProductRange() {
         .from('products')
         .select('*')
         .eq('is_active', true)
-        .order('price');
+        .order('display_order', { ascending: true });
 
       if (error) throw error;
       
