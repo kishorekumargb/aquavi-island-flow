@@ -204,6 +204,9 @@ const AdminDashboard = () => {
     setShowAdminLogin(true);
   }, []);
 
+  // Track if initial data has been fetched to prevent refetching on visibility change
+  const [initialDataFetched, setInitialDataFetched] = useState(false);
+
   // Authentication check - only allow access after explicit verification
   useEffect(() => {
     if (!authLoading) {
@@ -212,31 +215,40 @@ const AdminDashboard = () => {
         setShowAdminLogin(true);
         setIsAuthenticated(false);
         setCurrentAccessLevel(null);
+        setInitialDataFetched(false);
       } else if (user && currentAccessLevel === 'admin') {
         // User logged in through admin portal - grant full access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
-        setActiveTab('orders'); 
-        fetchOrders();
-        fetchProducts();  
-        fetchTestimonials();
-        fetchMessages();
-        fetchUsers();
-        fetchReceiveOrdersSetting();
-        fetchSiteSettings();
+        // Only set active tab and fetch data on initial login, not on every auth state change
+        if (!initialDataFetched) {
+          setActiveTab('orders'); 
+          fetchOrders();
+          fetchProducts();  
+          fetchTestimonials();
+          fetchMessages();
+          fetchUsers();
+          fetchReceiveOrdersSetting();
+          fetchSiteSettings();
+          setInitialDataFetched(true);
+        }
       } else if (user && currentAccessLevel === 'user') {
         // User logged in through user portal - grant limited access
         setShowAdminLogin(false);
         setIsAuthenticated(true);
-        setActiveTab('orders'); // Only orders tab for regular users
-        fetchOrders(); // Only fetch orders for regular users
+        // Only set active tab and fetch data on initial login
+        if (!initialDataFetched) {
+          setActiveTab('orders');
+          fetchOrders();
+          setInitialDataFetched(true);
+        }
       } else if (user && currentAccessLevel === null) {
         // User is authenticated but access level not set - keep login modal open
         setShowAdminLogin(true);
         setIsAuthenticated(false);
       }
     }
-  }, [user, userRole, authLoading, navigate, toast]);
+  }, [user, userRole, authLoading, currentAccessLevel, initialDataFetched]);
 
   // Status icon helper functions
   const getStatusIcon = (status: string) => {
