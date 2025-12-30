@@ -49,6 +49,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          confirmation_sent_at: string | null
           created_at: string
           customer_email: string | null
           customer_name: string
@@ -64,6 +65,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          confirmation_sent_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name: string
@@ -79,6 +81,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          confirmation_sent_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string

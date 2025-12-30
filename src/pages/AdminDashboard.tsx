@@ -85,6 +85,7 @@ interface Order {
   delivery_type: string;
   created_at: string;
   updated_at: string;
+  confirmation_sent_at: string | null;
 }
 
 interface Product {

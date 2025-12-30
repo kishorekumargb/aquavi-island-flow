@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify the order exists and matches provided data
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('order_number, customer_email, total_amount, delivery_type')
+      .select('order_number, customer_email, total_amount, delivery_type, confirmation_sent_at')
       .eq('order_number', orderData.orderNumber)
       .single();
     
@@ -85,6 +85,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Order verified from database:", order);
+
+    // SECURITY: Prevent duplicate confirmation emails - check if already sent
+    if (order.confirmation_sent_at) {
+      console.log("Confirmation already sent for order:", orderData.orderNumber, "at:", order.confirmation_sent_at);
+      return new Response(
+        JSON.stringify({ error: "Confirmation already sent", already_sent: true }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Validate email matches the order (if email was provided in order)
     if (order.customer_email && orderData.customerEmail && 
@@ -272,6 +281,19 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Business email sent:", businessEmailResponse.messageId);
     } catch (emailError) {
       console.error("Error sending business email:", emailError);
+    }
+
+    // SECURITY: Mark confirmation as sent to prevent duplicate emails
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ confirmation_sent_at: new Date().toISOString() })
+      .eq('order_number', orderData.orderNumber);
+    
+    if (updateError) {
+      console.error("Error marking confirmation as sent:", updateError);
+      // Continue anyway - email was sent successfully
+    } else {
+      console.log("Confirmation marked as sent for order:", orderData.orderNumber);
     }
 
     return new Response(
