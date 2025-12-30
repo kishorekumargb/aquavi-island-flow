@@ -83,7 +83,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
     frequency: 'once',
     address: '',
     date: '',
-    time: '15:30',
+    time: '11:00-14:30',
     items: [],
     marketingConsent: false,
     autoRenew: false
@@ -304,7 +304,11 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
               <div>
                 <Label className="text-base font-medium">Delivery Type</Label>
                 <Select value={orderData.deliveryType} onValueChange={(value) => 
-                  setOrderData(prev => ({ ...prev, deliveryType: value }))}>
+                  setOrderData(prev => ({ 
+                    ...prev, 
+                    deliveryType: value,
+                    time: value === 'delivery' ? '11:00-14:30' : '09:00-18:30'
+                  }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -376,9 +380,11 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="15:30">3:30 PM - 5:30 PM</SelectItem>
-                    <SelectItem value="morning">Morning (9:00 AM - 12:00 PM)</SelectItem>
-                    <SelectItem value="evening">Evening (5:30 PM - 7:00 PM)</SelectItem>
+                    {orderData.deliveryType === 'delivery' ? (
+                      <SelectItem value="11:00-14:30">11:00 AM - 2:30 PM</SelectItem>
+                    ) : (
+                      <SelectItem value="09:00-18:30">9:00 AM - 6:30 PM</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
