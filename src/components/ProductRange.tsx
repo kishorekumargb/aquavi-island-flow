@@ -15,6 +15,7 @@ interface Product {
   image_url: string | null;
   stock: number | null;
   is_active: boolean;
+  is_popular: boolean;
 }
 
 export function ProductRange() {
@@ -89,8 +90,8 @@ export function ProductRange() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product, index) => {
-            const isPopular = index === 1; // Make second product popular by default
+          {products.map((product) => {
+            const isPopular = product.is_popular;
             const hasLimitedStock = product.stock !== null && product.stock !== undefined;
             const isOutOfStock = hasLimitedStock && product.stock <= 0;
             const isLowStock = hasLimitedStock && product.stock > 0 && product.stock < 10;

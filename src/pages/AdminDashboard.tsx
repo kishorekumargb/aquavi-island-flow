@@ -96,6 +96,7 @@ interface Product {
   description: string | null;
   image_url: string | null;
   is_active: boolean;
+  is_popular: boolean;
   created_at: string;
   display_order: number;
 }
@@ -863,6 +864,31 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleTogglePopular = async (productId: string, isPopular: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_popular: isPopular })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: isPopular ? "Product marked as popular" : "Popular badge removed",
+      });
+
+      fetchProducts();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update popular status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleToggleTestimonialStatus = async (testimonialId: string, isActive: boolean) => {
     try {
       const { error } = await supabase
@@ -1365,6 +1391,7 @@ const AdminDashboard = () => {
                   <TableHead>Size</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
+                  <TableHead>Popular</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -1405,6 +1432,12 @@ const AdminDashboard = () => {
                       <TableCell>{product.size}</TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
                       <TableCell>{product.stock ?? 'Unlimited'}</TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={product.is_popular}
+                          onCheckedChange={(checked) => handleTogglePopular(product.id, checked)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Badge variant={product.is_active ? 'default' : 'secondary'}>
                           {product.is_active ? 'Active' : 'Inactive'}
