@@ -61,6 +61,8 @@ import {
   XCircle,
   AlertCircle,
   Eye,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
@@ -95,6 +97,7 @@ interface Product {
   image_url: string | null;
   is_active: boolean;
   created_at: string;
+  display_order: number;
 }
 
 interface Testimonial {
@@ -313,7 +316,7 @@ const AdminDashboard = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('display_order', { ascending: true });
 
       if (error) throw error;
       setProducts(data || []);
@@ -326,6 +329,43 @@ const AdminDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMoveProduct = async (productId: string, direction: 'up' | 'down') => {
+    const currentIndex = products.findIndex(p => p.id === productId);
+    if (currentIndex === -1) return;
+    
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= products.length) return;
+
+    const currentProduct = products[currentIndex];
+    const targetProduct = products[targetIndex];
+
+    try {
+      // Swap display_order values
+      await supabase
+        .from('products')
+        .update({ display_order: targetProduct.display_order })
+        .eq('id', currentProduct.id);
+
+      await supabase
+        .from('products')
+        .update({ display_order: currentProduct.display_order })
+        .eq('id', targetProduct.id);
+
+      fetchProducts();
+      toast({
+        title: "Success",
+        description: "Product order updated",
+      });
+    } catch (error) {
+      console.error('Error reordering product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reorder product",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1320,12 +1360,12 @@ const AdminDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16">Order</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Size</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1337,8 +1377,30 @@ const AdminDashboard = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  products.map((product) => (
+                  products.map((product, index) => (
                     <TableRow key={product.id}>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleMoveProduct(product.id, 'up')}
+                            disabled={index === 0}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleMoveProduct(product.id, 'down')}
+                            disabled={index === products.length - 1}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.size}</TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
@@ -1348,7 +1410,6 @@ const AdminDashboard = () => {
                           {product.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{format(new Date(product.created_at), 'MMM d, yyyy')}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button size="sm" variant="outline" onClick={() => setEditingProduct(product)}>
