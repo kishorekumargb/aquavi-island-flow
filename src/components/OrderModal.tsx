@@ -197,7 +197,7 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
             {/* Step Content - Scrollable area */}
             <div className="flex-1 min-h-0 overflow-y-auto">
               {currentStep === 1 && (
-                <div className="space-y-3 pr-2">
+                <div className="space-y-3 px-1">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-heading font-semibold">Select Products</h3>
                     {getOrderItems().length > 0 && (
@@ -499,8 +499,8 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
                   <Button 
                     variant="premium" 
-                    size="default" 
-                    className="w-full rounded-lg py-4 text-base active:scale-[0.98] active:brightness-95"
+                    size="lg" 
+                    className="w-full"
                     disabled={isSubmitting}
                     onClick={async () => {
                       // Validation
