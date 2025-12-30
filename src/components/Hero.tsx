@@ -5,14 +5,11 @@ import { Droplets, Award, Shield } from 'lucide-react';
 import { OrderModal } from '@/components/OrderModal';
 import { supabase } from '@/integrations/supabase/client';
 import fallbackHeroImage from '@/assets/aqua-vi-hero-banner.jpg';
-
 export function Hero() {
   const [heroImageUrl, setHeroImageUrl] = useState(fallbackHeroImage);
-
   useEffect(() => {
     fetchHeroImage();
   }, []);
-
   const isValidImageUrl = (url: string): boolean => {
     // Check if URL is a direct image URL (not Google Drive view links)
     if (url.includes('drive.google.com/file') && url.includes('/view')) {
@@ -20,17 +17,13 @@ export function Hero() {
     }
     return url.startsWith('http://') || url.startsWith('https://');
   };
-
   const fetchHeroImage = async () => {
     try {
-      const { data, error } = await supabase
-        .from('public_site_config')
-        .select('setting_value')
-        .eq('setting_key', 'hero_image_url')
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from('public_site_config').select('setting_value').eq('setting_key', 'hero_image_url').single();
       if (error) throw error;
-      
       if (data?.setting_value && isValidImageUrl(data.setting_value)) {
         setHeroImageUrl(data.setting_value);
       }
@@ -38,15 +31,12 @@ export function Hero() {
       console.error('Error fetching hero image:', error);
     }
   };
-
-  return (
-    <>
+  return <>
       {/* Full Screen Hero Image Section - Image Only */}
       <section className="relative h-screen w-full overflow-hidden mt-20">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100 sm:scale-100 md:scale-100"
-          style={{ backgroundImage: `url(${heroImageUrl})` }}
-        />
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100 sm:scale-100 md:scale-100" style={{
+        backgroundImage: `url(${heroImageUrl})`
+      }} />
         
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
@@ -98,13 +88,12 @@ export function Hero() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-primary rounded-full"></div>
-                <span>Delivery 3:30 - 5:30 PM</span>
+                <span>Delivery 11:00 AM - 2:30 PM</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-    </>
-  );
+    </>;
 }
