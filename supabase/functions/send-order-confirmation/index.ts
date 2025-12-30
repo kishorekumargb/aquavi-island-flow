@@ -41,7 +41,7 @@ interface OrderConfirmationRequest {
 // Logo URL for email headers
 const logoUrl = "https://qscyapmuiqaijvuitlyv.supabase.co/storage/v1/object/public/products/aquavi-email-logo.png";
 // Admin dashboard URL
-const adminDashboardUrl = "https://aquavi.lovable.app/access-water-360";
+const adminDashboardUrl = "https://aquavidistributor.com/access-water-360";
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -135,121 +135,448 @@ const handler = async (req: Request): Promise<Response> => {
     const itemsHtml = orderData.items.map(item => {
       const sizeDescription = productSizeMap[item.name] || item.size;
       return `
-      <tr style="border-bottom: 1px solid #eee;">
-        <td style="padding: 12px; text-align: left;">${item.name} (${sizeDescription})</td>
-        <td style="padding: 12px; text-align: center;">${item.quantity}</td>
-        <td style="padding: 12px; text-align: right;">$${item.price.toFixed(2)}</td>
-        <td style="padding: 12px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
-      </tr>
-    `;
+                              <tr>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 14px;">${item.name} (${sizeDescription})</td>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 14px; text-align: center;">${item.quantity}</td>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 14px; text-align: right;">$${item.price.toFixed(2)}</td>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 14px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+                              </tr>`;
     }).join('');
 
-    // Customer confirmation email with logo
+    // Customer confirmation email (logo-matched colors: #214B95 blue, #039C97 teal)
     const customerEmailHtml = `
-      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${logoUrl}" alt="Aqua VI Logo" style="max-width: 180px; height: auto; margin-bottom: 15px;" />
-            <p style="color: #666; margin: 5px 0 0 0;">Premium Water Delivery</p>
-          </div>
-          
-          <h2 style="color: #333; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">Order Confirmation</h2>
-          
-          <p>Dear ${orderData.customerName},</p>
-          <p>Thank you for your order! We have received your order and will process it shortly.</p>
-          
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
-            <h3 style="margin: 0 0 15px 0; color: #333;">Order Details</h3>
-            <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
-            <p><strong>${isPickup ? 'Pickup Location' : 'Delivery Address'}:</strong> ${deliveryInfoText}</p>
-            <p><strong>Payment Method:</strong> ${orderData.paymentMethod}</p>
-            <p><strong>Order Type:</strong> ${isPickup ? 'Pickup' : 'Delivery'}</p>
-            ${orderData.customerPhone ? `<p><strong>Phone:</strong> ${orderData.customerPhone}</p>` : ''}
-          </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation - Aqua VI</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <div style="display: none; max-height: 0; overflow: hidden;">
+    Your Aqua VI order ${orderData.orderNumber} has been received.
+  </div>
 
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: white; border: 1px solid #ddd;">
-            <thead>
-              <tr style="background-color: #2563eb; color: white;">
-                <th style="padding: 12px; text-align: left;">Item</th>
-                <th style="padding: 12px; text-align: center;">Quantity</th>
-                <th style="padding: 12px; text-align: right;">Price</th>
-                <th style="padding: 12px; text-align: right;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-              <tr style="background-color: #f8f9fa; font-weight: bold;">
-                <td colspan="3" style="padding: 12px; text-align: right;">Total Amount:</td>
-                <td style="padding: 12px; text-align: right; color: #2563eb;">$${orderData.totalAmount.toFixed(2)}</td>
-              </tr>
-            </tbody>
-          </table>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
 
-          <div style="background-color: #e7f3ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
-            <p style="margin: 0; color: #1e40af;"><strong>${isPickup ? 'Pickup Information:' : 'Delivery Information:'}</strong></p>
-            <p style="margin: 5px 0 0 0;">${isPickup 
-              ? 'We will contact you shortly to confirm pickup time. Please bring your order confirmation.' 
-              : 'Our delivery team will contact you shortly to confirm the delivery time. Standard delivery is between 3:30 PM - 5:30 PM.'}</p>
-          </div>
+          <!-- Logo Header -->
+          <tr>
+            <td align="center" style="padding-bottom: 32px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="vertical-align: middle; padding-right: 12px;">
+                    <img src="${logoUrl}" alt="Aqua VI" width="48" height="48" style="display: block; border-radius: 12px;">
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <span style="font-size: 24px; font-weight: 700; color: #214B95;">Aqua VI Distributor</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-          <p>If you have any questions about your order, please contact us at:</p>
-          <ul>
-            <li>Phone: 1-499-4611</li>
-            <li>Email: aquavidistributor@gmail.com</li>
-          </ul>
+          <!-- Main Card -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
 
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
-            <p>Thank you for choosing Aqua VI!</p>
-            <p style="font-size: 12px;">This is an automated message, please do not reply to this email.</p>
-          </div>
-        </div>
-      </div>
+                <!-- Success Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #214B95 0%, #039C97 100%); padding: 32px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td style="background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; width: 48px; height: 48px; text-align: center; vertical-align: middle;">
+                                <span style="font-size: 24px;">✓</span>
+                              </td>
+                              <td style="padding-left: 16px;">
+                                <p style="margin: 0; font-size: 14px; color: rgba(255, 255, 255, 0.9); text-transform: uppercase; letter-spacing: 0.5px;">Order confirmed</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Greeting -->
+                <tr>
+                  <td style="padding: 32px 40px 24px;">
+                    <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #111827;">Thanks, ${orderData.customerName}</h1>
+                    <p style="margin: 0; font-size: 16px; color: #6b7280; line-height: 1.5;">We've received your order. We'll contact you shortly to confirm ${isPickup ? 'pickup' : 'delivery'} details.</p>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top: 16px;">
+                      <tr>
+                        <td>
+                          <span style="font-size: 14px; color: #6b7280;">Order # ${orderData.orderNumber}</span>
+                        </td>
+                        <td style="padding: 0 12px;">
+                          <span style="color: #d1d5db;">|</span>
+                        </td>
+                        <td>
+                          <span style="font-size: 14px; font-weight: 600; color: #214B95;">$${orderData.totalAmount.toFixed(2)}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <div style="height: 1px; background-color: #e5e7eb;"></div>
+                  </td>
+                </tr>
+
+                <!-- Status Timeline -->
+                <tr>
+                  <td style="padding: 24px 40px;">
+                    <h2 style="margin: 0 0 20px; font-size: 14px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">Status</h2>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="padding-bottom: 16px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td style="vertical-align: top; padding-right: 12px;">
+                                <div style="width: 24px; height: 24px; background-color: #039C97; border-radius: 50%; text-align: center; line-height: 24px;">
+                                  <span style="color: white; font-size: 12px;">✓</span>
+                                </div>
+                              </td>
+                              <td style="vertical-align: top;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111827;">Received</p>
+                                <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">Confirmed in system</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom: 16px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td style="vertical-align: top; padding-right: 12px;">
+                                <div style="width: 24px; height: 24px; background-color: #e5e7eb; border-radius: 50%; text-align: center; line-height: 24px;">
+                                  <span style="color: #9ca3af; font-size: 12px;">2</span>
+                                </div>
+                              </td>
+                              <td style="vertical-align: top;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: #9ca3af;">Preparing</p>
+                                <p style="margin: 4px 0 0; font-size: 13px; color: #9ca3af;">Packing your items</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td style="vertical-align: top; padding-right: 12px;">
+                                <div style="width: 24px; height: 24px; background-color: #e5e7eb; border-radius: 50%; text-align: center; line-height: 24px;">
+                                  <span style="color: #9ca3af; font-size: 12px;">3</span>
+                                </div>
+                              </td>
+                              <td style="vertical-align: top;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: #9ca3af;">${isPickup ? 'Ready for pickup' : 'Out for delivery'}</p>
+                                <p style="margin: 4px 0 0; font-size: 13px; color: #9ca3af;">Next step after confirmation</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Order Details Section Header -->
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <div style="background-color: #f9fafb; padding: 12px 16px; border-radius: 8px 8px 0 0; border-bottom: 1px solid #e5e7eb;">
+                      <h2 style="margin: 0; font-size: 14px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">Order details</h2>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Delivery/Pickup Info -->
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb;">
+                      <tr>
+                        <td style="padding: 16px; width: 50%; vertical-align: top;">
+                          <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">${isPickup ? 'Pickup Location' : 'Delivery Address'}</p>
+                          <p style="margin: 0; font-size: 14px; color: #111827; line-height: 1.4;">${deliveryInfoText}</p>
+                        </td>
+                        <td style="padding: 16px; width: 50%; vertical-align: top;">
+                          <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Payment & Type</p>
+                          <p style="margin: 0; font-size: 14px; color: #111827;">Method: ${orderData.paymentMethod}</p>
+                          <p style="margin: 4px 0 0; font-size: 14px; color: #111827;">Order: ${isPickup ? 'Pickup' : 'Delivery'}</p>
+                          ${orderData.customerPhone ? `<p style="margin: 4px 0 0; font-size: 14px; color: #111827;">Phone: ${orderData.customerPhone}</p>` : ''}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding: 0 16px 16px;">
+                          <div style="background-color: #e0f2fe; border-radius: 8px; padding: 12px 16px;">
+                            <p style="margin: 0; font-size: 13px; color: #0369a1;">
+                              <strong>${isPickup ? 'Pickup info:' : 'Delivery info:'}</strong>
+                              ${isPickup
+                                ? ' We will contact you shortly to confirm pickup time. Please bring your order confirmation.'
+                                : ' Our delivery team will contact you shortly to confirm delivery time. Standard delivery window: 3:30 PM – 5:30 PM.'}
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Items Section Header -->
+                <tr>
+                  <td style="padding: 24px 40px 0;">
+                    <div style="background-color: #f9fafb; padding: 12px 16px; border-radius: 8px 8px 0 0; border-bottom: 1px solid #e5e7eb;">
+                      <h2 style="margin: 0; font-size: 14px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">Items</h2>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Items Table -->
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb;">
+                      <tr>
+                        <td style="padding: 0 16px 16px;">
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                            <thead>
+                              <tr style="background-color: #214B95;">
+                                <th style="padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase;">Item</th>
+                                <th style="padding: 12px 16px; text-align: center; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase;">Qty</th>
+                                <th style="padding: 12px 16px; text-align: right; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase;">Price</th>
+                                <th style="padding: 12px 16px; text-align: right; font-size: 12px; font-weight: 600; color: #ffffff; text-transform: uppercase;">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${itemsHtml}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                      <!-- Order Total -->
+                      <tr>
+                        <td style="padding: 0 16px 16px;">
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #214B95; border-radius: 8px;">
+                            <tr>
+                              <td style="padding: 16px;">
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                  <tr>
+                                    <td style="font-size: 16px; font-weight: 600; color: #ffffff;">Order total</td>
+                                    <td style="text-align: right; font-size: 24px; font-weight: 700; color: #ffffff;">$${orderData.totalAmount.toFixed(2)}</td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" style="padding-top: 8px;">
+                                      <p style="margin: 0; font-size: 13px; color: rgba(255, 255, 255, 0.8);">${orderData.paymentMethod ? `Payment method: ${orderData.paymentMethod}` : ''}</p>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Support Section Header -->
+                <tr>
+                  <td style="padding: 24px 40px 0;">
+                    <div style="background-color: #f9fafb; padding: 12px 16px; border-radius: 8px 8px 0 0; border-bottom: 1px solid #e5e7eb;">
+                      <h2 style="margin: 0; font-size: 14px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">Support</h2>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Support Info -->
+                <tr>
+                  <td style="padding: 0 40px 32px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb; border-radius: 0 0 8px 8px;">
+                      <tr>
+                        <td style="padding: 16px;">
+                          <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #111827;">Need help with your order?</p>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td style="padding-right: 16px;">
+                                <span style="font-size: 14px; color: #6b7280;">Phone: 1-499-4611</span>
+                              </td>
+                              <td style="padding: 0 8px; color: #d1d5db;">|</td>
+                              <td>
+                                <span style="font-size: 14px; color: #6b7280;">Email: aquavidistributor@gmail.com</span>
+                              </td>
+                            </tr>
+                          </table>
+                          <p style="margin: 12px 0 0; font-size: 13px; color: #9ca3af;">Keep your order number handy when you contact us.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f9fafb; padding: 24px 40px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0 0 4px; font-size: 14px; color: #6b7280; text-align: center;">Thank you for choosing Aqua VI Distributor.</p>
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">This is an automated message, please do not reply.</p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Bottom Branding -->
+          <tr>
+            <td align="center" style="padding-top: 32px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">Aqua VI Distributor</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `;
 
-    // Business notification email with logo and Process Order button
+    // Business notification email with ORANGE theme
     const businessEmailHtml = `
-      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="${logoUrl}" alt="Aqua VI Logo" style="max-width: 150px; height: auto;" />
-          </div>
-          
-          <h1 style="color: #dc2626; margin: 0 0 20px 0; font-size: 24px; text-align: center;">🚨 New Order Received!</h1>
-          
-          <div style="background-color: #fef2f2; padding: 20px; border-left: 4px solid #dc2626; margin: 20px 0;">
-            <h3 style="margin: 0 0 15px 0; color: #dc2626;">Order: ${orderData.orderNumber}</h3>
-            <p><strong>Customer:</strong> ${orderData.customerName}</p>
-            <p><strong>Email:</strong> ${orderData.customerEmail || 'Not provided'}</p>
-            ${orderData.customerPhone ? `<p><strong>Phone:</strong> ${orderData.customerPhone}</p>` : ''}
-            <p><strong>${isPickup ? 'Pickup Location' : 'Delivery Address'}:</strong> ${deliveryInfoText}</p>
-            <p><strong>Payment Method:</strong> ${orderData.paymentMethod}</p>
-            <p><strong>Order Type:</strong> <span style="background-color: ${isPickup ? '#fef3c7' : '#dbeafe'}; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${isPickup ? '📦 PICKUP' : '🚚 DELIVERY'}</span></p>
-            <p><strong>Total Amount:</strong> <span style="color: #dc2626; font-weight: bold;">$${orderData.totalAmount.toFixed(2)}</span></p>
-          </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Order Alert - Aqua VI</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
 
-          <h3 style="color: #333; margin: 20px 0 10px 0;">Order Items:</h3>
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
-            <thead>
-              <tr style="background-color: #f8f9fa;">
-                <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Item</th>
-                <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">Qty</th>
-                <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Price</th>
-                <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
+          <!-- Logo Header -->
+          <tr>
+            <td align="center" style="padding-bottom: 32px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="vertical-align: middle; padding-right: 12px;">
+                    <img src="${logoUrl}" alt="Aqua VI" width="48" height="48" style="display: block; border-radius: 12px;">
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <span style="font-size: 24px; font-weight: 700; color: #EA580C;">Aqua VI Distributor</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-          <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f0fdf4; border-radius: 6px;">
-            <p style="margin: 0 0 15px 0; color: #15803d; font-weight: bold;">Action Required: Process this order</p>
-            <a href="${adminDashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
-              Process Order
-            </a>
-          </div>
-        </div>
-      </div>
+          <!-- Main Card -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+                <!-- Alert Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #EA580C 0%, #F97316 100%); padding: 32px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td style="background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; width: 48px; height: 48px; text-align: center; vertical-align: middle;">
+                                <span style="font-size: 24px;">🚨</span>
+                              </td>
+                              <td style="padding-left: 16px;">
+                                <p style="margin: 0; font-size: 20px; font-weight: 700; color: #ffffff;">NEW ORDER RECEIVED</p>
+                                <p style="margin: 4px 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.9);">Action required</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Order Summary -->
+                <tr>
+                  <td style="padding: 32px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FFF7ED; border-radius: 12px; border-left: 4px solid #EA580C;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; color: #9A3412;">Order: ${orderData.orderNumber}</h3>
+                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>Customer:</strong> ${orderData.customerName}</p>
+                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>Email:</strong> ${orderData.customerEmail || 'Not provided'}</p>
+                          ${orderData.customerPhone ? `<p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>Phone:</strong> ${orderData.customerPhone}</p>` : ''}
+                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>${isPickup ? 'Pickup Location' : 'Delivery Address'}:</strong> ${deliveryInfoText}</p>
+                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>Payment Method:</strong> ${orderData.paymentMethod}</p>
+                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;">
+                            <strong>Order Type:</strong> 
+                            <span style="background-color: ${isPickup ? '#FEF3C7' : '#DBEAFE'}; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${isPickup ? '📦 PICKUP' : '🚚 DELIVERY'}</span>
+                          </p>
+                          <p style="margin: 16px 0 0; font-size: 20px; color: #EA580C;"><strong>Total Amount: $${orderData.totalAmount.toFixed(2)}</strong></p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Items Table -->
+                <tr>
+                  <td style="padding: 0 40px 24px;">
+                    <h3 style="margin: 0 0 16px; font-size: 16px; font-weight: 600; color: #374151;">Order Items:</h3>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                      <thead>
+                        <tr style="background-color: #f9fafb;">
+                          <th style="padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; border-bottom: 1px solid #e5e7eb;">Item</th>
+                          <th style="padding: 12px 16px; text-align: center; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; border-bottom: 1px solid #e5e7eb;">Qty</th>
+                          <th style="padding: 12px 16px; text-align: right; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; border-bottom: 1px solid #e5e7eb;">Price</th>
+                          <th style="padding: 12px 16px; text-align: right; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; border-bottom: 1px solid #e5e7eb;">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${itemsHtml}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Action Button -->
+                <tr>
+                  <td style="padding: 0 40px 32px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ECFDF5; border-radius: 12px;">
+                      <tr>
+                        <td style="padding: 24px; text-align: center;">
+                          <p style="margin: 0 0 16px; font-size: 14px; font-weight: 600; color: #166534;">Action Required: Process this order</p>
+                          <a href="${adminDashboardUrl}" style="display: inline-block; background-color: #EA580C; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Process Order</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `;
 
     let customerEmailResponse = null;
