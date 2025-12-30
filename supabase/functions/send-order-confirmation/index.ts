@@ -41,7 +41,7 @@ interface OrderConfirmationRequest {
 // Logo URL for email headers
 const logoUrl = "https://qscyapmuiqaijvuitlyv.supabase.co/storage/v1/object/public/products/aquavi-email-logo.png";
 // Admin dashboard URL
-const adminDashboardUrl = "https://aquavi.lovable.app/admin";
+const adminDashboardUrl = "https://aquavi.lovable.app/access-water-360";
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
