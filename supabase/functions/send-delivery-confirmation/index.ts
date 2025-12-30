@@ -148,20 +148,15 @@ const handler = async (req: Request): Promise<Response> => {
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f4f6;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" border="0" style="max-width: 640px; width: 100%;">
 
           <!-- Logo Header (Integrated) -->
           <tr>
             <td>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px 16px 0 0; padding: 32px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px 16px 0 0;">
                 <tr>
                   <td align="center" style="padding: 32px 20px;">
-                    <img src="${logoUrl}" alt="Aqua VI" width="80" height="80" style="display: block; margin-bottom: 16px;">
-                    <p style="margin: 0; font-size: 28px; font-weight: 700;">
-                      <span style="color: #214B95;">AQUA </span><span style="color: #039C97;">VI</span>
-                    </p>
-                    <p style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #214B95;">DISTRIBUTOR</p>
-                    <p style="margin: 12px 0 0; font-size: 14px; color: #6b7280;">Premium Water Delivery</p>
+                    <img src="${logoUrl}" alt="Aqua VI Distributor" width="120" height="120" style="display: block;">
                   </td>
                 </tr>
               </table>
@@ -442,20 +437,15 @@ const handler = async (req: Request): Promise<Response> => {
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f4f6;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" border="0" style="max-width: 640px; width: 100%;">
 
           <!-- Logo Header (Integrated) -->
           <tr>
             <td>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px 16px 0 0; padding: 32px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px 16px 0 0;">
                 <tr>
                   <td align="center" style="padding: 32px 20px;">
-                    <img src="${logoUrl}" alt="Aqua VI" width="80" height="80" style="display: block; margin-bottom: 16px;">
-                    <p style="margin: 0; font-size: 28px; font-weight: 700;">
-                      <span style="color: #214B95;">AQUA </span><span style="color: #039C97;">VI</span>
-                    </p>
-                    <p style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #214B95;">DISTRIBUTOR</p>
-                    <p style="margin: 12px 0 0; font-size: 14px; color: #6b7280;">Internal Notification</p>
+                    <img src="${logoUrl}" alt="Aqua VI Distributor" width="120" height="120" style="display: block;">
                   </td>
                 </tr>
               </table>
