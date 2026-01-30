@@ -82,20 +82,24 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if user is admin
+    // Check if user has admin role (handles users with multiple role entries)
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .eq('role', 'admin');
 
-    if (!roleData || roleData.role !== 'admin') {
+    const isAdmin = roleData && roleData.length > 0;
+    
+    if (!isAdmin) {
       console.error("User is not an admin:", user.id);
       return new Response(
         JSON.stringify({ error: "Forbidden" }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+    
+    console.log("Admin user verified:", user.id);
 
     const notificationData: SubscriptionNotificationRequest = await req.json();
     
