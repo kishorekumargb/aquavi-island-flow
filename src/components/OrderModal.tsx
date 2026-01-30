@@ -42,6 +42,9 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
     email?: string;
     address?: string;
     date?: string;
+    preferredDay?: string;
+    startDate?: string;
+    weekOfMonth?: string;
   }>({});
   const [step2Touched, setStep2Touched] = useState<{
     name?: boolean;
@@ -49,7 +52,27 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
     email?: boolean;
     address?: boolean;
     date?: boolean;
+    preferredDay?: boolean;
+    startDate?: boolean;
+    weekOfMonth?: boolean;
   }>({});
+
+  // Weekday options (Monday-Friday only)
+  const weekdayOptions = [
+    { value: 'monday', label: 'Monday' },
+    { value: 'tuesday', label: 'Tuesday' },
+    { value: 'wednesday', label: 'Wednesday' },
+    { value: 'thursday', label: 'Thursday' },
+    { value: 'friday', label: 'Friday' }
+  ];
+
+  // Week of month options for monthly subscriptions
+  const weekOfMonthOptions = [
+    { value: '1', label: '1st' },
+    { value: '2', label: '2nd' },
+    { value: '3', label: '3rd' },
+    { value: '4', label: '4th' }
+  ];
 
   useEffect(() => {
     fetchProducts();
@@ -94,13 +117,17 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
   };
   const [orderData, setOrderData] = useState({
     deliveryType: 'delivery',
-    frequency: 'once',
+    frequency: 'once', // 'once', 'biweekly', 'monthly'
     address: '',
-    date: '',
+    date: '', // For one-time orders
     time: '11:00-14:30',
     items: [],
     marketingConsent: false,
-    autoRenew: false
+    autoRenew: false,
+    // Subscription-specific fields
+    preferredDay: '', // 'monday'-'friday'
+    startDate: '', // For biweekly subscriptions
+    weekOfMonth: '' // '1'-'4' for monthly subscriptions
   });
 
   const [quantities, setQuantities] = useState({});
@@ -192,9 +219,28 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
       errors.address = 'Delivery address is required';
     }
     
-    // Date validation
-    if (!orderData.date.trim()) {
-      errors.date = 'Preferred date is required';
+    // Frequency-specific validation
+    if (orderData.frequency === 'once') {
+      // One-time order: date is required
+      if (!orderData.date.trim()) {
+        errors.date = 'Preferred date is required';
+      }
+    } else if (orderData.frequency === 'biweekly') {
+      // Bi-weekly: preferred day and start date required
+      if (!orderData.preferredDay) {
+        errors.preferredDay = 'Preferred day is required';
+      }
+      if (!orderData.startDate.trim()) {
+        errors.startDate = 'Start date is required';
+      }
+    } else if (orderData.frequency === 'monthly') {
+      // Monthly: preferred day and week of month required
+      if (!orderData.preferredDay) {
+        errors.preferredDay = 'Preferred day is required';
+      }
+      if (!orderData.weekOfMonth) {
+        errors.weekOfMonth = 'Week of month is required';
+      }
     }
     
     setStep2Errors(errors);
@@ -202,18 +248,42 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
   };
 
   const handleStep2NextClick = () => {
-    // Mark all fields as touched to show errors
-    setStep2Touched({
+    // Mark all relevant fields as touched based on frequency
+    const touched: typeof step2Touched = {
       name: true,
       phone: true,
       email: true,
       address: true,
-      date: true
-    });
+    };
+    
+    if (orderData.frequency === 'once') {
+      touched.date = true;
+    } else if (orderData.frequency === 'biweekly') {
+      touched.preferredDay = true;
+      touched.startDate = true;
+    } else if (orderData.frequency === 'monthly') {
+      touched.preferredDay = true;
+      touched.weekOfMonth = true;
+    }
+    
+    setStep2Touched(touched);
     
     if (validateStep2()) {
       nextStep();
     }
+  };
+
+  // Helper function to get subscription summary text
+  const getSubscriptionSummary = (): string => {
+    if (orderData.frequency === 'biweekly' && orderData.preferredDay && orderData.startDate) {
+      const dayLabel = weekdayOptions.find(d => d.value === orderData.preferredDay)?.label || orderData.preferredDay;
+      return `Deliver every 2 weeks on ${dayLabel}, starting ${orderData.startDate}`;
+    } else if (orderData.frequency === 'monthly' && orderData.preferredDay && orderData.weekOfMonth) {
+      const dayLabel = weekdayOptions.find(d => d.value === orderData.preferredDay)?.label || orderData.preferredDay;
+      const weekLabel = weekOfMonthOptions.find(w => w.value === orderData.weekOfMonth)?.label || orderData.weekOfMonth;
+      return `Deliver on the ${weekLabel} ${dayLabel} of each month`;
+    }
+    return '';
   };
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
@@ -484,14 +554,32 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
 
                     <div>
                       <Label className="text-sm font-medium">Frequency</Label>
-                      <Select value={orderData.frequency} onValueChange={(value) =>
-                        setOrderData(prev => ({ ...prev, frequency: value }))}>
+                      <Select value={orderData.frequency} onValueChange={(value) => {
+                        setOrderData(prev => ({ 
+                          ...prev, 
+                          frequency: value,
+                          // Reset frequency-specific fields when switching
+                          date: value === 'once' ? prev.date : '',
+                          preferredDay: value !== 'once' ? prev.preferredDay : '',
+                          startDate: value === 'biweekly' ? prev.startDate : '',
+                          weekOfMonth: value === 'monthly' ? prev.weekOfMonth : ''
+                        }));
+                        // Clear frequency-specific errors
+                        setStep2Errors(prev => ({
+                          ...prev,
+                          date: undefined,
+                          preferredDay: undefined,
+                          startDate: undefined,
+                          weekOfMonth: undefined
+                        }));
+                      }}>
                         <SelectTrigger className="mt-1 h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="once">One-time Order</SelectItem>
-                          <SelectItem value="twice">Twice per Month</SelectItem>
+                          <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -526,51 +614,194 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-sm font-medium">Preferred Date *</Label>
-                      <Input
-                        type="date"
-                        value={orderData.date}
-                        onChange={(e) => {
-                          setOrderData(prev => ({ ...prev, date: e.target.value }));
-                          if (step2Touched.date) {
-                            setStep2Errors(prev => ({ ...prev, date: e.target.value.trim() ? undefined : 'Preferred date is required' }));
-                          }
-                        }}
-                        onBlur={() => {
-                          setStep2Touched(prev => ({ ...prev, date: true }));
-                          if (!orderData.date.trim()) {
-                            setStep2Errors(prev => ({ ...prev, date: 'Preferred date is required' }));
-                          } else {
-                            setStep2Errors(prev => ({ ...prev, date: undefined }));
-                          }
-                        }}
-                        className={`mt-1 h-9 ${step2Touched.date && step2Errors.date ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                        required
-                      />
-                      {step2Touched.date && step2Errors.date && (
-                        <p className="text-xs text-destructive mt-1">{step2Errors.date}</p>
-                      )}
-                    </div>
+                  {/* ONE-TIME ORDER: Date picker */}
+                  {orderData.frequency === 'once' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-sm font-medium">Preferred Date *</Label>
+                        <Input
+                          type="date"
+                          value={orderData.date}
+                          onChange={(e) => {
+                            setOrderData(prev => ({ ...prev, date: e.target.value }));
+                            if (step2Touched.date) {
+                              setStep2Errors(prev => ({ ...prev, date: e.target.value.trim() ? undefined : 'Preferred date is required' }));
+                            }
+                          }}
+                          onBlur={() => {
+                            setStep2Touched(prev => ({ ...prev, date: true }));
+                            if (!orderData.date.trim()) {
+                              setStep2Errors(prev => ({ ...prev, date: 'Preferred date is required' }));
+                            } else {
+                              setStep2Errors(prev => ({ ...prev, date: undefined }));
+                            }
+                          }}
+                          className={`mt-1 h-9 ${step2Touched.date && step2Errors.date ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                          required
+                        />
+                        {step2Touched.date && step2Errors.date && (
+                          <p className="text-xs text-destructive mt-1">{step2Errors.date}</p>
+                        )}
+                      </div>
 
-                    <div>
-                      <Label className="text-sm font-medium">Preferred Time</Label>
-                      <Select value={orderData.time} onValueChange={(value) =>
-                        setOrderData(prev => ({ ...prev, time: value }))}>
-                        <SelectTrigger className="mt-1 h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {orderData.deliveryType === 'delivery' ? (
-                            <SelectItem value="11:00-14:30">11:00 AM - 2:30 PM</SelectItem>
-                          ) : (
-                            <SelectItem value="09:00-18:30">9:00 AM - 6:30 PM</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      <div>
+                        <Label className="text-sm font-medium">Preferred Time</Label>
+                        <div className="mt-1 h-9 px-3 py-2 text-sm rounded-md border bg-muted text-muted-foreground">
+                          {orderData.deliveryType === 'delivery' ? '11:00 AM - 2:30 PM' : '9:00 AM - 6:30 PM'}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* BI-WEEKLY: Preferred day + Start date */}
+                  {orderData.frequency === 'biweekly' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-sm font-medium">Preferred Day *</Label>
+                          <Select 
+                            value={orderData.preferredDay} 
+                            onValueChange={(value) => {
+                              setOrderData(prev => ({ ...prev, preferredDay: value }));
+                              if (step2Touched.preferredDay) {
+                                setStep2Errors(prev => ({ ...prev, preferredDay: value ? undefined : 'Preferred day is required' }));
+                              }
+                            }}
+                          >
+                            <SelectTrigger className={`mt-1 h-9 ${step2Touched.preferredDay && step2Errors.preferredDay ? 'border-destructive focus-visible:ring-destructive' : ''}`}>
+                              <SelectValue placeholder="Select day" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {weekdayOptions.map((day) => (
+                                <SelectItem key={day.value} value={day.value}>{day.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {step2Touched.preferredDay && step2Errors.preferredDay && (
+                            <p className="text-xs text-destructive mt-1">{step2Errors.preferredDay}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-medium">Start Date *</Label>
+                          <Input
+                            type="date"
+                            value={orderData.startDate}
+                            onChange={(e) => {
+                              setOrderData(prev => ({ ...prev, startDate: e.target.value }));
+                              if (step2Touched.startDate) {
+                                setStep2Errors(prev => ({ ...prev, startDate: e.target.value.trim() ? undefined : 'Start date is required' }));
+                              }
+                            }}
+                            onBlur={() => {
+                              setStep2Touched(prev => ({ ...prev, startDate: true }));
+                              if (!orderData.startDate.trim()) {
+                                setStep2Errors(prev => ({ ...prev, startDate: 'Start date is required' }));
+                              } else {
+                                setStep2Errors(prev => ({ ...prev, startDate: undefined }));
+                              }
+                            }}
+                            className={`mt-1 h-9 ${step2Touched.startDate && step2Errors.startDate ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                            required
+                          />
+                          {step2Touched.startDate && step2Errors.startDate && (
+                            <p className="text-xs text-destructive mt-1">{step2Errors.startDate}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Preferred Time</Label>
+                        <div className="mt-1 h-9 px-3 py-2 text-sm rounded-md border bg-muted text-muted-foreground">
+                          {orderData.deliveryType === 'delivery' ? '11:00 AM - 2:30 PM' : '9:00 AM - 6:30 PM'}
+                        </div>
+                      </div>
+
+                      {/* Subscription Summary */}
+                      {orderData.preferredDay && orderData.startDate && (
+                        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm text-primary font-medium">
+                            <Calendar className="w-4 h-4" />
+                            <span>{getSubscriptionSummary()}</span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* MONTHLY: Preferred day + Week of month */}
+                  {orderData.frequency === 'monthly' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-sm font-medium">Week of Month *</Label>
+                          <Select 
+                            value={orderData.weekOfMonth} 
+                            onValueChange={(value) => {
+                              setOrderData(prev => ({ ...prev, weekOfMonth: value }));
+                              if (step2Touched.weekOfMonth) {
+                                setStep2Errors(prev => ({ ...prev, weekOfMonth: value ? undefined : 'Week of month is required' }));
+                              }
+                            }}
+                          >
+                            <SelectTrigger className={`mt-1 h-9 ${step2Touched.weekOfMonth && step2Errors.weekOfMonth ? 'border-destructive focus-visible:ring-destructive' : ''}`}>
+                              <SelectValue placeholder="Select week" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {weekOfMonthOptions.map((week) => (
+                                <SelectItem key={week.value} value={week.value}>{week.label} week</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {step2Touched.weekOfMonth && step2Errors.weekOfMonth && (
+                            <p className="text-xs text-destructive mt-1">{step2Errors.weekOfMonth}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-medium">Preferred Day *</Label>
+                          <Select 
+                            value={orderData.preferredDay} 
+                            onValueChange={(value) => {
+                              setOrderData(prev => ({ ...prev, preferredDay: value }));
+                              if (step2Touched.preferredDay) {
+                                setStep2Errors(prev => ({ ...prev, preferredDay: value ? undefined : 'Preferred day is required' }));
+                              }
+                            }}
+                          >
+                            <SelectTrigger className={`mt-1 h-9 ${step2Touched.preferredDay && step2Errors.preferredDay ? 'border-destructive focus-visible:ring-destructive' : ''}`}>
+                              <SelectValue placeholder="Select day" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {weekdayOptions.map((day) => (
+                                <SelectItem key={day.value} value={day.value}>{day.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {step2Touched.preferredDay && step2Errors.preferredDay && (
+                            <p className="text-xs text-destructive mt-1">{step2Errors.preferredDay}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Preferred Time</Label>
+                        <div className="mt-1 h-9 px-3 py-2 text-sm rounded-md border bg-muted text-muted-foreground">
+                          {orderData.deliveryType === 'delivery' ? '11:00 AM - 2:30 PM' : '9:00 AM - 6:30 PM'}
+                        </div>
+                      </div>
+
+                      {/* Subscription Summary */}
+                      {orderData.preferredDay && orderData.weekOfMonth && (
+                        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm text-primary font-medium">
+                            <Calendar className="w-4 h-4" />
+                            <span>{getSubscriptionSummary()}</span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
 
@@ -650,7 +881,11 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Frequency</span>
-                          <span>{orderData.frequency === 'once' ? 'One-time' : 'Twice/month'}</span>
+                          <span>
+                            {orderData.frequency === 'once' && 'One-time'}
+                            {orderData.frequency === 'biweekly' && 'Bi-weekly'}
+                            {orderData.frequency === 'monthly' && 'Monthly'}
+                          </span>
                         </div>
                         {orderData.address && (
                           <div className="flex justify-between">
@@ -658,13 +893,47 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                             <span className="text-right max-w-[150px] truncate">{orderData.address}</span>
                           </div>
                         )}
+                        {/* One-time: show date */}
+                        {orderData.frequency === 'once' && orderData.date && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Date</span>
+                            <span>{orderData.date}</span>
+                          </div>
+                        )}
+                        {/* Bi-weekly: show schedule summary */}
+                        {orderData.frequency === 'biweekly' && orderData.preferredDay && orderData.startDate && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Schedule</span>
+                            <span className="text-right max-w-[180px] text-xs">{getSubscriptionSummary()}</span>
+                          </div>
+                        )}
+                        {/* Monthly: show schedule summary */}
+                        {orderData.frequency === 'monthly' && orderData.preferredDay && orderData.weekOfMonth && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Schedule</span>
+                            <span className="text-right max-w-[180px] text-xs">{getSubscriptionSummary()}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Date</span>
-                          <span>{orderData.date}</span>
+                          <span className="text-muted-foreground">Time</span>
+                          <span>{orderData.deliveryType === 'delivery' ? '11:00 AM - 2:30 PM' : '9:00 AM - 6:30 PM'}</span>
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Subscription indicator */}
+                  {orderData.frequency !== 'once' && (
+                    <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-primary">Recurring Subscription</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {getSubscriptionSummary()}. You can pause or cancel anytime.
+                      </p>
+                    </div>
+                  )}
 
                   <Button 
                     variant="premium" 
@@ -700,10 +969,29 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                         return;
                       }
 
-                      if (!orderData.date.trim()) {
+                      // Frequency-specific validation
+                      if (orderData.frequency === 'once' && !orderData.date.trim()) {
                         toast({
                           title: "Missing Information",
                           description: "Please select a preferred date",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
+                      if (orderData.frequency === 'biweekly' && (!orderData.preferredDay || !orderData.startDate.trim())) {
+                        toast({
+                          title: "Missing Information",
+                          description: "Please select a preferred day and start date",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
+                      if (orderData.frequency === 'monthly' && (!orderData.preferredDay || !orderData.weekOfMonth)) {
+                        toast({
+                          title: "Missing Information",
+                          description: "Please select week of month and preferred day",
                           variant: "destructive",
                         });
                         return;
@@ -805,10 +1093,13 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                           frequency: 'once',
                           address: '',
                           date: '',
-                          time: '15:30',
+                          time: '11:00-14:30',
                           items: [],
                           marketingConsent: false,
-                          autoRenew: false
+                          autoRenew: false,
+                          preferredDay: '',
+                          startDate: '',
+                          weekOfMonth: ''
                         });
                         
                       } catch (error: any) {
