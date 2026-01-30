@@ -36,6 +36,20 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
     email: '',
     phone: ''
   });
+  const [step2Errors, setStep2Errors] = useState<{
+    name?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    date?: string;
+  }>({});
+  const [step2Touched, setStep2Touched] = useState<{
+    name?: boolean;
+    phone?: boolean;
+    email?: boolean;
+    address?: boolean;
+    date?: boolean;
+  }>({});
 
   useEffect(() => {
     fetchProducts();
@@ -136,6 +150,70 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
         const product = products.find(p => p.id === productId);
         return { product, quantity: quantity as number };
       });
+  };
+
+  // Validation functions
+  const validatePhone = (phone: string): boolean => {
+    // Accept various phone formats: digits, spaces, dashes, plus sign, parentheses
+    const phoneRegex = /^[\d\s\-+()]{7,20}$/;
+    return phone.trim().length >= 7 && phoneRegex.test(phone.trim());
+  };
+
+  const validateEmail = (email: string): boolean => {
+    if (!email.trim()) return true; // Email is optional
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  const validateStep2 = (): boolean => {
+    const errors: typeof step2Errors = {};
+    
+    // Name validation
+    if (!customerInfo.name.trim()) {
+      errors.name = 'Full name is required';
+    } else if (customerInfo.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    }
+    
+    // Phone validation
+    if (!customerInfo.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    } else if (!validatePhone(customerInfo.phone)) {
+      errors.phone = 'Please enter a valid phone number';
+    }
+    
+    // Email validation (optional but if provided, must be valid)
+    if (customerInfo.email.trim() && !validateEmail(customerInfo.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    // Address validation (only for delivery)
+    if (orderData.deliveryType === 'delivery' && !orderData.address.trim()) {
+      errors.address = 'Delivery address is required';
+    }
+    
+    // Date validation
+    if (!orderData.date.trim()) {
+      errors.date = 'Preferred date is required';
+    }
+    
+    setStep2Errors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleStep2NextClick = () => {
+    // Mark all fields as touched to show errors
+    setStep2Touched({
+      name: true,
+      phone: true,
+      email: true,
+      address: true,
+      date: true
+    });
+    
+    if (validateStep2()) {
+      nextStep();
+    }
   };
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
@@ -288,21 +366,58 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                       <Input
                         placeholder="Enter your full name"
                         value={customerInfo.name}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                        className="mt-1 h-9"
+                        onChange={(e) => {
+                          setCustomerInfo(prev => ({ ...prev, name: e.target.value }));
+                          if (step2Touched.name) {
+                            setStep2Errors(prev => ({ ...prev, name: e.target.value.trim().length >= 2 ? undefined : 'Full name is required' }));
+                          }
+                        }}
+                        onBlur={() => {
+                          setStep2Touched(prev => ({ ...prev, name: true }));
+                          if (!customerInfo.name.trim()) {
+                            setStep2Errors(prev => ({ ...prev, name: 'Full name is required' }));
+                          } else if (customerInfo.name.trim().length < 2) {
+                            setStep2Errors(prev => ({ ...prev, name: 'Name must be at least 2 characters' }));
+                          } else {
+                            setStep2Errors(prev => ({ ...prev, name: undefined }));
+                          }
+                        }}
+                        className={`mt-1 h-9 ${step2Touched.name && step2Errors.name ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                         required
                       />
+                      {step2Touched.name && step2Errors.name && (
+                        <p className="text-xs text-destructive mt-1">{step2Errors.name}</p>
+                      )}
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Phone *</Label>
                       <Input
                         type="tel"
-                        placeholder="Enter your phone"
+                        placeholder="e.g., 1-284-443-4353"
                         value={customerInfo.phone}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                        className="mt-1 h-9"
+                        onChange={(e) => {
+                          setCustomerInfo(prev => ({ ...prev, phone: e.target.value }));
+                          if (step2Touched.phone) {
+                            const isValid = validatePhone(e.target.value);
+                            setStep2Errors(prev => ({ ...prev, phone: isValid ? undefined : 'Please enter a valid phone number' }));
+                          }
+                        }}
+                        onBlur={() => {
+                          setStep2Touched(prev => ({ ...prev, phone: true }));
+                          if (!customerInfo.phone.trim()) {
+                            setStep2Errors(prev => ({ ...prev, phone: 'Phone number is required' }));
+                          } else if (!validatePhone(customerInfo.phone)) {
+                            setStep2Errors(prev => ({ ...prev, phone: 'Please enter a valid phone number' }));
+                          } else {
+                            setStep2Errors(prev => ({ ...prev, phone: undefined }));
+                          }
+                        }}
+                        className={`mt-1 h-9 ${step2Touched.phone && step2Errors.phone ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                         required
                       />
+                      {step2Touched.phone && step2Errors.phone && (
+                        <p className="text-xs text-destructive mt-1">{step2Errors.phone}</p>
+                      )}
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Email</Label>
@@ -310,21 +425,43 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                         type="email"
                         placeholder="Enter your email"
                         value={customerInfo.email}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                        className="mt-1 h-9"
+                        onChange={(e) => {
+                          setCustomerInfo(prev => ({ ...prev, email: e.target.value }));
+                          if (step2Touched.email) {
+                            const isValid = validateEmail(e.target.value);
+                            setStep2Errors(prev => ({ ...prev, email: isValid ? undefined : 'Please enter a valid email address' }));
+                          }
+                        }}
+                        onBlur={() => {
+                          setStep2Touched(prev => ({ ...prev, email: true }));
+                          if (customerInfo.email.trim() && !validateEmail(customerInfo.email)) {
+                            setStep2Errors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+                          } else {
+                            setStep2Errors(prev => ({ ...prev, email: undefined }));
+                          }
+                        }}
+                        className={`mt-1 h-9 ${step2Touched.email && step2Errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       />
+                      {step2Touched.email && step2Errors.email && (
+                        <p className="text-xs text-destructive mt-1">{step2Errors.email}</p>
+                      )}
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-sm font-medium">Delivery Type</Label>
-                      <Select value={orderData.deliveryType} onValueChange={(value) => 
+                      <Select value={orderData.deliveryType} onValueChange={(value) => {
                         setOrderData(prev => ({ 
                           ...prev, 
                           deliveryType: value,
                           time: value === 'delivery' ? '11:00-14:30' : '09:00-18:30'
-                        }))}>
+                        }));
+                        // Clear address error if switching to pickup
+                        if (value === 'pickup') {
+                          setStep2Errors(prev => ({ ...prev, address: undefined }));
+                        }
+                      }}>
                         <SelectTrigger className="mt-1 h-9">
                           <SelectValue />
                         </SelectTrigger>
@@ -366,10 +503,26 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                       <Input
                         placeholder="Enter your full address in BVI"
                         value={orderData.address}
-                        onChange={(e) => setOrderData(prev => ({ ...prev, address: e.target.value }))}
-                        className="mt-1 h-9"
+                        onChange={(e) => {
+                          setOrderData(prev => ({ ...prev, address: e.target.value }));
+                          if (step2Touched.address) {
+                            setStep2Errors(prev => ({ ...prev, address: e.target.value.trim() ? undefined : 'Delivery address is required' }));
+                          }
+                        }}
+                        onBlur={() => {
+                          setStep2Touched(prev => ({ ...prev, address: true }));
+                          if (!orderData.address.trim()) {
+                            setStep2Errors(prev => ({ ...prev, address: 'Delivery address is required' }));
+                          } else {
+                            setStep2Errors(prev => ({ ...prev, address: undefined }));
+                          }
+                        }}
+                        className={`mt-1 h-9 ${step2Touched.address && step2Errors.address ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                         required
                       />
+                      {step2Touched.address && step2Errors.address && (
+                        <p className="text-xs text-destructive mt-1">{step2Errors.address}</p>
+                      )}
                     </div>
                   )}
 
@@ -379,10 +532,26 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                       <Input
                         type="date"
                         value={orderData.date}
-                        onChange={(e) => setOrderData(prev => ({ ...prev, date: e.target.value }))}
-                        className="mt-1 h-9"
+                        onChange={(e) => {
+                          setOrderData(prev => ({ ...prev, date: e.target.value }));
+                          if (step2Touched.date) {
+                            setStep2Errors(prev => ({ ...prev, date: e.target.value.trim() ? undefined : 'Preferred date is required' }));
+                          }
+                        }}
+                        onBlur={() => {
+                          setStep2Touched(prev => ({ ...prev, date: true }));
+                          if (!orderData.date.trim()) {
+                            setStep2Errors(prev => ({ ...prev, date: 'Preferred date is required' }));
+                          } else {
+                            setStep2Errors(prev => ({ ...prev, date: undefined }));
+                          }
+                        }}
+                        className={`mt-1 h-9 ${step2Touched.date && step2Errors.date ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                         required
                       />
+                      {step2Touched.date && step2Errors.date && (
+                        <p className="text-xs text-destructive mt-1">{step2Errors.date}</p>
+                      )}
                     </div>
 
                     <div>
@@ -674,11 +843,8 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                 <Button 
                   variant="premium" 
                   size="sm"
-                  onClick={nextStep}
-                  disabled={
-                    (currentStep === 1 && getOrderItems().length === 0) ||
-                    (currentStep === 2 && !customerInfo.name.trim())
-                  }
+                  onClick={currentStep === 2 ? handleStep2NextClick : nextStep}
+                  disabled={currentStep === 1 && getOrderItems().length === 0}
                 >
                   Next Step
                 </Button>
