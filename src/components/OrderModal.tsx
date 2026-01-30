@@ -1000,47 +1000,88 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                       setIsSubmitting(true);
                       
                       try {
-                        // Use server-side validated order creation
                         const orderItems = getOrderItems().map(item => ({
                           product_id: item.product?.id,
                           quantity: item.quantity
                         }));
-                        
-                        const { data: rpcResult, error } = await supabase.rpc('create_validated_order', {
-                          p_customer_name: customerInfo.name,
-                          p_customer_email: customerInfo.email || null,
-                          p_customer_phone: customerInfo.phone,
-                          p_delivery_address: orderData.address || '',
-                          p_delivery_type: orderData.deliveryType,
-                          p_items: orderItems,
-                          p_payment_method: 'cash'
-                        });
-                        
-                        if (error) {
-                          // Handle specific validation errors
-                          if (error.message.includes('not being accepted')) {
-                            toast({
-                              title: "Orders Currently Unavailable",
-                              description: "We're temporarily not accepting new orders. Please try again later.",
-                              variant: "destructive",
-                            });
-                          } else {
-                            throw error;
-                          }
-                          setIsSubmitting(false);
-                          return;
-                        }
-                        
-                        // Cast result to expected shape
-                        const orderResult = rpcResult as {
+
+                        let orderResult: {
                           success: boolean;
                           order_id: string;
                           order_number: string;
                           total_amount: number;
                           items: Array<{ name: string; price: number; quantity: number }>;
+                          subscription_id?: string;
+                          first_delivery_date?: string;
+                          next_delivery_date?: string;
+                          frequency?: string;
                         };
-                        
-                        console.log('Order created successfully:', orderResult);
+
+                        if (orderData.frequency === 'once') {
+                          // ONE-TIME ORDER: Use existing create_validated_order
+                          const { data: rpcResult, error } = await supabase.rpc('create_validated_order', {
+                            p_customer_name: customerInfo.name,
+                            p_customer_email: customerInfo.email || null,
+                            p_customer_phone: customerInfo.phone,
+                            p_delivery_address: orderData.address || '',
+                            p_delivery_type: orderData.deliveryType,
+                            p_items: orderItems,
+                            p_payment_method: 'cash'
+                          });
+                          
+                          if (error) {
+                            if (error.message.includes('not being accepted')) {
+                              toast({
+                                title: "Orders Currently Unavailable",
+                                description: "We're temporarily not accepting new orders. Please try again later.",
+                                variant: "destructive",
+                              });
+                            } else {
+                              throw error;
+                            }
+                            setIsSubmitting(false);
+                            return;
+                          }
+                          
+                          orderResult = rpcResult as typeof orderResult;
+                          console.log('Order created successfully:', orderResult);
+                        } else {
+                          // SUBSCRIPTION: Use create_subscription
+                          const startDate = orderData.frequency === 'biweekly' 
+                            ? orderData.startDate 
+                            : new Date().toISOString().split('T')[0]; // Use today for monthly
+                          
+                          const { data: rpcResult, error } = await supabase.rpc('create_subscription', {
+                            p_customer_name: customerInfo.name,
+                            p_customer_email: customerInfo.email || null,
+                            p_customer_phone: customerInfo.phone,
+                            p_delivery_address: orderData.address || '',
+                            p_delivery_type: orderData.deliveryType,
+                            p_frequency: orderData.frequency,
+                            p_preferred_day: orderData.preferredDay,
+                            p_week_of_month: orderData.frequency === 'monthly' ? parseInt(orderData.weekOfMonth) : null,
+                            p_start_date: startDate,
+                            p_items: orderItems,
+                            p_payment_method: 'cash'
+                          });
+                          
+                          if (error) {
+                            if (error.message.includes('not being accepted')) {
+                              toast({
+                                title: "Orders Currently Unavailable",
+                                description: "We're temporarily not accepting new orders. Please try again later.",
+                                variant: "destructive",
+                              });
+                            } else {
+                              throw error;
+                            }
+                            setIsSubmitting(false);
+                            return;
+                          }
+                          
+                          orderResult = rpcResult as typeof orderResult;
+                          console.log('Subscription created successfully:', orderResult);
+                        }
                         
                         // Send email notifications
                         try {
@@ -1059,7 +1100,11 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                             })),
                             totalAmount: orderResult.total_amount,
                             paymentMethod: 'cash',
-                            deliveryType: orderData.deliveryType
+                            deliveryType: orderData.deliveryType,
+                            // Include subscription info if applicable
+                            isSubscription: orderData.frequency !== 'once',
+                            frequency: orderData.frequency,
+                            subscriptionSummary: orderData.frequency !== 'once' ? getSubscriptionSummary() : undefined
                           };
                           
                           await supabase.functions.invoke('send-order-confirmation', {
@@ -1081,6 +1126,13 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                           deliveryAddress: orderData.address || '',
                           customerPhone: customerInfo.phone || ''
                         });
+                        
+                        // Add subscription info to confirmation params
+                        if (orderData.frequency !== 'once') {
+                          orderParams.set('isSubscription', 'true');
+                          orderParams.set('frequency', orderData.frequency);
+                          orderParams.set('subscriptionSummary', getSubscriptionSummary());
+                        }
                         
                         navigate(`/order-confirmation?${orderParams.toString()}`);
                         
@@ -1114,7 +1166,10 @@ export function OrderModal({ children }: { children: React.ReactNode }) {
                       }
                     }}
                   >
-                    {isSubmitting ? 'Placing Order...' : 'Confirm Order (Cash on Delivery)'}
+                    {isSubmitting 
+                      ? (orderData.frequency === 'once' ? 'Placing Order...' : 'Creating Subscription...') 
+                      : (orderData.frequency === 'once' ? 'Confirm Order (Cash on Delivery)' : 'Start Subscription (Cash on Delivery)')
+                    }
                   </Button>
                 </div>
               )}
