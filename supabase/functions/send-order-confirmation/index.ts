@@ -36,6 +36,11 @@ interface OrderConfirmationRequest {
   totalAmount: number;
   paymentMethod: string;
   deliveryType: string;
+  // Subscription fields (optional - backward compatible)
+  isSubscription?: boolean;
+  frequency?: string;  // 'biweekly' | 'monthly'
+  subscriptionSummary?: string;
+  nextDeliveryDate?: string;
 }
 
 // Logo URL for email headers
@@ -116,6 +121,11 @@ const handler = async (req: Request): Promise<Response> => {
       ? 'Pickup Location: Aqua VI Store - Contact us for pickup details'
       : orderData.deliveryAddress || 'To be confirmed';
 
+    // Subscription detection (backward compatible - only activates when fields are present)
+    const isSubscription = orderData.isSubscription === true;
+    const subscriptionFrequency = orderData.frequency || '';
+    const subscriptionSummary = orderData.subscriptionSummary || '';
+
     // Fetch product details from database to get actual size descriptions
     const productNames = orderData.items.map(item => item.name);
     const { data: products } = await supabase
@@ -192,8 +202,8 @@ const handler = async (req: Request): Promise<Response> => {
                                 <span style="font-size: 24px; color: #ffffff;">✓</span>
                               </td>
                               <td style="padding-left: 16px;">
-                                <p style="margin: 0; font-size: 20px; font-weight: 700; color: #ffffff;">Order Confirmed!</p>
-                                <p style="margin: 4px 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.9);">We've received your order</p>
+                                <p style="margin: 0; font-size: 20px; font-weight: 700; color: #ffffff;">${isSubscription ? 'Subscription Started!' : 'Order Confirmed!'}</p>
+                                <p style="margin: 4px 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.9);">${isSubscription ? 'Your recurring delivery is set up' : 'We\'ve received your order'}</p>
                               </td>
                             </tr>
                           </table>
@@ -202,6 +212,19 @@ const handler = async (req: Request): Promise<Response> => {
                     </table>
                   </td>
                 </tr>
+
+                <!-- Subscription Badge - Only shows for recurring orders -->
+                ${isSubscription ? `
+                <tr>
+                  <td style="padding: 16px 40px 0;">
+                    <div style="background: linear-gradient(135deg, #039C97 0%, #06B6D4 100%); border-radius: 8px; padding: 12px 16px; text-align: center;">
+                      <span style="color: #ffffff; font-size: 14px; font-weight: 600; letter-spacing: 0.5px;">
+                        🔄 RECURRING ${subscriptionFrequency.toUpperCase()} SUBSCRIPTION
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                ` : ''}
 
                 <!-- Greeting -->
                 <tr>
@@ -388,6 +411,27 @@ const handler = async (req: Request): Promise<Response> => {
                   </td>
                 </tr>
 
+                <!-- Subscription Schedule Section - Only shows for recurring orders -->
+                ${isSubscription ? `
+                <tr>
+                  <td style="padding: 24px 40px 0;">
+                    <div style="background-color: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 16px;">
+                      <h3 style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #0f766e; text-transform: uppercase; letter-spacing: 0.5px;">
+                        📅 Your Recurring Schedule
+                      </h3>
+                      <p style="margin: 0 0 12px; font-size: 14px; color: #374151; line-height: 1.5;">
+                        ${subscriptionSummary}
+                      </p>
+                      <div style="background-color: #ccfbf1; border-radius: 4px; padding: 10px 12px;">
+                        <p style="margin: 0; font-size: 13px; color: #0d9488;">
+                          <strong>Need to pause or modify?</strong> Contact us at 1-284-443-4353 or reply to this email.
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                ` : ''}
+
                 <!-- Support Section Header -->
                 <tr>
                   <td style="padding: 24px 40px 0;">
@@ -521,6 +565,15 @@ const handler = async (req: Request): Promise<Response> => {
                             <strong>Order Type:</strong> 
                             <span style="background-color: ${isPickup ? '#FEF3C7' : '#DBEAFE'}; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${isPickup ? '📦 PICKUP' : '🚚 DELIVERY'}</span>
                           </p>
+                          ${isSubscription ? `
+                          <p style="margin: 8px 0 0; font-size: 14px; color: #374151;">
+                            <strong>Subscription:</strong> 
+                            <span style="background-color: #ccfbf1; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: #0d9488;">
+                              🔄 RECURRING ${subscriptionFrequency.toUpperCase()}
+                            </span>
+                          </p>
+                          <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">Schedule: ${subscriptionSummary}</p>
+                          ` : ''}
                           <p style="margin: 16px 0 0; font-size: 20px; color: #EA580C;"><strong>Total Amount: $${orderData.totalAmount.toFixed(2)}</strong></p>
                         </td>
                       </tr>
@@ -583,7 +636,9 @@ const handler = async (req: Request): Promise<Response> => {
         customerEmailResponse = await transporter.sendMail({
           from: '"Aqua VI Distributor" <aquavidistributor@gmail.com>',
           to: orderData.customerEmail,
-          subject: `Order Confirmation - ${orderData.orderNumber}`,
+          subject: isSubscription 
+            ? `Subscription Started - ${orderData.orderNumber}` 
+            : `Order Confirmation - ${orderData.orderNumber}`,
           html: customerEmailHtml,
         });
         console.log("Customer email sent:", customerEmailResponse.messageId);
@@ -597,7 +652,9 @@ const handler = async (req: Request): Promise<Response> => {
       businessEmailResponse = await transporter.sendMail({
         from: '"Aqua VI Distributor" <aquavidistributor@gmail.com>',
         to: "aquavidistributor@gmail.com",
-        subject: `🚨 New ${isPickup ? 'Pickup' : 'Delivery'} Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
+        subject: isSubscription
+          ? `🔄 SUBSCRIPTION ${isPickup ? 'Pickup' : 'Delivery'}: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`
+          : `🚨 New ${isPickup ? 'Pickup' : 'Delivery'} Order: ${orderData.orderNumber} - $${orderData.totalAmount.toFixed(2)}`,
         html: businessEmailHtml,
       });
       console.log("Business email sent:", businessEmailResponse.messageId);

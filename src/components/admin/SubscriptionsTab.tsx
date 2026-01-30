@@ -98,7 +98,46 @@ export function SubscriptionsTab() {
     }
   };
 
+  const sendSubscriptionNotification = async (
+    subscription: Subscription,
+    eventType: 'paused' | 'resumed' | 'cancelled'
+  ) => {
+    if (!subscription.customer_email) {
+      console.log('No customer email, skipping notification');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.functions.invoke('send-subscription-notification', {
+        body: {
+          eventType,
+          subscriptionId: subscription.id,
+          customerName: subscription.customer_name,
+          customerEmail: subscription.customer_email,
+          frequency: subscription.frequency,
+          subscriptionSummary: `${getFrequencyLabel(subscription.frequency)} delivery on ${getDayLabel(subscription.preferred_day)}${subscription.frequency === 'monthly' && subscription.week_of_month ? ` (${getWeekLabel(subscription.week_of_month)} week)` : ''}`,
+          nextDeliveryDate: subscription.next_delivery_date ? format(new Date(subscription.next_delivery_date), 'MMMM d, yyyy') : undefined,
+          items: subscription.items,
+          totalAmount: subscription.total_amount,
+          deliveryType: subscription.delivery_type
+        }
+      });
+
+      if (error) {
+        console.error('Failed to send subscription notification:', error);
+      } else {
+        console.log(`Subscription ${eventType} notification sent successfully`);
+      }
+    } catch (error) {
+      console.error('Failed to send subscription notification:', error);
+      // Don't block the status update if email fails
+    }
+  };
+
   const updateSubscriptionStatus = async (subscriptionId: string, newStatus: string) => {
+    // Find the subscription before updating
+    const subscription = subscriptions.find(s => s.id === subscriptionId);
+    
     try {
       setUpdatingStatus(true);
       const { error } = await supabase
@@ -112,6 +151,12 @@ export function SubscriptionsTab() {
         title: "Success",
         description: `Subscription ${newStatus === 'cancelled' ? 'cancelled' : newStatus === 'paused' ? 'paused' : 'resumed'} successfully`,
       });
+
+      // Send notification email after successful status update
+      if (subscription && (newStatus === 'paused' || newStatus === 'cancelled' || newStatus === 'active')) {
+        const eventType = newStatus === 'active' ? 'resumed' : newStatus as 'paused' | 'cancelled';
+        await sendSubscriptionNotification(subscription, eventType);
+      }
 
       fetchSubscriptions();
       setShowCancelConfirm(false);
