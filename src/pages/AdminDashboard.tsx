@@ -63,8 +63,10 @@ import {
   Eye,
   ArrowUp,
   ArrowDown,
+  RefreshCw,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { SubscriptionsTab } from '@/components/admin/SubscriptionsTab';
 
 // Types
 interface Order {
@@ -2090,6 +2092,7 @@ const AdminDashboard = () => {
               {[
                 { id: 'orders', label: 'Orders', icon: ShoppingBag },
                 ...(currentAccessLevel === 'admin' ? [
+                  { id: 'subscriptions', label: 'Subscriptions', icon: RefreshCw },
                   { id: 'products', label: 'Products', icon: Package },
                   { id: 'testimonials', label: 'Testimonials', icon: Star },
                   { id: 'customers', label: 'Customers', icon: Users },
@@ -2120,6 +2123,7 @@ const AdminDashboard = () => {
           <div className="p-6">
             {activeTab === 'user-management' && currentAccessLevel === 'admin' && renderUserManagement()}
             {activeTab === 'orders' && renderOrders()}
+            {activeTab === 'subscriptions' && currentAccessLevel === 'admin' && <SubscriptionsTab />}
             {activeTab === 'products' && currentAccessLevel === 'admin' && renderProducts()}
             {activeTab === 'testimonials' && currentAccessLevel === 'admin' && renderTestimonials()}
             {activeTab === 'messages' && currentAccessLevel === 'admin' && renderMessages()}
