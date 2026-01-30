@@ -61,6 +61,7 @@ export type Database = {
           order_number: string
           payment_method: string | null
           status: string
+          subscription_id: string | null
           total_amount: number
           updated_at: string
         }
@@ -77,6 +78,7 @@ export type Database = {
           order_number?: string
           payment_method?: string | null
           status?: string
+          subscription_id?: string | null
           total_amount: number
           updated_at?: string
         }
@@ -93,10 +95,19 @@ export type Database = {
           order_number?: string
           payment_method?: string | null
           status?: string
+          subscription_id?: string | null
           total_amount?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -221,6 +232,69 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_address: string | null
+          delivery_type: string
+          frequency: string
+          id: string
+          items: Json
+          last_order_id: string | null
+          next_delivery_date: string
+          payment_method: string | null
+          preferred_day: string
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+          week_of_month: number | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_address?: string | null
+          delivery_type?: string
+          frequency: string
+          id?: string
+          items: Json
+          last_order_id?: string | null
+          next_delivery_date: string
+          payment_method?: string | null
+          preferred_day: string
+          start_date: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+          week_of_month?: number | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          delivery_address?: string | null
+          delivery_type?: string
+          frequency?: string
+          id?: string
+          items?: Json
+          last_order_id?: string | null
+          next_delivery_date?: string
+          payment_method?: string | null
+          preferred_day?: string
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          week_of_month?: number | null
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           avatar: string | null
@@ -289,6 +363,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_next_delivery_date: {
+        Args: {
+          p_current_date: string
+          p_frequency: string
+          p_preferred_day: string
+          p_week_of_month: number
+        }
+        Returns: string
+      }
       create_validated_order: {
         Args: {
           p_customer_email: string
