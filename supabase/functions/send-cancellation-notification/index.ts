@@ -81,9 +81,9 @@ const handler = async (req: Request): Promise<Response> => {
       .select('role')
       .eq('user_id', user.id)
       .in('role', ['admin', 'user'])
-      .single();
+      .limit(1);
 
-    if (roleError || !roleData) {
+    if (roleError || !roleData || roleData.length === 0) {
       console.error("User does not have required role:", user.id);
       return new Response(
         JSON.stringify({ error: "Forbidden: Access denied" }),
@@ -91,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("User verified with role:", roleData.role, "- processing cancellation notification");
+    console.log("User verified with role:", roleData[0].role, "- processing cancellation notification");
 
     const { orderId }: CancellationNotificationRequest = await req.json();
     
