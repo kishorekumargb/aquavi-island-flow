@@ -299,7 +299,7 @@ const AdminDashboard = () => {
       setOrders((data || []).map(order => ({
         ...order,
         items: Array.isArray(order.items) ? order.items : []
-      })) as Order[]);
+      })) as unknown as Order[]);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
