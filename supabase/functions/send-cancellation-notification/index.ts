@@ -119,14 +119,33 @@ const handler = async (req: Request): Promise<Response> => {
     // Parse items from order
     const items = Array.isArray(order.items) ? order.items : [];
     
-    // Generate order items HTML
-    const itemsHtml = items.map((item: any) => `
+    // Fetch product details from database to get actual size descriptions
+    const productNames = items.map((item: any) => item.name);
+    const { data: products } = await supabase
+      .from('products')
+      .select('name, size')
+      .in('name', productNames);
+    
+    // Create a map for quick lookup of product sizes
+    const productSizeMap: Record<string, string> = {};
+    if (products) {
+      products.forEach((product: { name: string; size: string }) => {
+        productSizeMap[product.name] = product.size;
+      });
+    }
+    
+    // Generate order items HTML with actual product size descriptions
+    const itemsHtml = items.map((item: any) => {
+      const sizeDescription = productSizeMap[item.name] || '';
+      const displayName = sizeDescription ? `${item.name} (${sizeDescription})` : item.name;
+      return `
                               <tr>
-                                <td style="padding: 12px 16px; border-bottom: 1px solid #fecaca; color: #374151; font-size: 14px;">${item.name}</td>
+                                <td style="padding: 12px 16px; border-bottom: 1px solid #fecaca; color: #374151; font-size: 14px;">${displayName}</td>
                                 <td style="padding: 12px 16px; border-bottom: 1px solid #fecaca; color: #374151; font-size: 14px; text-align: center;">${item.quantity}</td>
                                 <td style="padding: 12px 16px; border-bottom: 1px solid #fecaca; color: #374151; font-size: 14px; text-align: right;">$${Number(item.price).toFixed(2)}</td>
                                 <td style="padding: 12px 16px; border-bottom: 1px solid #fecaca; color: #374151; font-size: 14px; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
-                              </tr>`).join('');
+                              </tr>`;
+    }).join('');
 
     // Customer cancellation notification email - RED theme
     const customerEmailHtml = `
