@@ -372,6 +372,22 @@ export type Database = {
         }
         Returns: string
       }
+      create_subscription: {
+        Args: {
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_delivery_address: string
+          p_delivery_type: string
+          p_frequency: string
+          p_items: Json
+          p_payment_method?: string
+          p_preferred_day: string
+          p_start_date: string
+          p_week_of_month: number
+        }
+        Returns: Json
+      }
       create_validated_order: {
         Args: {
           p_customer_email: string
