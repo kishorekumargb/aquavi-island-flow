@@ -323,7 +323,7 @@ const handler = async (req: Request): Promise<Response> => {
                           <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                             <tr>
                               <td style="padding-right: 16px;">
-                                <span style="font-size: 14px; color: #6b7280;">Phone: 1-499-4611</span>
+                                <span style="font-size: 14px; color: #6b7280;">Phone: 1-284-443-4353</span>
                               </td>
                               <td style="padding: 0 8px; color: #d1d5db;">|</td>
                               <td>
