@@ -13,8 +13,8 @@ interface ContactInfo {
 }
 
 const defaultContactInfo: ContactInfo = {
-  phone: '1-499-4611',
-  email: 'info@aquavi.com',
+  phone: '1-284-443-4353',
+  email: 'aquavidistributor@gmail.com',
   address: 'MoneyGram, Flemming Street, Road Town, Tortola',
   deliveryHours: '3:30 PM - 5:30 PM',
   businessHoursMonFri: '8:00 AM - 6:00 PM',

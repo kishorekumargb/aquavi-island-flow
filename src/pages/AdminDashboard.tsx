@@ -1781,7 +1781,7 @@ const AdminDashboard = () => {
                 id="phone"
                 value={siteSettings.phone}
                 onChange={(e) => setSiteSettings({ ...siteSettings, phone: e.target.value })}
-                placeholder="e.g., 1-499-4611"
+                placeholder="e.g., 1-284-443-4353"
               />
             </div>
             <div>
@@ -1791,7 +1791,7 @@ const AdminDashboard = () => {
                 type="email"
                 value={siteSettings.email}
                 onChange={(e) => setSiteSettings({ ...siteSettings, email: e.target.value })}
-                placeholder="e.g., info@aquavi.com"
+                placeholder="e.g., aquavidistributor@gmail.com"
               />
             </div>
           </div>

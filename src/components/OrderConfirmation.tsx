@@ -16,7 +16,7 @@ export function OrderConfirmation() {
     total: searchParams.get('total') || '0.00',
     items: searchParams.get('items') || 'Water Bottles',
     deliveryAddress: searchParams.get('deliveryAddress') || 'Road Town, Tortola',
-    customerPhone: searchParams.get('customerPhone') || '1-499-4611'
+    customerPhone: searchParams.get('customerPhone') || '1-284-443-4353'
   };
 
   useEffect(() => {
