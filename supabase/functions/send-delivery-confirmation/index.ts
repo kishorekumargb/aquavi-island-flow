@@ -116,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const isPickup = order.delivery_type === 'pickup';
     const deliveryInfoText = isPickup 
-      ? 'Pickup from Aqua VI Store'
+      ? 'Pickup from Aqua VI Distributor Store'
       : order.delivery_address || 'Delivery address';
 
     // Parse items from order
@@ -386,7 +386,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <tr>
                   <td style="padding: 24px 40px;">
                     <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px;">
-                      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">💧 Thank you for choosing Aqua VI!</p>
+                      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">💧 Thank you for choosing Aqua VI Distributor!</p>
                       <p style="margin: 8px 0 0; font-size: 14px; color: #92400e;">We appreciate your business and look forward to serving you again.</p>
                     </div>
                   </td>

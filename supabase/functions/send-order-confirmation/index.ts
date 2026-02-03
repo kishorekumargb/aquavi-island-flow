@@ -118,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Determine delivery info text based on delivery type
     const isPickup = orderData.deliveryType === 'pickup';
     const deliveryInfoText = isPickup 
-      ? 'Pickup Location: Aqua VI Store - Contact us for pickup details'
+      ? 'Pickup Location: Aqua VI Distributor Store - Contact us for pickup details'
       : orderData.deliveryAddress || 'To be confirmed';
 
     // Subscription detection (backward compatible - only activates when fields are present)

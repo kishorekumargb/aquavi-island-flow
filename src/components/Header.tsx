@@ -21,7 +21,7 @@ export function Header() {
             <div className="w-10 h-10 bg-gradient-hero rounded-full items-center justify-center hidden">
               <span className="text-primary-foreground font-bold text-lg">A</span>
             </div>
-            <span className="font-heading text-2xl font-bold text-primary">AQUA VI Distributor</span>
+            <span className="font-heading text-2xl font-bold text-primary">Aqua VI Distributor</span>
           </div>
 
           {/* Desktop Navigation */}
