@@ -2091,8 +2091,8 @@ const AdminDashboard = () => {
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'orders', label: 'Orders', icon: ShoppingBag },
+                { id: 'subscriptions', label: 'Subscriptions', icon: RefreshCw },
                 ...(currentAccessLevel === 'admin' ? [
-                  { id: 'subscriptions', label: 'Subscriptions', icon: RefreshCw },
                   { id: 'products', label: 'Products', icon: Package },
                   { id: 'testimonials', label: 'Testimonials', icon: Star },
                   { id: 'customers', label: 'Customers', icon: Users },
@@ -2123,7 +2123,7 @@ const AdminDashboard = () => {
           <div className="p-6">
             {activeTab === 'user-management' && currentAccessLevel === 'admin' && renderUserManagement()}
             {activeTab === 'orders' && renderOrders()}
-            {activeTab === 'subscriptions' && currentAccessLevel === 'admin' && <SubscriptionsTab />}
+            {activeTab === 'subscriptions' && <SubscriptionsTab />}
             {activeTab === 'products' && currentAccessLevel === 'admin' && renderProducts()}
             {activeTab === 'testimonials' && currentAccessLevel === 'admin' && renderTestimonials()}
             {activeTab === 'messages' && currentAccessLevel === 'admin' && renderMessages()}

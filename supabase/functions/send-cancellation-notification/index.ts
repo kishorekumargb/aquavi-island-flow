@@ -307,7 +307,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <tr>
                   <td style="padding: 24px 40px;">
                     <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px;">
-                      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">💧 We appreciate your interest in Aqua VI!</p>
+                      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">💧 We appreciate your interest in Aqua VI Distributor!</p>
                       <p style="margin: 8px 0 0; font-size: 14px; color: #92400e;">We hope to serve you again in the future. Feel free to place a new order anytime.</p>
                     </div>
                   </td>

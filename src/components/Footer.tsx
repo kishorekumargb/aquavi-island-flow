@@ -45,11 +45,11 @@ export function Footer() {
               <div className="w-10 h-10 bg-gradient-hero rounded-full flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-xl">A</span>
               </div>
-              <span className="font-heading text-3xl font-bold text-primary">Aqua VI</span>
+              <span className="font-heading text-3xl font-bold text-primary">Aqua VI Distributor</span>
             </div>
             
             <p className="text-muted-foreground leading-relaxed mb-6 max-w-xs">
-              Locally bottled water with great taste and free delivery across the British Virgin Islands.
+              Aqua VI Distributor - Locally bottled water with great taste and free delivery across the British Virgin Islands.
             </p>
 
 
@@ -77,7 +77,7 @@ export function Footer() {
 
           {/* About Section */}
           <div>
-            <h3 className="font-heading text-lg font-semibold text-foreground mb-4">About Aqua VI</h3>
+            <h3 className="font-heading text-lg font-semibold text-foreground mb-4">About Aqua VI Distributor</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Premium bottled water sourced locally in the British Virgin Islands. 
               We're committed to providing the purest water with exceptional taste and 
@@ -137,7 +137,7 @@ export function Footer() {
         {/* Bottom Footer */}
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-sm text-muted-foreground">
-            © 2024 Aqua VI Water. All rights reserved. Made with pride in the BVI.
+            © 2024 Aqua VI Distributor. All rights reserved. Made with pride in the BVI.
           </div>
           
           <div className="flex flex-wrap justify-center space-x-6 text-sm">
