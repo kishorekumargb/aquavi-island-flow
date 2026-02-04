@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,8 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  CalendarClock,
+  Package,
 } from 'lucide-react';
 
 interface Subscription {
@@ -59,6 +61,14 @@ interface Subscription {
   updated_at: string;
 }
 
+interface SubscriptionOrder {
+  id: string;
+  order_number: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+}
+
 export function SubscriptionsTab() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,11 +77,21 @@ export function SubscriptionsTab() {
   const [showDetails, setShowDetails] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [generatingOrder, setGeneratingOrder] = useState(false);
+  const [subscriptionOrders, setSubscriptionOrders] = useState<SubscriptionOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchSubscriptions();
   }, []);
+
+  // Fetch orders when subscription details modal opens
+  useEffect(() => {
+    if (showDetails && selectedSubscription) {
+      fetchSubscriptionOrders(selectedSubscription.id);
+    }
+  }, [showDetails, selectedSubscription]);
 
   const fetchSubscriptions = async () => {
     try {
@@ -95,6 +115,24 @@ export function SubscriptionsTab() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionOrders = async (subscriptionId: string) => {
+    try {
+      setLoadingOrders(true);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, order_number, total_amount, status, created_at')
+        .eq('subscription_id', subscriptionId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSubscriptionOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching subscription orders:', error);
+    } finally {
+      setLoadingOrders(false);
     }
   };
 
@@ -130,12 +168,10 @@ export function SubscriptionsTab() {
       }
     } catch (error) {
       console.error('Failed to send subscription notification:', error);
-      // Don't block the status update if email fails
     }
   };
 
   const updateSubscriptionStatus = async (subscriptionId: string, newStatus: string) => {
-    // Find the subscription before updating
     const subscription = subscriptions.find(s => s.id === subscriptionId);
     
     try {
@@ -152,7 +188,6 @@ export function SubscriptionsTab() {
         description: `Subscription ${newStatus === 'cancelled' ? 'cancelled' : newStatus === 'paused' ? 'paused' : 'resumed'} successfully`,
       });
 
-      // Send notification email after successful status update
       if (subscription && (newStatus === 'paused' || newStatus === 'cancelled' || newStatus === 'active')) {
         const eventType = newStatus === 'active' ? 'resumed' : newStatus as 'paused' | 'cancelled';
         await sendSubscriptionNotification(subscription, eventType);
@@ -171,6 +206,80 @@ export function SubscriptionsTab() {
     } finally {
       setUpdatingStatus(false);
     }
+  };
+
+  const generateNextOrder = async (subscription: Subscription) => {
+    try {
+      setGeneratingOrder(true);
+      
+      const { data, error } = await supabase.functions.invoke('generate-subscription-orders', {
+        body: { subscription_id: subscription.id }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.generated > 0) {
+        toast({
+          title: "Order Generated",
+          description: `Order ${data.results[0]?.order_number || ''} created for ${subscription.customer_name}`,
+        });
+        fetchSubscriptions();
+        if (showDetails) {
+          fetchSubscriptionOrders(subscription.id);
+        }
+      } else if (data.failed > 0) {
+        throw new Error(data.results[0]?.error || 'Failed to generate order');
+      }
+    } catch (error) {
+      console.error('Error generating order:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate order",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingOrder(false);
+    }
+  };
+
+  const getDueBadge = (subscription: Subscription) => {
+    if (subscription.status !== 'active') return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const nextDelivery = parseISO(subscription.next_delivery_date);
+    const daysUntil = differenceInDays(nextDelivery, today);
+
+    if (daysUntil < 0) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          Overdue
+        </Badge>
+      );
+    } else if (daysUntil === 0) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+          <CalendarClock className="w-3 h-3 mr-1" />
+          Today
+        </Badge>
+      );
+    } else if (daysUntil <= 2) {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs">
+          <CalendarClock className="w-3 h-3 mr-1" />
+          {daysUntil}d
+        </Badge>
+      );
+    } else if (daysUntil <= 7) {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 text-xs">
+          <CalendarClock className="w-3 h-3 mr-1" />
+          {daysUntil}d
+        </Badge>
+      );
+    }
+    return null;
   };
 
   const getStatusIcon = (status: string) => {
@@ -199,6 +308,21 @@ export function SubscriptionsTab() {
     }
   };
 
+  const getOrderStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const getFrequencyLabel = (frequency: string) => {
     switch (frequency) {
       case 'biweekly': return 'Bi-weekly';
@@ -217,8 +341,27 @@ export function SubscriptionsTab() {
     return labels[week - 1] || '';
   };
 
+  // Count subscriptions due within 7 days
+  const dueThisWeekCount = subscriptions.filter(sub => {
+    if (sub.status !== 'active') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const nextDelivery = parseISO(sub.next_delivery_date);
+    const daysUntil = differenceInDays(nextDelivery, today);
+    return daysUntil <= 7;
+  }).length;
+
   const filteredSubscriptions = statusFilter === 'all'
     ? subscriptions
+    : statusFilter === 'due_soon'
+    ? subscriptions.filter(sub => {
+        if (sub.status !== 'active') return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const nextDelivery = parseISO(sub.next_delivery_date);
+        const daysUntil = differenceInDays(nextDelivery, today);
+        return daysUntil <= 7;
+      })
     : subscriptions.filter(sub => sub.status === statusFilter);
 
   return (
@@ -230,11 +373,14 @@ export function SubscriptionsTab() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-44">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Subscriptions</SelectItem>
+              <SelectItem value="due_soon">
+                Due This Week {dueThisWeekCount > 0 && `(${dueThisWeekCount})`}
+              </SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="paused">Paused</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -247,7 +393,7 @@ export function SubscriptionsTab() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{subscriptions.length}</div>
@@ -268,6 +414,14 @@ export function SubscriptionsTab() {
               {subscriptions.filter(s => s.status === 'paused').length}
             </div>
             <p className="text-xs text-muted-foreground">Paused</p>
+          </CardContent>
+        </Card>
+        <Card className={dueThisWeekCount > 0 ? 'border-orange-300 bg-orange-50' : ''}>
+          <CardContent className="pt-6">
+            <div className={`text-2xl font-bold ${dueThisWeekCount > 0 ? 'text-orange-600' : ''}`}>
+              {dueThisWeekCount}
+            </div>
+            <p className="text-xs text-muted-foreground">Due This Week</p>
           </CardContent>
         </Card>
         <Card>
@@ -302,7 +456,9 @@ export function SubscriptionsTab() {
                 {filteredSubscriptions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      {statusFilter === 'all' ? 'No subscriptions found' : `No ${statusFilter} subscriptions found`}
+                      {statusFilter === 'all' ? 'No subscriptions found' : 
+                       statusFilter === 'due_soon' ? 'No subscriptions due this week' :
+                       `No ${statusFilter} subscriptions found`}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -330,11 +486,16 @@ export function SubscriptionsTab() {
                       </TableCell>
                       <TableCell className="font-medium">${subscription.total_amount.toFixed(2)}</TableCell>
                       <TableCell>
-                        {subscription.status === 'active' ? (
-                          format(new Date(subscription.next_delivery_date), 'MMM d, yyyy')
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {subscription.status === 'active' ? (
+                            <>
+                              <span>{format(new Date(subscription.next_delivery_date), 'MMM d, yyyy')}</span>
+                              {getDueBadge(subscription)}
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -357,14 +518,25 @@ export function SubscriptionsTab() {
                             <Eye className="h-4 w-4" />
                           </Button>
                           {subscription.status === 'active' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateSubscriptionStatus(subscription.id, 'paused')}
-                              disabled={updatingStatus}
-                            >
-                              <Pause className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => generateNextOrder(subscription)}
+                                disabled={generatingOrder}
+                                title="Generate Next Order"
+                              >
+                                <Package className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateSubscriptionStatus(subscription.id, 'paused')}
+                                disabled={updatingStatus}
+                              >
+                                <Pause className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                           {subscription.status === 'paused' && (
                             <Button
@@ -402,11 +574,11 @@ export function SubscriptionsTab() {
 
       {/* Subscription Details Modal */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Subscription Details</DialogTitle>
             <DialogDescription>
-              View subscription information and items
+              View subscription information, items, and order history
             </DialogDescription>
           </DialogHeader>
           {selectedSubscription && (
@@ -456,12 +628,15 @@ export function SubscriptionsTab() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Next Delivery</p>
-                    <p className="font-medium">
-                      {selectedSubscription.status === 'active'
-                        ? format(new Date(selectedSubscription.next_delivery_date), 'MMMM d, yyyy')
-                        : '—'
-                      }
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">
+                        {selectedSubscription.status === 'active'
+                          ? format(new Date(selectedSubscription.next_delivery_date), 'MMMM d, yyyy')
+                          : '—'
+                        }
+                      </p>
+                      {getDueBadge(selectedSubscription)}
+                    </div>
                   </div>
                   {selectedSubscription.delivery_address && (
                     <div className="col-span-2">
@@ -500,6 +675,58 @@ export function SubscriptionsTab() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Order History */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">Order History</h4>
+                {loadingOrders ? (
+                  <p className="text-sm text-muted-foreground">Loading orders...</p>
+                ) : subscriptionOrders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No orders generated yet</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order #</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {subscriptionOrders.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-mono text-sm">{order.order_number}</TableCell>
+                          <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy')}</TableCell>
+                          <TableCell>${order.total_amount.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Badge className={`${getOrderStatusColor(order.status)} capitalize`}>
+                              {order.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+
+              {/* Generate Order Button */}
+              {selectedSubscription.status === 'active' && (
+                <div className="border-t pt-4">
+                  <Button
+                    onClick={() => generateNextOrder(selectedSubscription)}
+                    disabled={generatingOrder}
+                    className="w-full"
+                  >
+                    <Package className="h-4 w-4 mr-2" />
+                    {generatingOrder ? 'Generating...' : 'Generate Next Order Now'}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    This will create a new order and advance the next delivery date
+                  </p>
+                </div>
+              )}
 
               {/* Dates */}
               <div className="border-t pt-4 text-sm text-muted-foreground">

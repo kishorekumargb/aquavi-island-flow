@@ -401,6 +401,10 @@ export type Database = {
         Returns: Json
       }
       generate_aquavi_order_number: { Args: never; Returns: string }
+      generate_order_from_subscription: {
+        Args: { p_subscription_id: string }
+        Returns: Json
+      }
       generate_order_number: { Args: never; Returns: string }
       get_user_role:
         | { Args: never; Returns: string }
