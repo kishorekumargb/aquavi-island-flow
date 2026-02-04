@@ -1,221 +1,167 @@
-
-
 # Automated Recurring Order Generation System
 
-## Overview
-
-This plan implements a fully automated system that generates orders from active subscriptions based on their `next_delivery_date`. The system will also address identified gaps in the subscription module.
+## Status: Phase 1 & 2 Complete ✅
 
 ---
 
-## Current State Analysis
+## Completed Implementation
 
-### What Works Now
-- Subscription creation correctly generates the **first order** immediately
-- `next_delivery_date` is properly calculated using the `calculate_next_delivery_date()` database function
-- Admin dashboard allows pause, resume, and cancel with email notifications
-- Order confirmation emails include subscription schedule info
+### ✅ Phase 1: Automated Order Generation (Core)
 
-### Identified Gaps
+#### 1.1 Database Function Created
+- **RPC Function**: `generate_order_from_subscription(p_subscription_id uuid)`
+- Creates order from subscription template
+- Calculates and updates `next_delivery_date` using existing logic
+- Updates `last_order_id` reference
+- Returns complete order details
 
-| Gap | Severity | Description |
-|-----|----------|-------------|
-| No automated order generation | Critical | Subsequent orders after the first are not created automatically |
-| No upcoming delivery alerts | Medium | Staff have no visual indicator of which subscriptions need orders soon |
-| No subscription edit capability | Low | Cannot modify items, frequency, or delivery details after creation |
-| No order history on subscription | Low | Details modal doesn't show past orders linked to subscription |
-| `next_delivery_date` not updated | Critical | After generating an order, the next delivery date isn't recalculated |
+#### 1.2 Edge Function Deployed
+- **File**: `supabase/functions/generate-subscription-orders/index.ts`
+- Queries active subscriptions where `next_delivery_date <= today + 2 days`
+- Supports manual trigger via `subscription_id` parameter
+- Supports `dry_run` mode for testing
+- Sends order confirmation emails automatically
+- Comprehensive logging for troubleshooting
+
+#### 1.3 Edge Function Config
+- Added to `supabase/config.toml`
+- `verify_jwt = false` (for cron job access)
+
+### ✅ Phase 2: Admin Dashboard Enhancements
+
+#### 2.1 Due Date Indicators
+- Color-coded badges: Red (overdue/today), Orange (1-2 days), Yellow (3-7 days)
+- "Due This Week" filter option with count
+- New summary card showing subscriptions due this week
+
+#### 2.2 Order History in Details Modal
+- Shows all orders linked to subscription
+- Displays order number, date, amount, and status
+
+#### 2.3 Manual Order Generation
+- "Generate Next Order" button (Package icon) in table actions
+- Full-width button in subscription details modal
+- Calls edge function, updates UI after success
 
 ---
 
-## Implementation Plan
+## Pending: Enable Cron Job (Requires Supabase Dashboard)
 
-### Phase 1: Automated Order Generation (Core)
-
-#### 1.1 Enable Required Extensions
-
-Enable `pg_cron` and `pg_net` extensions in Supabase to allow scheduled database jobs that can call edge functions.
-
-```text
-Extensions to enable:
-+-------------+------------------------------------------+
-| Extension   | Purpose                                  |
-+-------------+------------------------------------------+
-| pg_cron     | Schedule recurring database jobs         |
-| pg_net      | HTTP calls from database to edge func    |
-+-------------+------------------------------------------+
+### Step 1: Enable Extensions
+In Supabase Dashboard → SQL Editor, run:
+```sql
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+CREATE EXTENSION IF NOT EXISTS pg_net;
 ```
 
-#### 1.2 Create Order Generation Edge Function
+### Step 2: Schedule Daily Job
+After extensions are enabled, run:
+```sql
+SELECT cron.schedule(
+  'generate-subscription-orders-daily',
+  '0 6 * * *',  -- Daily at 6:00 AM UTC
+  $$
+  SELECT net.http_post(
+    url := 'https://qscyapmuiqaijvuitlyv.supabase.co/functions/v1/generate-subscription-orders',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
+    ),
+    body := '{"lead_days": 2}'::jsonb
+  );
+  $$
+);
+```
 
-New edge function: `supabase/functions/generate-subscription-orders/index.ts`
+### Step 3: Verify Cron Job
+```sql
+SELECT * FROM cron.job;
+```
 
-**Responsibilities:**
-1. Query all active subscriptions where `next_delivery_date <= today + 2 days`
-2. For each subscription:
-   - Create a new order with subscription items
-   - Update `next_delivery_date` using `calculate_next_delivery_date()`
-   - Update `last_order_id` reference
-   - Send order confirmation email (optional, configurable)
-3. Log results and any failures
+---
 
-**Flow Diagram:**
-```text
-[pg_cron: Daily 6 AM]
-        |
-        v
+## How It Works
+
+### Automated Flow (When Cron Enabled)
+```
+[Daily at 6 AM UTC]
+        ↓
+[pg_cron triggers HTTP call]
+        ↓
 [Edge Function: generate-subscription-orders]
-        |
-        +---> Query active subscriptions due soon
-        |
-        v
-  For each subscription:
-        +---> Create new order record
-        +---> Calculate next delivery date
-        +---> Update subscription record
-        +---> Send confirmation email (if email exists)
-        |
-        v
-[Return: Summary of orders generated]
+        ↓
+  For each active subscription with next_delivery_date <= today + 2:
+        → Call RPC: generate_order_from_subscription(id)
+        → Create order record
+        → Calculate new next_delivery_date
+        → Update subscription
+        → Send confirmation email (if email exists)
+        ↓
+[Return summary with results]
 ```
 
-#### 1.3 Database Function for Order Generation
-
-Create an RPC function `generate_order_from_subscription(subscription_id)` that:
-- Validates subscription is active
-- Creates order with correct items/amounts
-- Calculates and updates next delivery date
-- Returns the new order details
-
-This keeps business logic in the database for consistency.
-
-#### 1.4 Schedule the Cron Job
-
-Configure pg_cron to call the edge function daily at 6:00 AM:
-- Lead time: 2 days before `next_delivery_date`
-- This gives staff time to prepare orders
+### Manual Flow (Available Now)
+Staff can click the Package icon on any active subscription to:
+1. Generate an order immediately
+2. Advance the next_delivery_date
+3. Send confirmation email to customer
 
 ---
 
-### Phase 2: Admin Dashboard Enhancements
+## API Reference
 
-#### 2.1 Upcoming Deliveries Alert
+### Edge Function: generate-subscription-orders
 
-Add visual indicators in the Subscriptions tab:
-- Badge showing "Due in X days" for subscriptions with upcoming deliveries
-- Filter option: "Due This Week" to quickly see what needs attention
-- Color coding: Yellow (3-7 days), Orange (1-2 days), Red (overdue/today)
+**Endpoint**: `POST /functions/v1/generate-subscription-orders`
 
-#### 2.2 Subscription Order History
+**Parameters** (JSON body):
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `lead_days` | number | 2 | Days before delivery to generate orders |
+| `dry_run` | boolean | false | Simulate without creating orders |
+| `subscription_id` | string | null | Generate for specific subscription only |
 
-In the subscription details modal, add a section showing:
-- All orders linked to this subscription
-- Order status, date, and amount
-- Quick link to view order details
-
-#### 2.3 Manual Order Generation Button
-
-Add a "Generate Next Order" button for staff to manually trigger order creation:
-- Useful for testing or one-off needs
-- Calls the same RPC function as the automated system
-- Updates next delivery date automatically
-
----
-
-### Phase 3: Notification System (Enhancement)
-
-#### 3.1 Upcoming Delivery Reminder
-
-New edge function: `send-upcoming-delivery-reminder`
-
-Sends email to customers 2-3 days before scheduled delivery:
-- Reminder of what's being delivered
-- Delivery date and time window
-- Option to contact if changes needed
-
-#### 3.2 Order Generated Notification
-
-When automated system creates an order:
-- Send customer the standard order confirmation
-- Flag it as "Recurring Order" in the email
-- Show next scheduled delivery date
-
----
-
-## Technical Details
-
-### New Files to Create
-
-| File | Purpose |
-|------|---------|
-| `supabase/functions/generate-subscription-orders/index.ts` | Main automation function |
-| Migration for `generate_order_from_subscription` RPC | Database function |
-| Migration for pg_cron job setup | Schedule the daily job |
-
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/admin/SubscriptionsTab.tsx` | Add due date indicators, order history, manual generate button |
-| `supabase/config.toml` | Add new edge function configuration |
-
-### Database Changes
-
-1. **RPC Function**: `generate_order_from_subscription(p_subscription_id uuid)`
-   - Creates order from subscription template
-   - Updates `next_delivery_date` and `last_order_id`
-   - Returns order details
-
-2. **Cron Job** (via SQL insert after enabling extensions):
-   - Schedule: `0 6 * * *` (daily at 6 AM)
-   - Calls edge function via `pg_net.http_post()`
-
-### Edge Function Logic
-
-```text
-generate-subscription-orders:
-
-1. Auth: Verify service role (cron context)
-2. Query: SELECT * FROM subscriptions 
-          WHERE status = 'active' 
-          AND next_delivery_date <= CURRENT_DATE + 2
-3. For each subscription:
-   a. Call RPC generate_order_from_subscription(id)
-   b. If customer has email, send confirmation
-   c. Log success/failure
-4. Return summary: { generated: N, failed: M, details: [...] }
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Generated 3 orders, 0 failed",
+  "generated": 3,
+  "failed": 0,
+  "results": [
+    {
+      "subscription_id": "...",
+      "customer_name": "...",
+      "order_id": "...",
+      "order_number": "AQVI...",
+      "success": true,
+      "email_sent": true
+    }
+  ],
+  "execution_time_ms": 1234
+}
 ```
 
 ---
 
-## Rollout Sequence
+## Future Enhancements (Phase 3)
 
-1. **Deploy database function** - `generate_order_from_subscription` RPC
-2. **Deploy edge function** - `generate-subscription-orders`
-3. **Enable extensions** - pg_cron, pg_net (requires Supabase dashboard)
-4. **Create cron job** - Schedule via SQL
-5. **Update admin UI** - Add due indicators and manual trigger
-6. **Test end-to-end** - Verify with existing active subscription
-7. **Monitor** - Check logs for first few automated runs
+### 3.1 Upcoming Delivery Reminder Email
+- Send customer reminder 3 days before delivery
+- Include items, date, and contact info
 
----
-
-## Success Criteria
-
-- Active subscriptions automatically generate orders 2 days before `next_delivery_date`
-- `next_delivery_date` correctly advances after each order generation
-- Customers receive order confirmation emails for automated orders
-- Admin dashboard shows upcoming deliveries clearly
-- Staff can manually trigger order generation when needed
-- System logs all automation activity for troubleshooting
+### 3.2 Subscription Edit Capability
+- Allow modifying items, frequency, or delivery details
+- Track changes in subscription history
 
 ---
 
-## Notes for the Team
+## Notes for Team
 
-- **Lead Time**: Orders generate 2 days before delivery date, giving staff time to prepare
-- **Email Notifications**: Customers with email addresses receive confirmations automatically
-- **Manual Override**: Staff can always generate orders manually from the admin panel
-- **Paused Subscriptions**: Only "active" subscriptions are processed; paused ones are skipped
-- **Cancelled Subscriptions**: Never processed by the automated system
-
+- **Lead Time**: Orders generate 2 days before delivery date
+- **Email Notifications**: Customers with email receive confirmations
+- **Manual Override**: Staff can generate orders anytime via admin panel
+- **Paused Subscriptions**: Skipped by automated system
+- **Cancelled Subscriptions**: Never processed
+- **Logs**: Check edge function logs for troubleshooting

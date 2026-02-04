@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.send-subscription-notification]
 verify_jwt = true
+
+[functions.generate-subscription-orders]
+verify_jwt = false
