@@ -39,7 +39,9 @@ import {
   AlertCircle,
   CalendarClock,
   Package,
+  Pencil,
 } from 'lucide-react';
+import { EditSubscriptionModal } from './EditSubscriptionModal';
 
 interface Subscription {
   id: string;
@@ -76,6 +78,7 @@ export function SubscriptionsTab() {
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [generatingOrder, setGeneratingOrder] = useState(false);
   const [subscriptionOrders, setSubscriptionOrders] = useState<SubscriptionOrder[]>([]);
@@ -517,6 +520,19 @@ export function SubscriptionsTab() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {subscription.status !== 'cancelled' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedSubscription(subscription);
+                                setShowEditModal(true);
+                              }}
+                              title="Edit Subscription"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
                           {subscription.status === 'active' && (
                             <>
                               <Button
@@ -711,21 +727,36 @@ export function SubscriptionsTab() {
                 )}
               </div>
 
-              {/* Generate Order Button */}
-              {selectedSubscription.status === 'active' && (
-                <div className="border-t pt-4">
+              {/* Action Buttons */}
+              {selectedSubscription.status !== 'cancelled' && (
+                <div className="border-t pt-4 flex gap-2">
                   <Button
-                    onClick={() => generateNextOrder(selectedSubscription)}
-                    disabled={generatingOrder}
-                    className="w-full"
+                    variant="outline"
+                    onClick={() => {
+                      setShowDetails(false);
+                      setShowEditModal(true);
+                    }}
+                    className="flex-1"
                   >
-                    <Package className="h-4 w-4 mr-2" />
-                    {generatingOrder ? 'Generating...' : 'Generate Next Order Now'}
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit Subscription
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    This will create a new order and advance the next delivery date
-                  </p>
+                  {selectedSubscription.status === 'active' && (
+                    <Button
+                      onClick={() => generateNextOrder(selectedSubscription)}
+                      disabled={generatingOrder}
+                      className="flex-1"
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      {generatingOrder ? 'Generating...' : 'Generate Order'}
+                    </Button>
+                  )}
                 </div>
+              )}
+              {selectedSubscription.status === 'active' && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Generate Order will create a new order and advance the next delivery date
+                </p>
               )}
 
               {/* Dates */}
@@ -772,6 +803,14 @@ export function SubscriptionsTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Subscription Modal */}
+      <EditSubscriptionModal
+        subscription={selectedSubscription}
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        onSuccess={fetchSubscriptions}
+      />
     </div>
   );
 }
