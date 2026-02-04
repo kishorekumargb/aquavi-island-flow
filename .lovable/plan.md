@@ -1,167 +1,246 @@
-# Automated Recurring Order Generation System
 
-## Status: Phase 1 & 2 Complete ✅
+# Phase 3: Future Enhancements Implementation
 
----
+## Overview
 
-## Completed Implementation
-
-### ✅ Phase 1: Automated Order Generation (Core)
-
-#### 1.1 Database Function Created
-- **RPC Function**: `generate_order_from_subscription(p_subscription_id uuid)`
-- Creates order from subscription template
-- Calculates and updates `next_delivery_date` using existing logic
-- Updates `last_order_id` reference
-- Returns complete order details
-
-#### 1.2 Edge Function Deployed
-- **File**: `supabase/functions/generate-subscription-orders/index.ts`
-- Queries active subscriptions where `next_delivery_date <= today + 2 days`
-- Supports manual trigger via `subscription_id` parameter
-- Supports `dry_run` mode for testing
-- Sends order confirmation emails automatically
-- Comprehensive logging for troubleshooting
-
-#### 1.3 Edge Function Config
-- Added to `supabase/config.toml`
-- `verify_jwt = false` (for cron job access)
-
-### ✅ Phase 2: Admin Dashboard Enhancements
-
-#### 2.1 Due Date Indicators
-- Color-coded badges: Red (overdue/today), Orange (1-2 days), Yellow (3-7 days)
-- "Due This Week" filter option with count
-- New summary card showing subscriptions due this week
-
-#### 2.2 Order History in Details Modal
-- Shows all orders linked to subscription
-- Displays order number, date, amount, and status
-
-#### 2.3 Manual Order Generation
-- "Generate Next Order" button (Package icon) in table actions
-- Full-width button in subscription details modal
-- Calls edge function, updates UI after success
+This plan implements the two optional features identified in the subscription system:
+1. **Upcoming Delivery Reminder Email** - Automated reminder sent 3 days before delivery
+2. **Subscription Edit Capability** - Allow modifying items, frequency, and delivery details after creation
 
 ---
 
-## Pending: Enable Cron Job (Requires Supabase Dashboard)
+## Feature 1: Upcoming Delivery Reminder Email
 
-### Step 1: Enable Extensions
-In Supabase Dashboard → SQL Editor, run:
-```sql
--- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pg_net;
+### What It Does
+Sends customers an email reminder 3 days before their scheduled delivery, confirming what will be delivered and when.
+
+### Implementation
+
+#### 1.1 New Edge Function: `send-upcoming-delivery-reminder`
+
+Create `supabase/functions/send-upcoming-delivery-reminder/index.ts`:
+- Query active subscriptions where `next_delivery_date = today + 3 days`
+- For each subscription with an email:
+  - Send a friendly reminder email with:
+    - Items being delivered
+    - Delivery date and time window
+    - Delivery address (if applicable)
+    - Contact info for changes
+- Track sent reminders in logs
+
+**Email Template:**
+- Blue/Teal gradient header (consistent with brand)
+- Icon: Calendar/Clock symbol
+- Subject: "Upcoming Delivery Reminder - Aqua VI"
+- Content: Friendly reminder about what's coming and when
+- Call to action: Contact info if changes needed
+
+#### 1.2 Daily Cron Job for Reminders
+
+Add to the existing pg_cron schedule:
+- Schedule: `0 7 * * *` (7:00 AM daily, 1 hour after order generation)
+- Job name: `send-delivery-reminders-daily`
+- Calls the reminder edge function
+
+#### 1.3 Update Config
+
+Add function to `supabase/config.toml`:
+```toml
+[functions.send-upcoming-delivery-reminder]
+verify_jwt = false
 ```
 
-### Step 2: Schedule Daily Job
-After extensions are enabled, run:
+---
+
+## Feature 2: Subscription Edit Capability
+
+### What It Does
+Allow admin/staff to modify subscription details after creation:
+- Edit items (add, remove, change quantities)
+- Change frequency (bi-weekly to monthly or vice versa)
+- Update delivery address
+- Modify preferred day and schedule
+
+### Implementation
+
+#### 2.1 Edit Subscription Modal Component
+
+Create a new `EditSubscriptionModal` component with:
+- Product selection (same as OrderModal)
+- Frequency selection with schedule options
+- Delivery address field
+- Payment method selection
+- Real-time total calculation
+
+#### 2.2 Update SubscriptionsTab.tsx
+
+Add to the subscription management:
+- Edit button (Pencil icon) in actions column
+- Edit button in details modal
+- State management for edit modal
+- Form validation before save
+
+#### 2.3 Database Update Logic
+
+Update subscription via direct Supabase update:
+- Recalculate total_amount based on new items
+- If frequency changed, recalculate next_delivery_date
+- Send notification email to customer about changes (optional)
+
+#### 2.4 Customer Notification (Optional)
+
+Create a new event type in `send-subscription-notification`:
+- `modified`: Notify customer of subscription changes
+- Include: What changed, new schedule, next delivery
+
+---
+
+## Technical Details
+
+### New Files to Create
+
+| File | Purpose |
+|------|---------|
+| `supabase/functions/send-upcoming-delivery-reminder/index.ts` | Reminder email function |
+| `src/components/admin/EditSubscriptionModal.tsx` | Modal for editing subscriptions |
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `supabase/config.toml` | Add new edge function |
+| `src/components/admin/SubscriptionsTab.tsx` | Add edit button and modal integration |
+| `supabase/functions/send-subscription-notification/index.ts` | Add 'modified' event type |
+
+### Database Changes
+
+No database schema changes required - all fields already exist in the subscriptions table.
+
+### Cron Job Addition
+
+SQL to add reminder job:
 ```sql
 SELECT cron.schedule(
-  'generate-subscription-orders-daily',
-  '0 6 * * *',  -- Daily at 6:00 AM UTC
+  'send-delivery-reminders-daily',
+  '0 7 * * *',
   $$
   SELECT net.http_post(
-    url := 'https://qscyapmuiqaijvuitlyv.supabase.co/functions/v1/generate-subscription-orders',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
-    ),
-    body := '{"lead_days": 2}'::jsonb
-  );
+    url := 'https://qscyapmuiqaijvuitlyv.supabase.co/functions/v1/send-upcoming-delivery-reminder',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer [ANON_KEY]"}'::jsonb,
+    body := '{"reminder_days": 3}'::jsonb
+  ) AS request_id;
   $$
 );
 ```
 
-### Step 3: Verify Cron Job
-```sql
-SELECT * FROM cron.job;
+---
+
+## Edit Subscription Modal Design
+
+```text
++------------------------------------------+
+|  Edit Subscription                    X  |
++------------------------------------------+
+|  Customer: [Name]                        |
+|  Phone: [Phone] | Email: [Email]         |
++------------------------------------------+
+|  DELIVERY TYPE                           |
+|  [Delivery ▼]                            |
+|                                          |
+|  DELIVERY ADDRESS                        |
+|  [_____________________________________] |
+|                                          |
+|  FREQUENCY                               |
+|  ( ) Bi-weekly   ( ) Monthly             |
+|                                          |
+|  PREFERRED DAY                           |
+|  [Wednesday ▼]                           |
+|                                          |
+|  [Week of Month ▼] (if monthly)          |
++------------------------------------------+
+|  PRODUCTS                                |
+|  +--------------------------------------+|
+|  | Aqua VI 5 Gal    $6.00   [-] 2 [+]  ||
+|  | Aqua VI 3 Gal    $4.50   [-] 0 [+]  ||
+|  | Aqua VI 1 Liter  $1.00   [-] 0 [+]  ||
+|  +--------------------------------------+|
+|  Total: $12.00                           |
++------------------------------------------+
+|  PAYMENT METHOD                          |
+|  [Cash ▼]                                |
++------------------------------------------+
+|            [Cancel]  [Save Changes]      |
++------------------------------------------+
 ```
 
 ---
 
-## How It Works
+## Reminder Email Template Design
 
-### Automated Flow (When Cron Enabled)
-```
-[Daily at 6 AM UTC]
-        ↓
-[pg_cron triggers HTTP call]
-        ↓
-[Edge Function: generate-subscription-orders]
-        ↓
-  For each active subscription with next_delivery_date <= today + 2:
-        → Call RPC: generate_order_from_subscription(id)
-        → Create order record
-        → Calculate new next_delivery_date
-        → Update subscription
-        → Send confirmation email (if email exists)
-        ↓
-[Return summary with results]
-```
-
-### Manual Flow (Available Now)
-Staff can click the Package icon on any active subscription to:
-1. Generate an order immediately
-2. Advance the next_delivery_date
-3. Send confirmation email to customer
-
----
-
-## API Reference
-
-### Edge Function: generate-subscription-orders
-
-**Endpoint**: `POST /functions/v1/generate-subscription-orders`
-
-**Parameters** (JSON body):
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `lead_days` | number | 2 | Days before delivery to generate orders |
-| `dry_run` | boolean | false | Simulate without creating orders |
-| `subscription_id` | string | null | Generate for specific subscription only |
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Generated 3 orders, 0 failed",
-  "generated": 3,
-  "failed": 0,
-  "results": [
-    {
-      "subscription_id": "...",
-      "customer_name": "...",
-      "order_id": "...",
-      "order_number": "AQVI...",
-      "success": true,
-      "email_sent": true
-    }
-  ],
-  "execution_time_ms": 1234
-}
+```text
++------------------------------------------+
+|            [AQUA VI LOGO]                |
++------------------------------------------+
+|  +--------------------------------------+|
+|  | Calendar Icon  UPCOMING DELIVERY     ||
+|  |                Your order is coming  ||
+|  +--------------------------------------+|
+|                                          |
+|  Hi [Customer Name],                     |
+|                                          |
+|  This is a friendly reminder that your   |
+|  recurring water delivery is scheduled   |
+|  for [Date].                             |
+|                                          |
+|  +--------------------------------------+|
+|  | DELIVERY DETAILS                     ||
+|  | Date: [Next Delivery Date]           ||
+|  | Time: 11:00 AM - 2:30 PM             ||
+|  | Address: [Delivery Address]          ||
+|  +--------------------------------------+|
+|                                          |
+|  +--------------------------------------+|
+|  | YOUR ITEMS                           ||
+|  | Item        Qty   Price   Total      ||
+|  | Aqua VI 5G   2   $6.00   $12.00      ||
+|  +--------------------------------------+|
+|                                          |
+|  Need to make changes? Contact us:       |
+|  Phone: 1-284-443-4353                   |
+|  Email: aquavidistributor@gmail.com      |
++------------------------------------------+
 ```
 
 ---
 
-## Future Enhancements (Phase 3)
+## Rollout Sequence
 
-### 3.1 Upcoming Delivery Reminder Email
-- Send customer reminder 3 days before delivery
-- Include items, date, and contact info
-
-### 3.2 Subscription Edit Capability
-- Allow modifying items, frequency, or delivery details
-- Track changes in subscription history
+1. **Create reminder edge function** - Build and test the email template
+2. **Update config.toml** - Add new function configuration
+3. **Deploy and test reminder function** - Verify emails send correctly
+4. **Add reminder cron job** - Schedule daily at 7 AM
+5. **Create EditSubscriptionModal** - Build the edit form component
+6. **Integrate edit modal into SubscriptionsTab** - Add buttons and state
+7. **Add subscription change notification** - Optional email on edit
+8. **Test full flow** - Verify edit saves correctly and recalculates dates
 
 ---
 
-## Notes for Team
+## Success Criteria
 
-- **Lead Time**: Orders generate 2 days before delivery date
-- **Email Notifications**: Customers with email receive confirmations
-- **Manual Override**: Staff can generate orders anytime via admin panel
-- **Paused Subscriptions**: Skipped by automated system
-- **Cancelled Subscriptions**: Never processed
-- **Logs**: Check edge function logs for troubleshooting
+- Customers receive reminder emails 3 days before delivery
+- Reminders only sent to subscriptions with valid email addresses
+- Admin can edit any active or paused subscription
+- Editing items correctly recalculates total amount
+- Changing frequency correctly recalculates next delivery date
+- All changes logged in updated_at timestamp
+- Optional: Customer notified of subscription changes
+
+---
+
+## Notes
+
+- Reminder cron runs 1 hour after order generation (7 AM vs 6 AM)
+- Edit modal reuses product selection logic from OrderModal
+- Cancelled subscriptions cannot be edited (must create new)
+- Next delivery date auto-recalculates when frequency changes
