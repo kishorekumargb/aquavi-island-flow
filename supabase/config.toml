@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.generate-subscription-orders]
 verify_jwt = false
+
+[functions.send-upcoming-delivery-reminder]
+verify_jwt = false

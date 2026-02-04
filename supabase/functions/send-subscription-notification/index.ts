@@ -25,7 +25,7 @@ interface SubscriptionItem {
 }
 
 interface SubscriptionNotificationRequest {
-  eventType: 'paused' | 'resumed' | 'cancelled';
+  eventType: 'paused' | 'resumed' | 'cancelled' | 'modified';
   subscriptionId: string;
   customerName: string;
   customerEmail: string;
@@ -145,6 +145,16 @@ const handler = async (req: Request): Promise<Response> => {
         badgeTextColor: '#991B1B',
         message: 'Your subscription has been cancelled. No further deliveries will be scheduled.',
         actionText: 'Changed your mind? Contact us anytime to restart your subscription at 1-284-443-4353.',
+      },
+      modified: {
+        bannerColor: 'linear-gradient(135deg, #214B95 0%, #039C97 100%)',
+        icon: '✏️',
+        title: 'Subscription Updated',
+        subtitle: 'Your delivery details have changed',
+        badgeColor: '#DBEAFE',
+        badgeTextColor: '#1E40AF',
+        message: 'Your subscription has been updated with new delivery details. Please review the changes below.',
+        actionText: 'If you have any questions about these changes, contact us at 1-284-443-4353.',
       },
     };
 
