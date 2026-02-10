@@ -81,6 +81,7 @@ export function SubscriptionsTab() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [generatingOrder, setGeneratingOrder] = useState(false);
+  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
   const [subscriptionOrders, setSubscriptionOrders] = useState<SubscriptionOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const { toast } = useToast();
@@ -538,7 +539,10 @@ export function SubscriptionsTab() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => generateNextOrder(subscription)}
+                                onClick={() => {
+                                  setSelectedSubscription(subscription);
+                                  setShowGenerateConfirm(true);
+                                }}
                                 disabled={generatingOrder}
                                 title="Generate Next Order"
                               >
@@ -804,7 +808,45 @@ export function SubscriptionsTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Subscription Modal */}
+      {/* Generate Order Confirmation Modal */}
+      <Dialog open={showGenerateConfirm} onOpenChange={setShowGenerateConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Subscription Order</DialogTitle>
+            <DialogDescription>
+              This will create a new order and advance the subscription schedule to the next cycle.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSubscription && (
+            <div className="py-4 space-y-2">
+              <p><strong>Customer:</strong> {selectedSubscription.customer_name}</p>
+              <p><strong>Delivery Date:</strong> {format(new Date(selectedSubscription.next_delivery_date), 'MMMM d, yyyy')}</p>
+              <p><strong>Amount:</strong> ${selectedSubscription.total_amount.toFixed(2)}</p>
+              <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-800">
+                <AlertCircle className="w-4 h-4 inline mr-1" />
+                After generating, the next delivery date will advance to the following {selectedSubscription.frequency === 'biweekly' ? '2-week' : 'monthly'} cycle.
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGenerateConfirm(false)} disabled={generatingOrder}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedSubscription) {
+                  generateNextOrder(selectedSubscription);
+                  setShowGenerateConfirm(false);
+                }
+              }}
+              disabled={generatingOrder}
+            >
+              {generatingOrder ? 'Generating...' : 'Confirm & Generate Order'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <EditSubscriptionModal
         subscription={selectedSubscription}
         open={showEditModal}

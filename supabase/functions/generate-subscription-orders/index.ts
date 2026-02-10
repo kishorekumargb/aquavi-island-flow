@@ -134,6 +134,19 @@ Deno.serve(async (req) => {
         result.order_id = orderResult.order_id;
         result.order_number = orderResult.order_number;
 
+        // Build subscription summary for email
+        const buildSubscriptionSummary = (sub: any): string => {
+          const dayLabel = sub.preferred_day.charAt(0).toUpperCase() + sub.preferred_day.slice(1);
+          if (sub.frequency === 'biweekly') {
+            return `Every 2 weeks on ${dayLabel}`;
+          }
+          if (sub.frequency === 'monthly' && sub.week_of_month) {
+            const weekLabels = ['1st', '2nd', '3rd', '4th'];
+            return `Monthly on the ${weekLabels[sub.week_of_month - 1]} ${dayLabel}`;
+          }
+          return `${sub.frequency} on ${dayLabel}`;
+        };
+
         // Send order confirmation email if customer has email
         if (subscription.customer_email) {
           try {
@@ -143,12 +156,15 @@ Deno.serve(async (req) => {
                 orderNumber: orderResult.order_number,
                 customerName: subscription.customer_name,
                 customerEmail: subscription.customer_email,
+                customerPhone: subscription.customer_phone,
                 items: subscription.items,
                 totalAmount: subscription.total_amount,
                 deliveryType: subscription.delivery_type,
                 deliveryAddress: subscription.delivery_address,
-                isSubscriptionOrder: true,
-                subscriptionFrequency: subscription.frequency,
+                paymentMethod: subscription.payment_method,
+                isSubscription: true,
+                frequency: subscription.frequency,
+                subscriptionSummary: buildSubscriptionSummary(subscription),
                 nextDeliveryDate: orderResult.next_delivery_date
               }
             });
