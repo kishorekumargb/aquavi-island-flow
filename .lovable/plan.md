@@ -1,115 +1,63 @@
 
-# Phase 3: Future Enhancements - COMPLETED ✓
 
-## Overview
+# Fix Subscription Order Email Notifications
 
-Both optional features from the subscription system have been implemented:
-1. ✅ **Upcoming Delivery Reminder Email** - Automated reminder sent 3 days before delivery
-2. ✅ **Subscription Edit Capability** - Allow modifying items, frequency, and delivery details after creation
+## Problem
+Subscription order emails are being sent as plain "Order Confirmed" instead of "Subscription Started" with full recurring schedule details. Two root causes:
 
----
+1. **Field name mismatch** in `generate-subscription-orders`: sends `isSubscriptionOrder` but email function expects `isSubscription`
+2. **Missing `subscriptionSummary`**: the schedule description (e.g., "Every 2 weeks on Monday") is never constructed or sent
 
-## Feature 1: Upcoming Delivery Reminder Email ✓
+## What Already Exists (No Changes Needed)
+The `send-order-confirmation` function already has complete subscription email templates:
+- "Subscription Started!" banner and subject line
+- Teal "RECURRING BIWEEKLY/MONTHLY SUBSCRIPTION" badge
+- "Your Recurring Schedule" section with summary text and next delivery date
+- Business email with "SUBSCRIPTION Delivery" subject
 
-### Implementation Complete
+These just never activate due to the field mismatch.
 
-#### Edge Function: `send-upcoming-delivery-reminder`
-- **File:** `supabase/functions/send-upcoming-delivery-reminder/index.ts`
-- Queries active subscriptions where `next_delivery_date = today + 3 days`
-- Sends branded reminder email with:
-  - Items being delivered
-  - Delivery date and time window
-  - Delivery address (if applicable)
-  - Contact info for changes
-- Logs all sent reminders
+## Changes
 
-#### Configuration Added
-- `supabase/config.toml` updated with `verify_jwt = false`
+### File 1: `supabase/functions/generate-subscription-orders/index.ts`
 
-#### Cron Job (Pending User Action)
-To schedule the daily reminder job at 7:00 AM, run this SQL in Cloud View > Run SQL:
+Update the email payload (around lines 140-155) to:
 
-```sql
-SELECT cron.schedule(
-  'send-delivery-reminders-daily',
-  '0 7 * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://qscyapmuiqaijvuitlyv.supabase.co/functions/v1/send-upcoming-delivery-reminder',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzY3lhcG11aXFhaWp2dWl0bHl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk3ODMsImV4cCI6MjA2ODQyNTc4M30.Z5ZKQiYooi4M2hxHMs8I7B7gPhrZzWJv69L7AUKtxYA"}'::jsonb,
-    body := '{"reminder_days": 3}'::jsonb
-  ) AS request_id;
-  $$
-);
-```
+- Rename `isSubscriptionOrder` to `isSubscription`
+- Rename `subscriptionFrequency` to `frequency`
+- Add `paymentMethod` from `subscription.payment_method`
+- Add `customerPhone` from `subscription.customer_phone`
+- **Construct `subscriptionSummary`** from the subscription's frequency, preferred day, and schedule fields (e.g., "Every 2 weeks on Monday" or "Monthly on the 2nd Tuesday")
+- Pass `nextDeliveryDate` (already present, no change needed)
+
+### File 2: `src/components/admin/SubscriptionsTab.tsx`
+
+Add an AlertDialog confirmation before the "Generate Order" action:
+- Warning text: "This will create an order for delivery on [next_delivery_date] and advance the schedule to the next cycle."
+- Cancel and Confirm buttons
+- Prevents accidental date advancement
+
+### Deployment
+Redeploy `generate-subscription-orders` edge function.
 
 ---
 
-## Feature 2: Subscription Edit Capability ✓
+## Expected Result After Fix
 
-### Implementation Complete
+**Customer email will show:**
+- Subject: "Subscription Started - AQVI..."
+- Banner: "Subscription Started! Your recurring delivery is set up"
+- Badge: "RECURRING MONTHLY SUBSCRIPTION"
+- Schedule section: "Monthly on the 2nd Tuesday" with next delivery date
+- Payment method and phone number included
 
-#### New Component: `EditSubscriptionModal`
-- **File:** `src/components/admin/EditSubscriptionModal.tsx`
-- Edit items (add, remove, change quantities)
-- Change frequency (bi-weekly ↔ monthly)
-- Update delivery address
-- Modify preferred day and schedule
-- Change payment method
-- Real-time total calculation
+**Business email will show:**
+- Subject: "SUBSCRIPTION Delivery: AQVI... - $89.99"
+- Full subscription details with schedule
 
-#### SubscriptionsTab Updates
-- **File:** `src/components/admin/SubscriptionsTab.tsx`
-- Added Edit button (Pencil icon ✏️) in actions column
-- Added Edit button in subscription details modal
-- State management for edit modal
-- Form validation before save
+## Files Modified
+| File | Change |
+|------|--------|
+| `supabase/functions/generate-subscription-orders/index.ts` | Fix field names, add subscriptionSummary construction |
+| `src/components/admin/SubscriptionsTab.tsx` | Add confirmation dialog for Generate Order |
 
-#### Database Update Logic
-- Recalculates total_amount based on new items
-- Recalculates next_delivery_date when frequency/schedule changes
-- Uses `calculate_next_delivery_date` RPC function
-
-#### Customer Notification
-- Added 'modified' event type to `send-subscription-notification`
-- Sends email notification when subscription is edited (if customer has email)
-- Shows new schedule and items
-
----
-
-## Files Created/Modified
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `supabase/functions/send-upcoming-delivery-reminder/index.ts` | Reminder email function |
-| `src/components/admin/EditSubscriptionModal.tsx` | Modal for editing subscriptions |
-
-### Modified Files
-| File | Changes |
-|------|---------|
-| `supabase/config.toml` | Added new edge function config |
-| `src/components/admin/SubscriptionsTab.tsx` | Added edit button and modal integration |
-| `supabase/functions/send-subscription-notification/index.ts` | Added 'modified' event type |
-
----
-
-## Success Criteria - All Met ✓
-
-- ✅ Customers receive reminder emails 3 days before delivery
-- ✅ Reminders only sent to subscriptions with valid email addresses
-- ✅ Admin can edit any active or paused subscription
-- ✅ Editing items correctly recalculates total amount
-- ✅ Changing frequency correctly recalculates next delivery date
-- ✅ All changes logged in updated_at timestamp
-- ✅ Customer notified of subscription changes (via email)
-
----
-
-## Notes
-
-- Reminder edge function is deployed and ready
-- Cron job requires manual SQL execution (see above)
-- Edit modal reuses product selection logic
-- Cancelled subscriptions cannot be edited (by design)
-- Next delivery date auto-recalculates when frequency changes
